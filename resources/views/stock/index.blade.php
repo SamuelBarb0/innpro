@@ -23,6 +23,12 @@
         </div>
       @endif
 
+      <div class="d-flex justify-content-end mb-3">
+        <a href="{{ route('stock.dashboard') }}" class="btn btn-outline-primary btn-sm">
+          <i class="bi bi-speedometer2 me-1"></i>Ver dashboard de inventario
+        </a>
+      </div>
+
       {{-- Tarjetas resumen --}}
       <div class="row mb-4">
         <div class="col-md-4">
