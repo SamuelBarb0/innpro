@@ -143,7 +143,7 @@ Route::middleware(['auth'])->group(function () {
 
 
 // Rutas de Stock
-Route::prefix('stock')->name('stock.')->group(function () {
+Route::prefix('stock')->name('stock.')->middleware('auth')->group(function () {
     // Vistas principales
     Route::get('/', [App\Http\Controllers\StockController::class, 'index'])->name('index');
     Route::get('/dashboard', [App\Http\Controllers\StockController::class, 'dashboard'])->name('dashboard');
@@ -174,12 +174,15 @@ Route::prefix('stock')->name('stock.')->group(function () {
     Route::post('/inicializar-todos', [App\Http\Controllers\StockController::class, 'inicializarTodos'])->name('inicializar-todos');
 });
 
-// Agregar ruta AJAX para ver stock desde productos
-Route::get('/productos/{producto}/stock-ajax', [App\Http\Controllers\ProductosController::class, 'stockAjax'])->name('productos.stock-ajax');
+// Rutas autenticadas: stock-ajax de productos y descargas de solicitudes
+Route::middleware('auth')->group(function () {
+    // AJAX para ver stock desde productos
+    Route::get('/productos/{producto}/stock-ajax', [App\Http\Controllers\ProductosController::class, 'stockAjax'])->name('productos.stock-ajax');
 
-// Rutas para solicitudes
-Route::get('/solicitudes/{solicitud}/pdf', [SolicitudController::class, 'descargarPdf'])->name('solicitudes.pdf');
-Route::get('/solicitudes/exportar-excel', [SolicitudController::class, 'exportarExcel'])->name('solicitudes.exportar-excel');
+    // Solicitudes (PDF / Excel)
+    Route::get('/solicitudes/{solicitud}/pdf', [SolicitudController::class, 'descargarPdf'])->name('solicitudes.pdf');
+    Route::get('/solicitudes/exportar-excel', [SolicitudController::class, 'exportarExcel'])->name('solicitudes.exportar-excel');
+});
 Route::middleware(['auth'])->group(function () {
     // ... otras rutas existentes ...
     
