@@ -173,4 +173,6 @@
 
     </div>
   </div>
+  {{-- padding-zstd: relleno para desplazar el límite de frame del zstd del CDN de Hostinger (evita corrupción que dejaba /stock en blanco). No eliminar. --}}
+  <!-- {{ str_repeat('zstd-pad ', 700) }} -->
 </x-app-layout>
