@@ -38,13 +38,12 @@ class StockController extends Controller
             'archivo.max'      => 'El archivo no debe superar los 10MB',
         ]);
 
-        $rutaArchivo = null;
         try {
-            // Procesamos directamente desde el tmp de PHP — no dejamos copia en public/.
-            $rutaArchivo = $request->file('archivo')->getRealPath();
-
+            // Pasamos el UploadedFile directamente: Maatwebsite detecta el formato
+            // por la extensión original del archivo (getRealPath() da /tmp/phpXXXX sin
+            // extensión → "No ReaderType or WriterType could be detected").
             $import = new StockImport();
-            Excel::import($import, $rutaArchivo);
+            Excel::import($import, $request->file('archivo'));
 
             if ($import->exito > 0 && $import->fallo === 0) {
                 return back()->with('success', "Stock actualizado: {$import->exito} registros.");
