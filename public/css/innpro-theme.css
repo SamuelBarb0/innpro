@@ -1,0 +1,501 @@
+/* ================================================================
+   INNPRO — "Security Command Center"  ·  tema de marca del panel
+   Identidad: índigo #241D5E · azul #3488BD · navy #020B3C · teal #5DCEBA
+   Lenguaje visual: sala de control / vigilancia — riel oscuro,
+   retículas tipo mira de cámara, blueprint técnico, HUD angular.
+   ================================================================ */
+
+:root {
+  --in-indigo:      #241D5E;
+  --in-indigo-700:  #191141;
+  --in-blue:        #3488BD;
+  --in-blue-600:    #12669B;
+  --in-navy:        #020B3C;
+  --in-teal:        #5DCEBA;
+  --in-teal-600:    #2AA995;
+
+  --in-ink:         #1a1c2b;   /* texto principal sobre claro */
+  --in-muted:       #6a7185;
+  --in-line:        rgba(36, 29, 94, .10);
+
+  --in-grad:        linear-gradient(120deg, #241D5E 0%, #12669B 58%, #3488BD 100%);
+  --in-grad-teal:   linear-gradient(120deg, #12669B, #2AA995);
+  --in-rail:        linear-gradient(198deg, #241D5E 0%, #0b1440 52%, #020B3C 100%);
+
+  --in-font-display: 'Chakra Petch', 'Segoe UI', sans-serif;
+  --in-font-body:    'Sora', 'Segoe UI', system-ui, sans-serif;
+}
+
+/* ---------------- Tipografía global ---------------- */
+body {
+  font-family: var(--in-font-body);
+  color: var(--in-ink);
+  /* Atmósfera: glows de marca + blueprint técnico */
+  background-color: #eaeef7 !important;
+  background-image:
+    radial-gradient(1100px 620px at 10% -8%, rgba(36, 29, 94, .12), transparent 60%),
+    radial-gradient(900px 520px at 102% -2%, rgba(52, 136, 189, .12), transparent 55%),
+    linear-gradient(rgba(36, 29, 94, .035) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(36, 29, 94, .035) 1px, transparent 1px);
+  background-size: auto, auto, 42px 42px, 42px 42px;
+  background-attachment: fixed;
+}
+h1, h2, h3, h4, h5, h6, .h1, .h2, .h3, .h4, .h5, .h6 {
+  font-family: var(--in-font-display);
+  letter-spacing: .01em;
+}
+
+/* ================================================================
+   RIEL LATERAL (sidebar) — command rail oscuro
+   ================================================================ */
+.sidebar {
+  background: var(--in-rail) !important;
+  border-right: 0 !important;
+  box-shadow: 4px 0 34px rgba(2, 11, 60, .28);
+  position: relative;
+}
+/* rejilla técnica muy sutil sobre el riel */
+.sidebar::before {
+  content: "";
+  position: absolute; inset: 0;
+  background-image:
+    linear-gradient(rgba(255, 255, 255, .04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, .04) 1px, transparent 1px);
+  background-size: 30px 30px;
+  mask-image: linear-gradient(180deg, #000 0%, transparent 62%);
+  -webkit-mask-image: linear-gradient(180deg, #000 0%, transparent 62%);
+  pointer-events: none;
+}
+.sidebar > .d-flex { position: relative; z-index: 1; }
+
+/* Placa de marca (logo) */
+.sidebar .border-bottom {
+  border-bottom: 1px solid rgba(255, 255, 255, .08) !important;
+  background: transparent;
+}
+.sidebar .brand-plate {
+  background: rgba(255, 255, 255, .96);
+  border-radius: 14px;
+  padding: .7rem .9rem;
+  box-shadow: 0 10px 26px rgba(2, 11, 60, .35), inset 0 0 0 1px rgba(255, 255, 255, .6);
+  position: relative;
+  width: 82%;
+}
+/* corner brackets tipo mira de cámara en la placa */
+.sidebar .brand-plate::before,
+.sidebar .brand-plate::after {
+  content: "";
+  position: absolute;
+  width: 12px; height: 12px;
+  border: 2px solid var(--in-teal);
+  opacity: .9;
+}
+.sidebar .brand-plate::before { top: -5px; left: -5px; border-right: 0; border-bottom: 0; border-radius: 3px 0 0 0; }
+.sidebar .brand-plate::after  { bottom: -5px; right: -5px; border-left: 0; border-top: 0; border-radius: 0 0 3px 0; }
+.sidebar .brand-plate img { display: block; width: 100%; filter: none; }
+.sidebar.collapsed .brand-plate { width: 100%; padding: .4rem; }
+
+/* Etiqueta de sección */
+.sidebar .nav-section {
+  font-family: var(--in-font-display);
+  font-size: .62rem;
+  letter-spacing: .28em;
+  text-transform: uppercase;
+  color: rgba(150, 205, 235, .55);
+  padding: .2rem .75rem .55rem;
+  margin-top: .4rem;
+}
+.sidebar.collapsed .nav-section { opacity: 0; }
+
+/* Enlaces del riel */
+.sidebar .nav-link {
+  color: rgba(226, 233, 250, .72) !important;
+  font-weight: 500;
+  border-radius: 10px;
+  padding: .58rem .75rem;
+  position: relative;
+  transition: background-color .18s ease, color .18s ease, transform .18s ease;
+}
+.sidebar .nav-link.text-dark { color: rgba(226, 233, 250, .72) !important; }
+.sidebar .nav-link i { color: var(--in-teal); transition: color .18s ease, transform .18s ease; font-size: 1.02rem; }
+.sidebar .nav-link span { font-family: var(--in-font-display); letter-spacing: .02em; font-weight: 500; }
+
+.sidebar .nav-link:hover {
+  background: rgba(93, 206, 186, .10);
+  color: #fff !important;
+  transform: translateX(3px);
+}
+.sidebar .nav-link:hover i { transform: scale(1.14); color: #8be3d3; }
+
+.sidebar .nav-link.active {
+  background: linear-gradient(90deg, rgba(93, 206, 186, .22), rgba(52, 136, 189, .06)) !important;
+  color: #fff !important;
+  font-weight: 600;
+  box-shadow: inset 0 0 0 1px rgba(93, 206, 186, .22), 0 8px 20px rgba(2, 11, 60, .35);
+}
+.sidebar .nav-link.active i { color: var(--in-teal) !important; }
+.sidebar .nav-link.active::before {
+  content: "";
+  position: absolute;
+  left: -2px; top: 20%; bottom: 20%;
+  width: 3px; border-radius: 4px;
+  background: var(--in-teal);
+  box-shadow: 0 0 12px var(--in-teal);
+}
+/* corner bracket en el ítem activo (mira) */
+.sidebar .nav-link.active::after {
+  content: "";
+  position: absolute;
+  top: 7px; right: 8px;
+  width: 9px; height: 9px;
+  border-top: 2px solid rgba(93, 206, 186, .8);
+  border-right: 2px solid rgba(93, 206, 186, .8);
+  border-radius: 0 3px 0 0;
+}
+
+/* Badge pendientes */
+.sidebar .badge.bg-danger {
+  background: var(--in-teal-600) !important;
+  box-shadow: 0 0 10px rgba(42, 169, 149, .6);
+}
+
+/* Botón salir */
+.sidebar .mt-auto { border-top: 1px solid rgba(255, 255, 255, .08) !important; }
+.sidebar .btn-outline-danger {
+  color: rgba(226, 233, 250, .85);
+  border-color: rgba(255, 255, 255, .18);
+  font-family: var(--in-font-display);
+  letter-spacing: .04em;
+  border-radius: 10px;
+}
+.sidebar .btn-outline-danger:hover {
+  background: rgba(228, 87, 46, .16);
+  border-color: rgba(228, 87, 46, .55);
+  color: #fff;
+}
+
+/* ================================================================
+   HEADER — barra superior de vidrio
+   ================================================================ */
+header#appHeader {
+  background: rgba(255, 255, 255, .72) !important;
+  backdrop-filter: saturate(180%) blur(14px);
+  -webkit-backdrop-filter: saturate(180%) blur(14px);
+  border-bottom: 0 !important;
+  box-shadow: 0 2px 18px rgba(2, 11, 60, .06);
+}
+header#appHeader::after {
+  content: "";
+  position: absolute;
+  left: 0; right: 0; bottom: 0;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, var(--in-teal), var(--in-blue), transparent);
+  opacity: .8;
+}
+header#appHeader .fw-semibold { font-family: var(--in-font-display); }
+#toggleSidebar { color: var(--in-indigo); }
+.header-user-info img {
+  box-shadow: 0 0 0 2px rgba(93, 206, 186, .5), 0 4px 12px rgba(2, 11, 60, .2);
+}
+
+/* Título de página (slot header) */
+main h4 { color: var(--in-indigo); font-weight: 700; }
+
+/* ================================================================
+   TARJETAS
+   ================================================================ */
+.card {
+  border: 1px solid var(--in-line);
+  border-radius: 16px;
+  background: rgba(255, 255, 255, .96);
+}
+.card.shadow-sm { box-shadow: 0 6px 24px rgba(2, 11, 60, .07) !important; }
+.card-header { background: transparent !important; border-bottom: 1px solid var(--in-line); }
+.card-header h6 { font-family: var(--in-font-display); font-weight: 600; letter-spacing: .02em; }
+.card-header h6 i { color: var(--in-blue); }
+
+/* KPI cards con retícula de cámara */
+.kpi-card {
+  border: 1px solid var(--in-line) !important;
+  border-left: none !important;
+  position: relative;
+  overflow: hidden;
+  transition: transform .18s ease, box-shadow .18s ease;
+}
+.kpi-card::before, .kpi-card::after {
+  content: "";
+  position: absolute;
+  width: 16px; height: 16px;
+  opacity: .45;
+  transition: opacity .2s ease, width .2s ease, height .2s ease;
+}
+.kpi-card::before {
+  top: 12px; right: 12px;
+  border-top: 2px solid var(--kpi-color, var(--in-blue));
+  border-right: 2px solid var(--kpi-color, var(--in-blue));
+  border-radius: 0 4px 0 0;
+}
+.kpi-card::after {
+  bottom: 12px; left: 12px;
+  border-bottom: 2px solid var(--kpi-color, var(--in-blue));
+  border-left: 2px solid var(--kpi-color, var(--in-blue));
+  border-radius: 0 0 0 4px;
+}
+.kpi-card:hover { transform: translateY(-4px); box-shadow: 0 14px 30px rgba(2, 11, 60, .13) !important; }
+.kpi-card:hover::before, .kpi-card:hover::after { opacity: .9; width: 22px; height: 22px; }
+
+.kpi-icon {
+  background: var(--kpi-color, var(--in-blue)) !important;
+  box-shadow: 0 8px 18px -4px var(--kpi-color, var(--in-blue));
+  border-radius: 13px !important;
+}
+.kpi-value { font-family: var(--in-font-display); font-weight: 700; }
+.kpi-label { font-family: var(--in-font-display); letter-spacing: .12em !important; color: var(--in-muted) !important; }
+
+/* ================================================================
+   BOTONES / ACENTOS
+   ================================================================ */
+.btn-primary {
+  background: var(--in-grad);
+  border: none;
+  font-family: var(--in-font-display);
+  letter-spacing: .03em;
+  box-shadow: 0 8px 18px rgba(36, 29, 94, .26);
+  position: relative;
+  overflow: hidden;
+}
+.btn-primary:hover, .btn-primary:focus {
+  filter: brightness(1.08);
+  transform: translateY(-1px);
+  box-shadow: 0 12px 24px rgba(36, 29, 94, .32);
+}
+.btn-primary::after {
+  content: "";
+  position: absolute; top: 0; left: -60%;
+  width: 40%; height: 100%;
+  background: linear-gradient(100deg, transparent, rgba(255, 255, 255, .35), transparent);
+  transform: skewX(-18deg);
+  transition: left .5s ease;
+}
+.btn-primary:hover::after { left: 130%; }
+
+.btn-success { background: var(--in-grad-teal); border: none; }
+.text-primary { color: var(--in-blue) !important; }
+.badge.bg-primary { background: var(--in-indigo) !important; }
+a { color: var(--in-blue-600); }
+
+/* Tablas (DataTables) — acentos discretos */
+table.dataTable thead th { font-family: var(--in-font-display); letter-spacing: .02em; color: var(--in-indigo); }
+.page-item.active .page-link { background: var(--in-indigo); border-color: var(--in-indigo); }
+.form-control:focus, .form-select:focus {
+  border-color: var(--in-blue);
+  box-shadow: 0 0 0 .2rem rgba(52, 136, 189, .18);
+}
+
+/* ================================================================
+   ANIMACIONES DE ENTRADA
+   ================================================================ */
+@keyframes inFadeUp { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: none; } }
+@keyframes inFadeRight { from { opacity: 0; transform: translateX(-10px); } to { opacity: 1; transform: none; } }
+
+.container-fluid .card { animation: inFadeUp .55s cubic-bezier(.22, .61, .36, 1) both; }
+.container-fluid .row:first-of-type .col-12:nth-child(1) .card { animation-delay: .05s; }
+.container-fluid .row:first-of-type .col-12:nth-child(2) .card { animation-delay: .12s; }
+.container-fluid .row:first-of-type .col-12:nth-child(3) .card { animation-delay: .19s; }
+.container-fluid .row:first-of-type .col-12:nth-child(4) .card { animation-delay: .26s; }
+.container-fluid .row:last-of-type .card { animation-delay: .34s; }
+
+.sidebar .nav-link { animation: inFadeRight .4s ease both; }
+.sidebar nav .nav-link:nth-child(1) { animation-delay: .04s; }
+.sidebar nav .nav-link:nth-child(2) { animation-delay: .08s; }
+.sidebar nav .nav-link:nth-child(3) { animation-delay: .12s; }
+.sidebar nav .nav-link:nth-child(4) { animation-delay: .16s; }
+.sidebar nav .nav-link:nth-child(5) { animation-delay: .20s; }
+.sidebar nav .nav-link:nth-child(6) { animation-delay: .24s; }
+.sidebar nav .nav-link:nth-child(7) { animation-delay: .28s; }
+.sidebar nav .nav-link:nth-child(8) { animation-delay: .32s; }
+.sidebar nav .nav-link:nth-child(9) { animation-delay: .36s; }
+.sidebar nav .nav-link:nth-child(10) { animation-delay: .40s; }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation: none !important; transition: none !important; }
+}
+
+/* Scrollbar de marca */
+.sidebar nav::-webkit-scrollbar { width: 6px; }
+.sidebar nav::-webkit-scrollbar-thumb { background: rgba(93, 206, 186, .35); border-radius: 6px; }
+::selection { background: rgba(93, 206, 186, .3); }
+
+/* ================================================================
+   ARMONIZACIÓN — páginas interiores (listas, formularios, tablas)
+   Un solo sistema visual para botones, buscador, paginación y forms.
+   ================================================================ */
+
+/* --- Contenedor de página tipo panel --- */
+main .card,
+.container-fluid > .card { border-radius: 16px; }
+
+/* Título de sección con acento */
+main h4, .container-fluid h4, .container-fluid h5 {
+  font-family: var(--in-font-display);
+  color: var(--in-indigo);
+  font-weight: 700;
+  position: relative;
+  padding-left: .85rem;
+}
+main h4::before, .container-fluid h4::before {
+  content: "";
+  position: absolute; left: 0; top: .12em; bottom: .12em;
+  width: 4px; border-radius: 4px;
+  background: var(--in-grad-teal);
+}
+
+/* --- Sistema de botones --- */
+.btn {
+  font-family: var(--in-font-display);
+  font-weight: 500;
+  letter-spacing: .02em;
+  border-radius: 10px;
+  padding: .45rem 1rem;
+  transition: transform .14s ease, box-shadow .14s ease, background-color .14s ease, color .14s ease, border-color .14s ease;
+}
+.btn:hover { transform: translateY(-1px); }
+
+/* Acción principal (Nuevo, Guardar) */
+.btn-outline-primary {
+  color: var(--in-indigo);
+  border: 1.5px solid rgba(36, 29, 94, .35);
+  background: rgba(36, 29, 94, .02);
+}
+.btn-outline-primary:hover, .btn-outline-primary:focus {
+  background: var(--in-grad);
+  border-color: transparent;
+  color: #fff;
+  box-shadow: 0 8px 18px rgba(36, 29, 94, .26);
+}
+
+/* Exportar / éxito → teal de marca */
+.btn-outline-success {
+  color: var(--in-teal-600);
+  border: 1.5px solid rgba(42, 169, 149, .4);
+}
+.btn-outline-success:hover, .btn-outline-success:focus {
+  background: var(--in-grad-teal);
+  border-color: transparent;
+  color: #fff;
+  box-shadow: 0 8px 18px rgba(42, 169, 149, .28);
+}
+
+/* Neutros (Filas, Columnas, Cancelar, secundarios) */
+.btn-outline-dark, .btn-outline-secondary {
+  color: #495066;
+  border: 1.5px solid rgba(36, 29, 94, .18);
+  background: #fff;
+}
+.btn-outline-dark:hover, .btn-outline-secondary:hover,
+.btn-outline-dark:focus, .btn-outline-secondary:focus {
+  background: rgba(36, 29, 94, .06);
+  border-color: rgba(36, 29, 94, .35);
+  color: var(--in-indigo);
+}
+
+/* Eliminar / peligro en contenido */
+.btn-outline-danger:not(.sidebar .btn-outline-danger) { border-width: 1.5px; }
+.btn-danger { background: #E4572E; border: none; }
+
+/* --- DataTables: buscador, longitud, info, paginación --- */
+.dataTables_wrapper .dataTables_filter input,
+.dataTables_wrapper .dataTables_length select,
+.dt-buttons + .dataTables_filter input {
+  border: 1.5px solid rgba(36, 29, 94, .16);
+  border-radius: 10px;
+  padding: .4rem .7rem;
+  outline: none;
+  transition: border-color .15s ease, box-shadow .15s ease;
+}
+.dataTables_wrapper .dataTables_filter input:focus,
+.dataTables_wrapper .dataTables_length select:focus {
+  border-color: var(--in-blue);
+  box-shadow: 0 0 0 3px rgba(52, 136, 189, .16);
+}
+.dataTables_wrapper .dataTables_filter label,
+.dataTables_wrapper .dataTables_length label,
+.dataTables_wrapper .dataTables_info {
+  font-family: var(--in-font-display);
+  color: var(--in-muted);
+  letter-spacing: .01em;
+}
+
+/* Paginación */
+.dataTables_wrapper .dataTables_paginate .paginate_button {
+  border-radius: 9px !important;
+  border: 1px solid transparent !important;
+  color: var(--in-indigo) !important;
+  font-family: var(--in-font-display);
+  margin: 0 2px;
+}
+.dataTables_wrapper .dataTables_paginate .paginate_button:hover {
+  background: rgba(36, 29, 94, .08) !important;
+  border-color: rgba(36, 29, 94, .15) !important;
+  color: var(--in-indigo) !important;
+}
+.dataTables_wrapper .dataTables_paginate .paginate_button.current,
+.dataTables_wrapper .dataTables_paginate .paginate_button.current:hover {
+  background: var(--in-grad) !important;
+  border-color: transparent !important;
+  color: #fff !important;
+  box-shadow: 0 6px 14px rgba(36, 29, 94, .28);
+}
+.dataTables_wrapper .dataTables_paginate .paginate_button.disabled { color: #b6bccb !important; }
+
+/* Cabecera y filas de tabla */
+table.dataTable thead th {
+  border-bottom: 2px solid rgba(36, 29, 94, .12) !important;
+  text-transform: uppercase;
+  font-size: .74rem;
+}
+table.dataTable tbody tr { transition: background-color .12s ease; }
+table.dataTable tbody tr:hover { background: rgba(93, 206, 186, .07) !important; }
+
+/* Menú desplegable de botones (colvis / pageLength) */
+.dt-button-collection {
+  border-radius: 12px !important;
+  border: 1px solid var(--in-line) !important;
+  box-shadow: 0 16px 40px rgba(2, 11, 60, .16) !important;
+  padding: .4rem !important;
+}
+.dt-button-collection .dt-button {
+  border-radius: 8px !important;
+  font-family: var(--in-font-body);
+}
+.dt-button-collection .dt-button.active,
+.dt-button-collection .dt-button:hover {
+  background: rgba(36, 29, 94, .08) !important;
+  color: var(--in-indigo) !important;
+}
+
+/* --- Formularios --- */
+.form-label, label.form-label, .col-form-label {
+  font-family: var(--in-font-display);
+  font-weight: 500;
+  color: #3a3f52;
+  letter-spacing: .01em;
+}
+.form-control, .form-select {
+  border: 1.5px solid rgba(36, 29, 94, .16);
+  border-radius: 10px;
+  padding: .5rem .75rem;
+}
+.form-control::placeholder { color: #aab0c0; }
+.input-group-text { border-radius: 10px; border-color: rgba(36, 29, 94, .16); background: #f4f6fb; }
+
+/* Badges de estado */
+.badge.bg-success { background: var(--in-teal-600) !important; }
+.badge.bg-secondary { background: #7b8194 !important; }
+.badge.bg-warning { background: #E0A400 !important; color: #fff !important; }
+
+/* SweetAlert (confirmaciones) alineado a marca */
+.swal2-popup { border-radius: 16px !important; font-family: var(--in-font-body) !important; }
+.swal2-title { font-family: var(--in-font-display) !important; color: var(--in-indigo) !important; }
+.swal2-styled.swal2-confirm { background: var(--in-grad) !important; border-radius: 10px !important; }
+.swal2-styled.swal2-cancel { background: #7b8194 !important; border-radius: 10px !important; }

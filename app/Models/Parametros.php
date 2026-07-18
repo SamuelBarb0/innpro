@@ -50,7 +50,7 @@ class Parametros extends Model
     public static function empresa(): array
     {
         return [
-            'razon_social' => static::valor('empresa_razon_social', 'Offi-Esco'),
+            'razon_social' => static::valor('empresa_razon_social', 'Innpro Ingeniería SAS'),
             'ruc'          => static::valor('empresa_ruc', ''),
             'direccion'    => static::valor('empresa_direccion', ''),
             'telefonos'    => static::valor('empresa_telefonos', ''),

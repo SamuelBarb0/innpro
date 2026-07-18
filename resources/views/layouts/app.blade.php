@@ -12,12 +12,11 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.bunny.net">
+    <link href="https://fonts.bunny.net/css?family=chakra-petch:500,600,700|sora:400,500,600,700&display=swap" rel="stylesheet">
+    <link href="{{ asset('css/innpro-theme.css') }}?v=3" rel="stylesheet">
    @stack('styles')
     <style>
-        body {
-            background-color: #f8f9fa;
-        }
-
         .sidebar {
             width: 250px;
             transition: all 0.3s ease;
@@ -76,16 +75,6 @@
         .nav-link {
             border-radius: 0.375rem;
             padding: 0.5rem 0.75rem;
-        }
-
-        .nav-link:hover {
-            background-color: rgba(0, 0, 0, 0.05);
-        }
-
-        .nav-link.active {
-            background-color: rgba(0, 0, 0, 0.08) !important;
-            color: #000 !important;
-            font-weight: 600;
         }
 
         /* Ensure user info in header expands as needed, remove max-width constraints if possible */

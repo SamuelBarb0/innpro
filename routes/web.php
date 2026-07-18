@@ -15,6 +15,7 @@ use App\Http\Controllers\CatalogoController;
 use App\Http\Controllers\SolicitudController;
 use App\Http\Controllers\EmpresaController;
 use App\Http\Controllers\ActualizacionPreciosController;
+use App\Http\Controllers\OrdenServicioController;
 /*
 |--------------------------------------------------------------------------
 | Web Routes
@@ -191,4 +192,30 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/productos/descargar-plantilla-csv', [ActualizacionPreciosController::class, 'descargarPlantillaCsv'])->name('productos.descargar-plantilla-csv');
     Route::get('/productos/descargar-plantilla-excel', [ActualizacionPreciosController::class, 'descargarPlantillaExcel'])->name('productos.descargar-plantilla-excel');
 });
+// ===== Seguimiento público de orden de servicio (sin autenticación) =====
+Route::get('/seguimiento/{token}', [OrdenServicioController::class, 'seguimientoPublico'])->name('servicio.seguimiento');
+
+// ===== Módulo de Servicio Técnico (Innpro) =====
+Route::middleware('auth')->prefix('servicio')->name('servicio.')->group(function () {
+    Route::get('/', [OrdenServicioController::class, 'index'])->name('index');
+    Route::get('/form/{orden?}', [OrdenServicioController::class, 'form'])->name('form');
+    Route::post('/guardar', [OrdenServicioController::class, 'guardar'])->name('guardar');
+    Route::get('/{orden}/detalle', [OrdenServicioController::class, 'detalle'])->name('detalle');
+    Route::get('/{orden}/pdf', [OrdenServicioController::class, 'pdf'])->name('pdf');
+    Route::post('/{orden}/actualizar', [OrdenServicioController::class, 'actualizar'])->name('actualizar');
+
+    // B5 — Ítems (equipos / repuestos)
+    Route::post('/{orden}/items', [OrdenServicioController::class, 'agregarItem'])->name('items.agregar');
+    Route::delete('/{orden}/items/{item}', [OrdenServicioController::class, 'eliminarItem'])->name('items.eliminar');
+
+    // B4 — Bitácora
+    Route::post('/{orden}/bitacora', [OrdenServicioController::class, 'agregarBitacora'])->name('bitacora.agregar');
+    Route::delete('/{orden}/bitacora/{entrada}', [OrdenServicioController::class, 'eliminarBitacora'])->name('bitacora.eliminar');
+    Route::post('/{orden}/bitacora-visible', [OrdenServicioController::class, 'toggleBitacoraVisible'])->name('bitacora.visible');
+
+    // B3 — Imágenes / evidencia
+    Route::post('/{orden}/imagenes', [OrdenServicioController::class, 'subirImagen'])->name('imagenes.subir');
+    Route::delete('/{orden}/imagenes/{imagen}', [OrdenServicioController::class, 'eliminarImagen'])->name('imagenes.eliminar');
+});
+
 require __DIR__.'/auth.php';

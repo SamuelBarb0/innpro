@@ -18,15 +18,17 @@
 @endphp
 <div class="d-flex flex-column h-100">
     {{-- Logo --}}
-    <div class="d-flex justify-content-center align-items-center py-3 border-bottom">
-        <a href="/" class="text-decoration-none">
-            <img style="width: 80%; margin-left: 5%;" src="{{ asset('images/logo.png') }}" class="logo-full" width="100" alt="Logo">
-            <img src="{{ asset('images/logo.png') }}" class="logo-icon d-none" width="40" alt="Logo Icon">
+    <div class="d-flex justify-content-center align-items-center py-4 border-bottom">
+        <a href="/" class="text-decoration-none brand-plate">
+            <img src="{{ asset('images/logo.png') }}" class="logo-full" alt="Innpro Ingeniería">
         </a>
     </div>
 
+    {{-- Etiqueta de sección --}}
+    <div class="nav-section">Panel de control</div>
+
     {{-- Navegación --}}
-    <nav class="d-flex flex-column flex-nowrap px-2 py-3 flex-grow-1 overflow-y-auto" style="min-height: 0;">
+    <nav class="d-flex flex-column flex-nowrap px-2 py-2 flex-grow-1 overflow-y-auto" style="min-height: 0;">
         <a href="/dashboard"
            class="nav-link mb-2 d-flex align-items-center gap-2 {{ request()->is('dashboard') ? 'active' : 'text-dark' }}">
             <i class="bi bi-house"></i>
@@ -89,6 +91,15 @@
                class="nav-link mb-2 d-flex align-items-center gap-2 {{ request()->routeIs('stock.index*') ? 'active' : 'text-dark' }}">
                 <i class="bi bi-box-seam"></i>
                 <span>Gestión de Stock</span>
+            </a>
+        @endif
+
+        {{-- Servicio Técnico (admin, técnico y vendedor) --}}
+        @if(auth()->user()->hasAnyRole(['admin', 'tecnico', 'vendedor']))
+            <a href="{{ route('servicio.index') }}"
+               class="nav-link mb-2 d-flex align-items-center gap-2 {{ request()->routeIs('servicio.*') ? 'active' : 'text-dark' }}">
+                <i class="bi bi-tools"></i>
+                <span>Servicio Técnico</span>
             </a>
         @endif
     </nav>

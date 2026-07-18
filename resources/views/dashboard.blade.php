@@ -41,7 +41,7 @@
         <div class="row g-3 mb-4">
             {{-- Solicitudes --}}
             <div class="col-12 col-md-6 col-xl-3">
-                <div class="card kpi-card h-100 shadow-sm" style="--kpi-color:#007bff;">
+                <div class="card kpi-card h-100 shadow-sm" style="--kpi-color:#241D5E;">
                     <div class="card-body d-flex align-items-center gap-3">
                         <span class="kpi-icon"><i class="bi bi-clipboard-data"></i></span>
                         <div class="flex-grow-1">
@@ -61,7 +61,7 @@
 
             {{-- Clientes activos --}}
             <div class="col-12 col-md-6 col-xl-3">
-                <div class="card kpi-card h-100 shadow-sm" style="--kpi-color:#198754;">
+                <div class="card kpi-card h-100 shadow-sm" style="--kpi-color:#3488BD;">
                     <div class="card-body d-flex align-items-center gap-3">
                         <span class="kpi-icon"><i class="bi bi-people"></i></span>
                         <div class="flex-grow-1">
@@ -77,7 +77,7 @@
 
             {{-- Productos activos --}}
             <div class="col-12 col-md-6 col-xl-3">
-                <div class="card kpi-card h-100 shadow-sm" style="--kpi-color:#6f42c1;">
+                <div class="card kpi-card h-100 shadow-sm" style="--kpi-color:#12669B;">
                     <div class="card-body d-flex align-items-center gap-3">
                         <span class="kpi-icon"><i class="bi bi-basket3"></i></span>
                         <div class="flex-grow-1">
@@ -91,7 +91,7 @@
 
             {{-- Stock disponible / sin stock --}}
             <div class="col-12 col-md-6 col-xl-3">
-                <div class="card kpi-card h-100 shadow-sm" style="--kpi-color:#fd7e14;">
+                <div class="card kpi-card h-100 shadow-sm" style="--kpi-color:#2AA995;">
                     <div class="card-body d-flex align-items-center gap-3">
                         <span class="kpi-icon"><i class="bi bi-box-seam"></i></span>
                         <div class="flex-grow-1">
@@ -157,8 +157,8 @@
                         datasets: [{
                             label: 'Solicitudes',
                             data: @json($chartValores),
-                            backgroundColor: 'rgba(0, 123, 255, .65)',
-                            borderColor: 'rgba(0, 123, 255, 1)',
+                            backgroundColor: 'rgba(52, 136, 189, .70)',
+                            borderColor: 'rgba(36, 29, 94, 1)',
                             borderWidth: 1,
                             borderRadius: 4
                         }]
@@ -183,7 +183,7 @@
                         labels: ['Con stock', 'Sin stock'],
                         datasets: [{
                             data: [{{ $productosConStock }}, {{ $productosSinStock }}],
-                            backgroundColor: ['#198754', '#dc3545'],
+                            backgroundColor: ['#2AA995', '#E4572E'],
                             borderWidth: 0
                         }]
                     },
