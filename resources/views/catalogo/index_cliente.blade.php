@@ -604,7 +604,7 @@ $(function(){
   function buildCard(p, colClass = 'col-12 col-md-4 col-lg-3 col-xl-2') {
     const img = p.imagen_principal
       ? `{{asset('')}}${p.imagen_principal.ruta_imagen}`
-      : '{{asset("images/no-image.png")}}';
+      : '{{asset("images/sin-imagen.png")}}';
     
     const raw = p.precio, num = parseFloat(raw);
     const precioTag = (mostrarPrecios && raw!=null && !isNaN(num))
@@ -732,7 +732,7 @@ $(function(){
         }
         html+='</div>';
       } else {
-        html+='<img src="{{asset("images/no-image.png")}}" class="img-fluid" style="object-fit:contain;background-color:#ffffff;">';
+        html+='<img src="{{asset("images/sin-imagen.png")}}" class="img-fluid" style="object-fit:contain;background-color:#ffffff;">';
       }
       html+='</div>';
 

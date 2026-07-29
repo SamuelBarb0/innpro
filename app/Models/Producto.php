@@ -5,7 +5,6 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
-use Illuminate\Support\Facades\Storage;
 
 class Producto extends Model
 {
@@ -131,7 +130,7 @@ class Producto extends Model
     {
         // asset() y no Storage::url(): ver nota en ImagenProducto::getUrlAttribute().
         $imagenPrincipal = $this->imagenPrincipal ?? $this->imagenes->first();
-        return $imagenPrincipal ? asset($imagenPrincipal->ruta_imagen) : asset('images/no-image.png');
+        return $imagenPrincipal ? asset($imagenPrincipal->ruta_imagen) : asset('images/sin-imagen.png');
     }
 
     // Obtener stock total del producto (suma de todas las variantes o stock principal)

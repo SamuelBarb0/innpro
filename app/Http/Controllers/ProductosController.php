@@ -35,7 +35,7 @@ class ProductosController extends Controller
                 ->addColumn('imagen', function($p) {
                     $url = $p->imagenPrincipal 
                         ? asset($p->imagenPrincipal->ruta_imagen)
-                        : asset('images/no-image.png');
+                        : asset('images/sin-imagen.png');
                     return '<img src="'.$url.'" class="img-thumbnail" style="width:50px;">';
                 })
                 ->addColumn('stock', function($p) {
