@@ -2,6 +2,14 @@
 /public/hot
 /public/storage
 /public/uploads
+
+# Archivos que suben los usuarios: viven en el webroot pero no son parte del
+# codigo. Si se versionan, ensucian el arbol del servidor y bloquean el deploy.
+# (Las imagenes demo ya commiteadas en public/imagenes/productos siguen rastreadas.)
+/public/imagenes/productos
+/public/imagenes/ordenes
+/public/ordenes_servicio
+
 /storage/*.key
 /vendor
 .env
