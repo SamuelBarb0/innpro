@@ -26,10 +26,12 @@
         <label class="form-label small mb-1">Cant.</label>
         <input type="number" step="0.01" min="0.01" name="cantidad" class="form-control form-control-sm" value="1" required>
       </div>
+      @if($verCostos)
       <div class="col-md-2">
         <label class="form-label small mb-1">Precio u.</label>
         <input type="number" step="0.01" min="0" name="precio_unitario" class="form-control form-control-sm" value="0">
       </div>
+      @endif
       <div class="col-12">
         <button class="btn btn-outline-primary btn-sm"><i class="bi bi-plus-lg me-1"></i>Agregar {{ $tipo }}</button>
       </div>
@@ -42,7 +44,9 @@
       <div class="table-responsive">
         <table class="table table-sm align-middle mb-0">
           <thead><tr class="text-muted small">
-            <th>Descripción</th><th class="text-end">Cant.</th><th class="text-end">Precio u.</th><th class="text-end">Subtotal</th><th></th>
+            <th>Descripción</th><th class="text-end">Cant.</th>
+            @if($verCostos)<th class="text-end">Precio u.</th><th class="text-end">Subtotal</th>@endif
+            <th></th>
           </tr></thead>
           <tbody>
             @foreach($coleccion as $it)
@@ -53,8 +57,10 @@
                   @if($it->notas)<small class="d-block text-muted">{{ $it->notas }}</small>@endif
                 </td>
                 <td class="text-end">{{ rtrim(rtrim(number_format($it->cantidad,2),'0'),'.') }}</td>
-                <td class="text-end">$ {{ number_format($it->precio_unitario,0) }}</td>
-                <td class="text-end fw-semibold">$ {{ number_format($it->subtotal,0) }}</td>
+                @if($verCostos)
+                  <td class="text-end">$ {{ number_format($it->precio_unitario,0) }}</td>
+                  <td class="text-end fw-semibold">$ {{ number_format($it->subtotal,0) }}</td>
+                @endif
                 <td class="text-end">
                   <form method="POST" action="{{ route('servicio.items.eliminar', [$orden->id, $it->id]) }}" onsubmit="return confirm('¿Eliminar ítem?')">
                     @csrf @method('DELETE')

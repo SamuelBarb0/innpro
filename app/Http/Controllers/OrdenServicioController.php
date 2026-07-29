@@ -35,6 +35,35 @@ class OrdenServicioController extends Controller
         return Auth::user()->hasRole('admin');
     }
 
+    /** Técnico "puro": ve el trabajo, no la parte económica ni los estados administrativos. */
+    private function esTecnico(): bool
+    {
+        $u = Auth::user();
+        return $u->hasRole('tecnico') && ! $u->hasAnyRole(['admin', 'vendedor']);
+    }
+
+    /**
+     * Los costos los determina facturación, no el técnico: se le ocultan
+     * el costo de mano de obra, el resumen del servicio y los precios de los ítems.
+     */
+    private function verCostos(): bool
+    {
+        return ! $this->esTecnico();
+    }
+
+    /** Estados que el usuario actual puede asignar a una orden. */
+    private function estadosDisponibles(): array
+    {
+        if (! $this->esTecnico()) {
+            return OrdenServicio::ESTADOS;
+        }
+
+        return array_intersect_key(
+            OrdenServicio::ESTADOS,
+            array_flip(OrdenServicio::ESTADOS_TECNICO)
+        );
+    }
+
     /* ============ Helpers de archivos ============ */
 
     /**
@@ -193,7 +222,7 @@ class OrdenServicioController extends Controller
                 ->make(true);
         }
 
-        return view('servicio.index');
+        return view('servicio.index', ['verCostos' => $this->verCostos()]);
     }
 
     /* ============ Crear / Editar (datos base) ============ */
@@ -206,7 +235,12 @@ class OrdenServicioController extends Controller
         $clientes = Cliente::activos()->orderBy('nombre_contacto')->get();
         $tecnicos = User::role('tecnico')->orderBy('name')->pluck('name', 'id');
 
-        return view('servicio.form', compact('orden', 'clientes', 'tecnicos'));
+        return view('servicio.form', [
+            'orden'     => $orden,
+            'clientes'  => $clientes,
+            'tecnicos'  => $tecnicos,
+            'verCostos' => $this->verCostos(),
+        ]);
     }
 
     public function guardar(Request $request)
@@ -229,7 +263,13 @@ class OrdenServicioController extends Controller
             'exists'   => 'El valor seleccionado no es válido.',
         ]);
 
-        $data['costo_mano_obra'] = $request->input('costo_mano_obra', 0) ?: 0;
+        // Sin permiso de costos no se toca el valor: si no, editar una orden
+        // como técnico dejaría en cero lo que puso el administrador.
+        if ($this->verCostos()) {
+            $data['costo_mano_obra'] = $request->input('costo_mano_obra', 0) ?: 0;
+        } else {
+            unset($data['costo_mano_obra']);
+        }
 
         if (! $orden->exists) {
             $orden->numero     = OrdenServicio::generarNumero();
@@ -261,9 +301,10 @@ class OrdenServicioController extends Controller
         return view('servicio.detalle', [
             'orden'         => $orden,
             'productos'     => $productos,
-            'estados'       => OrdenServicio::ESTADOS,
+            'estados'       => $this->estadosDisponibles(),
             'puedeBitacora' => $this->puedeBitacora(),
             'esAdmin'       => $this->esAdmin(),
+            'verCostos'     => $this->verCostos(),
         ]);
     }
 
@@ -275,12 +316,19 @@ class OrdenServicioController extends Controller
 
         $data = $request->validate([
             'diagnostico'     => ['nullable', 'string'],
-            'estado'          => ['required', 'in:'.implode(',', array_keys(OrdenServicio::ESTADOS))],
+            'estado'          => ['required', 'in:'.implode(',', array_keys($this->estadosDisponibles()))],
             'observaciones'   => ['nullable', 'string'],
             'costo_mano_obra' => ['nullable', 'numeric', 'min:0'],
+        ], [
+            'estado.in' => 'Ese estado no está disponible para tu rol.',
         ]);
 
-        if (in_array($data['estado'], ['finalizada', 'entregada']) && ! $orden->fecha_cierre) {
+        // El costo lo define facturación: aunque llegue en la petición, el técnico no lo toca.
+        if (! $this->verCostos()) {
+            unset($data['costo_mano_obra']);
+        }
+
+        if (in_array($data['estado'], array_merge(['finalizada'], OrdenServicio::ESTADOS_CIERRE)) && ! $orden->fecha_cierre) {
             $orden->fecha_cierre = now();
         }
 
@@ -303,7 +351,8 @@ class OrdenServicioController extends Controller
             'precio_unitario' => ['nullable', 'numeric', 'min:0'],
             'notas'           => ['nullable', 'string'],
         ]);
-        $data['precio_unitario'] = $data['precio_unitario'] ?? 0;
+        // El técnico registra qué se instaló, no cuánto cuesta.
+        $data['precio_unitario'] = $this->verCostos() ? ($data['precio_unitario'] ?? 0) : 0;
 
         $orden->items()->create($data);
 
@@ -438,8 +487,10 @@ class OrdenServicioController extends Controller
         $orden = OrdenServicio::where('token_publico', $token)->firstOrFail();
 
         abort_if($orden->tieneFirma('cliente'), 403, 'Esta orden ya fue firmada por el cliente.');
-        abort_unless(in_array($orden->estado, ['finalizada', 'entregada'], true), 403,
-            'La orden aún no está finalizada.');
+        abort_unless(
+            in_array($orden->estado, array_merge(['finalizada'], OrdenServicio::ESTADOS_CIERRE), true),
+            403, 'La orden aún no está finalizada.'
+        );
 
         $this->registrarFirma($request, $orden, 'cliente');
 

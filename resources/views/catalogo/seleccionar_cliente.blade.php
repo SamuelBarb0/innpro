@@ -1,5 +1,5 @@
 <x-app-layout>
-  <x-slot name="header">Catálogo - Seleccionar Cliente</x-slot>
+  <x-slot name="header">Cotizador - Seleccionar Cliente</x-slot>
 
   <div class="py-6">
     <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">

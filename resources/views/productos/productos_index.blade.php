@@ -29,7 +29,6 @@
                 <th>Imagen</th>
                 <th>Referencia</th>
                 <th>Nombre</th>
-                <th>Categoría</th>
                 <th>Unidad Venta</th>
                 <th>Unidad Empaque</th>
                 <th>¿Maneja Extensión?</th>
@@ -58,7 +57,6 @@
         { data:'imagen',       orderable:false, searchable:false },
         { data:'referencia',   name:'referencia' },
         { data:'nombre',       name:'nombre' },
-        { data:'categoria',    orderable:false, searchable:false },
         { data:'unidad_venta', name:'unidad_venta' },
         { data:'unidad_empaque', name:'unidad_empaque' },
         { data:'tiene_extension', name:'tiene_extension' },

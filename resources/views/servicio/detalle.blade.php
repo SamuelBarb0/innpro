@@ -56,6 +56,8 @@
                       @endforeach
                     </select>
                   </div>
+                  @if($verCostos)
+                  {{-- El costo lo determina facturación: el técnico no lo ve ni lo diligencia. --}}
                   <div class="col-md-6 mb-3">
                     <label class="form-label">Costo mano de obra</label>
                     <div class="input-group">
@@ -63,6 +65,7 @@
                       <input name="costo_mano_obra" type="number" step="0.01" min="0" class="form-control" value="{{ $orden->costo_mano_obra }}">
                     </div>
                   </div>
+                  @endif
                   <div class="col-12 mb-3">
                     <label class="form-label">Diagnóstico técnico</label>
                     <textarea name="diagnostico" class="form-control" rows="3">{{ $orden->diagnostico }}</textarea>
@@ -164,7 +167,8 @@
         {{-- ============ Columna derecha ============ --}}
         <div class="col-12 col-xl-5">
 
-          {{-- Resumen de costos --}}
+          {{-- Resumen de costos (oculto para el técnico: lo determina facturación) --}}
+          @if($verCostos)
           <div class="card shadow-sm mb-4">
             <div class="card-header"><h6 class="mb-0"><i class="bi bi-cash-stack"></i> Resumen del servicio</h6></div>
             <div class="card-body">
@@ -175,6 +179,15 @@
               <div class="d-flex justify-content-between py-1 small text-muted"><span>Horas registradas</span><span>{{ number_format($orden->horas_totales, 1) }} h</span></div>
             </div>
           </div>
+          @else
+          <div class="card shadow-sm mb-4">
+            <div class="card-header"><h6 class="mb-0"><i class="bi bi-clock-history"></i> Resumen del trabajo</h6></div>
+            <div class="card-body">
+              <div class="d-flex justify-content-between py-1"><span class="text-muted">Equipos y repuestos</span><span>{{ $orden->items->count() }}</span></div>
+              <div class="d-flex justify-content-between py-1"><span class="text-muted">Horas registradas</span><span>{{ number_format($orden->horas_totales, 1) }} h</span></div>
+            </div>
+          </div>
+          @endif
 
           {{-- B4: Bitácora --}}
           <div class="card shadow-sm mb-4">

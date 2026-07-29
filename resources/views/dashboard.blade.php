@@ -64,6 +64,14 @@
                    class="btn btn-outline-success btn-sm">
                     <i class="bi bi-file-earmark-excel me-1"></i>Exportar
                 </a>
+                @if($esAdmin)
+                    {{-- Empresa ya no está en el menú: solo el administrador entra desde aquí
+                         cuando necesita corregir el encabezado de las cotizaciones. --}}
+                    <a href="{{ route('empresa.edit') }}" class="btn btn-outline-secondary btn-sm"
+                       title="Datos que aparecen en el encabezado de las cotizaciones">
+                        <i class="bi bi-building me-1"></i>Datos de la empresa
+                    </a>
+                @endif
             </form>
         </div>
 
@@ -85,7 +93,7 @@
                         <div class="flex-grow-1">
                             <div class="kpi-label">Órdenes</div>
                             <div class="kpi-value">{{ number_format($ordenesTotal) }}</div>
-                            <div class="kpi-extra">{{ number_format($ordenesCerradas) }} finalizadas o entregadas</div>
+                            <div class="kpi-extra">{{ number_format($ordenesCerradas) }} finalizadas, en garantía o facturadas</div>
                         </div>
                     </div>
                 </div>

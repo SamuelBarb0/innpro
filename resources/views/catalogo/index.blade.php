@@ -1,7 +1,7 @@
 {{-- resources/views/catalogo/index.blade.php - Solo para flujo B (vendedores) --}}
 <x-app-layout>
   <x-slot name="header">
-    Catálogo de Productos
+    Cotizador
     @if($cliente)
       <span class="badge bg-info ms-2">Cotizando para: {{ $cliente->nombre_contacto }}</span>
     @endif

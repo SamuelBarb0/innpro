@@ -116,6 +116,7 @@ class DashboardController extends Controller
             : [];
 
         return array_merge([
+            'esAdmin'               => $esAdmin,
             'esVendedor'            => $esVendedor,
             'esTecnico'             => $esTecnico,
             'verComercial'          => $verComercial,
@@ -158,7 +159,9 @@ class DashboardController extends Controller
                                 ->whereNotNull('fecha_estimada')
                                 ->whereDate('fecha_estimada', '<', now())
                                 ->count();
-        $ordenesCerradas  = (clone $enRango())->whereIn('estado', ['finalizada', 'entregada'])->count();
+        $ordenesCerradas  = (clone $enRango())
+                                ->whereIn('estado', array_merge(['finalizada'], OrdenServicio::ESTADOS_CIERRE))
+                                ->count();
 
         // Tiempo medio de atención: de ingreso a cierre, sobre las órdenes ya cerradas del rango.
         $diasPromedio = (clone $enRango())
@@ -184,8 +187,8 @@ class DashboardController extends Controller
         $estadoColores = [];
         $paleta = [
             'recibida' => '#8a8f9c', 'en_diagnostico' => '#3488BD', 'en_proceso' => '#241D5E',
-            'espera_repuestos' => '#E4A32E', 'finalizada' => '#2AA995', 'entregada' => '#12669B',
-            'cancelada' => '#E4572E',
+            'espera_repuestos' => '#E4A32E', 'finalizada' => '#2AA995',
+            'garantia' => '#E4572E', 'facturado' => '#12669B',
         ];
         foreach (OrdenServicio::ESTADOS as $clave => $info) {
             if (($porEstadoRaw[$clave] ?? 0) > 0) {
@@ -210,7 +213,7 @@ class DashboardController extends Controller
             ->select(
                 'tecnico_id',
                 DB::raw('COUNT(*) as ordenes'),
-                DB::raw("SUM(CASE WHEN estado IN ('finalizada','entregada') THEN 1 ELSE 0 END) as cerradas"),
+                DB::raw("SUM(CASE WHEN estado IN ('finalizada','garantia','facturado') THEN 1 ELSE 0 END) as cerradas"),
                 DB::raw('AVG(DATEDIFF(fecha_cierre, fecha_ingreso)) as dias_promedio')
             )
             ->groupBy('tecnico_id')

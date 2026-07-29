@@ -149,20 +149,9 @@
               </div>
             </div>
 
-            {{-- Categoría --}}
-            <div class="col-md-3 mb-3">
-              <label class="form-label">Categoría <span class="text-danger">*</span></label>
-              <select name="categoria_id" class="form-select @error('categoria_id') is-invalid @enderror" required>
-                <option value="">-- Seleccionar --</option>
-                @foreach($categorias as $id=>$nombre)
-                  <option value="{{ $id }}"
-                    {{ old('categoria_id',$producto->categoria_id)==$id ? 'selected' : '' }}>
-                    {{ $nombre }}
-                  </option>
-                @endforeach
-              </select>
-              @error('categoria_id') <div class="invalid-feedback">{{ $message }}</div> @enderror
-            </div>
+            {{-- Categoría: oculta a petición de Innpro (no clasifican productos por categoría).
+                 Si no se envía, el controlador asigna "Sin categoría". Para retomarla,
+                 basta con volver a mostrar este bloque. --}}
 
             {{-- Tiene Variantes --}}
             <div class="col-md-12 mb-3">

@@ -46,29 +46,23 @@
                 <i class="bi bi-person-badge"></i>
                 <span>Clientes</span>
             </a>
-            <a href="/categorias"
-               class="nav-link mb-2 d-flex align-items-center gap-2 {{ request()->is('categorias*') ? 'active' : 'text-dark' }}">
-                <i class="bi bi-tags"></i>
-                <span>Categorías</span>
-            </a>
+            {{-- Categorías se ocultó a petición de Innpro: no clasifican por categoría.
+                 La ruta sigue viva por si hiciera falta retomarla. --}}
             <a href="/productos"
                class="nav-link mb-2 d-flex align-items-center gap-2 {{ request()->is('productos*') ? 'active' : 'text-dark' }}">
                 <i class="bi bi-basket3"></i>
                 <span>Productos</span>
             </a>
-            <a href="{{ route('empresa.edit') }}"
-               class="nav-link mb-2 d-flex align-items-center gap-2 {{ request()->is('empresa*') ? 'active' : 'text-dark' }}">
-                <i class="bi bi-building"></i>
-                <span>Empresa</span>
-            </a>
+            {{-- Empresa salió del menú principal: es solo el encabezado de la cotización.
+                 Se accede desde Inicio, con perfil administrador. --}}
         @endif
 
-        {{-- Catálogo (para vendedor y admin) --}}
+        {{-- Cotizador (para vendedor y admin) --}}
         @if(auth()->user()->hasRole(['vendedor', 'admin']))
             <a href="{{ route('catalogo') }}"
                class="nav-link mb-2 d-flex align-items-center gap-2 {{ request()->routeIs('catalogo*') ? 'active' : 'text-dark' }}">
                 <i class="bi bi-cart"></i>
-                <span>Catálogo</span>
+                <span>Cotizador</span>
             </a>
             <a href="{{ route('solicitudes') }}"
                class="nav-link mb-2 d-flex align-items-center gap-2 {{ request()->routeIs('solicitudes*') ? 'active' : 'text-dark' }}">
@@ -82,16 +76,9 @@
                     <span class="badge rounded-pill bg-danger ms-auto d-none" id="badgeSolicitudesPendientes">0</span>
                 @endif
             </a>
-            <a href="{{ route('enlaces') }}"
-               class="nav-link mb-2 d-flex align-items-center gap-2 {{ request()->routeIs('enlaces*') ? 'active' : 'text-dark' }}">
-                <i class="bi bi-link-45deg"></i>
-                <span>Links</span>
-            </a>
-            <a href="{{ route('stock.index') }}"
-               class="nav-link mb-2 d-flex align-items-center gap-2 {{ request()->routeIs('stock.index*') ? 'active' : 'text-dark' }}">
-                <i class="bi bi-box-seam"></i>
-                <span>Gestión de Stock</span>
-            </a>
+            {{-- Links y Gestión de Stock se ocultaron a petición de Innpro:
+                 el enlace al catálogo se maneja desde el Cotizador y el stock
+                 desde Clientes/Productos. Las rutas siguen disponibles. --}}
         @endif
 
         {{-- Servicio Técnico (admin, técnico y vendedor) --}}

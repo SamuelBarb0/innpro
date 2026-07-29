@@ -79,7 +79,7 @@ class MetricasExport implements WithMultipleSheets
             $filas[] = ['Órdenes en el rango', (int) ($d['ordenesTotal'] ?? 0)];
             $filas[] = ['Órdenes abiertas (hoy)', (int) ($d['ordenesAbiertas'] ?? 0)];
             $filas[] = ['Órdenes vencidas (hoy)', (int) ($d['ordenesVencidas'] ?? 0)];
-            $filas[] = ['Órdenes finalizadas/entregadas', (int) ($d['ordenesCerradas'] ?? 0)];
+            $filas[] = ['Órdenes cerradas (finalizada, garantía o facturado)', (int) ($d['ordenesCerradas'] ?? 0)];
             $filas[] = ['Días promedio de atención', $d['diasPromedio'] ?? 'Sin datos'];
             $filas[] = ['Horas registradas en bitácora', (float) ($d['horasRegistradas'] ?? 0)];
         }

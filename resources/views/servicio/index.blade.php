@@ -26,7 +26,7 @@
                 <th>Estado</th>
                 <th>Prioridad</th>
                 <th>Ingreso</th>
-                <th>Total</th>
+                @if($verCostos)<th>Total</th>@endif
               </tr>
             </thead>
             <tbody></tbody>
@@ -54,7 +54,9 @@
           { data:'estado',        name:'estado' },
           { data:'prioridad',     name:'prioridad' },
           { data:'fecha_ingreso', name:'fecha_ingreso' },
+          @if($verCostos)
           { data:'total',         orderable:false, searchable:false },
+          @endif
         ],
         dom: "<'flex justify-between mb-4'<'relative'B>f>t<'flex justify-between items-center px-2 my-2'i<'pagination-wrapper'p>>",
         buttons: [

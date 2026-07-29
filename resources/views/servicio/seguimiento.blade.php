@@ -1,6 +1,9 @@
 @php
-    $flujo = ['recibida','en_diagnostico','en_proceso','espera_repuestos','finalizada','entregada'];
-    $cancelada = $orden->estado === 'cancelada';
+    // El último paso del recorrido depende de cómo cerró la orden: facturada o en garantía.
+    $cierre = in_array($orden->estado, \App\Models\OrdenServicio::ESTADOS_CIERRE, true)
+        ? $orden->estado
+        : 'facturado';
+    $flujo = ['recibida','en_diagnostico','en_proceso','espera_repuestos','finalizada',$cierre];
     $idxActual = array_search($orden->estado, $flujo);
     if ($idxActual === false) $idxActual = -1;
 @endphp
@@ -99,7 +102,7 @@
                         <div class="num">{{ $orden->numero }}</div>
                         <div class="titulo">{{ $orden->titulo }}</div>
                     </div>
-                    <span class="pill {{ $cancelada ? 'cancel' : '' }}">{{ $orden->estadoLabel() }}</span>
+                    <span class="pill">{{ $orden->estadoLabel() }}</span>
                 </div>
                 <div class="meta">
                     <b>Cliente:</b> {{ $orden->cliente?->nombre_empresa ?: $orden->cliente?->nombre_contacto }} &nbsp;·&nbsp;
@@ -111,7 +114,6 @@
         </div>
 
         {{-- Stepper de estado --}}
-        @unless($cancelada)
         <div class="card">
             <div class="stepper">
                 @foreach($flujo as $i => $est)
@@ -122,7 +124,6 @@
                 @endforeach
             </div>
         </div>
-        @endunless
 
         {{-- Equipos (solo lectura, sin precios) --}}
         @if($orden->equipos->isNotEmpty())
@@ -162,7 +163,7 @@
         </div>
 
         {{-- Firma del cliente (recibido a conformidad) --}}
-        @if(in_array($orden->estado, ['finalizada','entregada'], true))
+        @if(in_array($orden->estado, array_merge(['finalizada'], \App\Models\OrdenServicio::ESTADOS_CIERRE), true))
         <div class="card">
             <div class="sec-title">Recibido a conformidad</div>
 

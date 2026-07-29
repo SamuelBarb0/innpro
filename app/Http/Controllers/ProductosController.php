@@ -149,7 +149,8 @@ class ProductosController extends Controller
             'unidades_por_paca' => ['nullable','numeric','min:0'],
             'codigo_barras' => ['nullable','string','max:100'],
             'tiene_extension' => ['nullable','boolean'],
-            'categoria_id' => ['required','exists:categorias,id'],
+            // Innpro no clasifica por categoría: es opcional y, si falta, se asigna una por defecto.
+            'categoria_id' => ['nullable','exists:categorias,id'],
             'activo' => ['nullable','boolean'],
             'controlar_stock' => ['boolean'],  // NUEVO
             'permitir_venta_sin_stock' => ['boolean'],  // NUEVO
@@ -192,7 +193,13 @@ class ProductosController extends Controller
             $data['controlar_stock'] = $request->input('controlar_stock', 1) == 1;  // NUEVO
             $data['permitir_venta_sin_stock'] = $request->input('permitir_venta_sin_stock', 0) == 1;  // NUEVO
             $data['activo'] = $producto->exists ? $request->boolean('activo') : true;
-            
+
+            // Sin categoría explícita se usa la de reserva, igual que en la importación por Excel.
+            if (empty($data['categoria_id'])) {
+                $data['categoria_id'] = $producto->categoria_id
+                    ?: Categoria::firstOrCreate(['nombre' => 'Sin categoría'], ['activo' => true])->id;
+            }
+
             $esNuevo = !$producto->exists;  // NUEVO
             $producto->fill($data)->save();
             

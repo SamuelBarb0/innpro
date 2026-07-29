@@ -56,9 +56,15 @@ class OrdenServicio extends Model
         'en_proceso'        => ['label' => 'En proceso',         'color' => 'primary'],
         'espera_repuestos'  => ['label' => 'Espera de repuestos','color' => 'warning'],
         'finalizada'        => ['label' => 'Finalizada',         'color' => 'success'],
-        'entregada'         => ['label' => 'Entregada',          'color' => 'dark'],
-        'cancelada'         => ['label' => 'Cancelada',          'color' => 'danger'],
+        'garantia'          => ['label' => 'Garantía',           'color' => 'warning'],
+        'facturado'         => ['label' => 'Facturado',          'color' => 'dark'],
     ];
+
+    /** Estados que puede manejar un técnico: el resto es gestión administrativa. */
+    public const ESTADOS_TECNICO = ['recibida', 'en_proceso', 'finalizada'];
+
+    /** Cierres posibles de una orden: se factura o se atiende por garantía. */
+    public const ESTADOS_CIERRE = ['garantia', 'facturado'];
 
     public const PRIORIDADES = [
         'baja'    => ['label' => 'Baja',    'color' => 'secondary'],
@@ -155,7 +161,7 @@ class OrdenServicio extends Model
 
     public function scopeAbiertas($query)
     {
-        return $query->whereNotIn('estado', ['entregada', 'cancelada']);
+        return $query->whereNotIn('estado', self::ESTADOS_CIERRE);
     }
 
     public function scopePorTecnico($query, $tecnicoId)

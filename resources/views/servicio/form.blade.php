@@ -71,6 +71,8 @@
                        value="{{ old('fecha_estimada', optional($orden->fecha_estimada)->format('Y-m-d')) }}">
               </div>
 
+              @if($verCostos)
+              {{-- El costo lo define facturación: no se le muestra al técnico. --}}
               <div class="col-md-4 mb-3">
                 <label class="form-label">Costo mano de obra</label>
                 <div class="input-group">
@@ -79,6 +81,7 @@
                          value="{{ old('costo_mano_obra', $orden->costo_mano_obra ?: '') }}" placeholder="0">
                 </div>
               </div>
+              @endif
             </div>
 
             <div class="d-flex justify-content-between mt-3">
