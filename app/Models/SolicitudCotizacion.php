@@ -68,7 +68,7 @@ class SolicitudCotizacion extends Model
      */
     public function getNombreArchivoPdfAttribute(): string
     {
-        return 'Solicitud Offi-Esco ' . $this->codigo_corto;
+        return 'Solicitud ' . config('app.name') . ' ' . $this->codigo_corto;
     }
 
     public function calcularMontoTotal()
