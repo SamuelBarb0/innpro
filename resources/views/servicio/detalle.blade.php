@@ -119,6 +119,46 @@
               @endif
             </div>
           </div>
+
+          {{-- Colector de firmas del formato técnico --}}
+          <div class="card shadow-sm mb-4">
+            <div class="card-header"><h6 class="mb-0"><i class="bi bi-vector-pen"></i> Firmas del formato técnico</h6></div>
+            <div class="card-body">
+              <div class="row g-3">
+                <div class="col-12 col-lg-6">
+                  @include('servicio.partials.firma', [
+                    'orden'            => $orden,
+                    'tipo'             => 'tecnico',
+                    'titulo'           => 'Técnico responsable',
+                    'rol'              => 'Técnico responsable',
+                    'action'           => route('servicio.firmar', [$orden->id, 'tecnico']),
+                    'nombrePorDefecto' => $orden->tecnico?->name,
+                    'ccPorDefecto'     => null,
+                    'puedeQuitar'      => $esAdmin,
+                    'urlQuitar'        => route('servicio.firmar.quitar', [$orden->id, 'tecnico']),
+                  ])
+                </div>
+                <div class="col-12 col-lg-6">
+                  @include('servicio.partials.firma', [
+                    'orden'            => $orden,
+                    'tipo'             => 'cliente',
+                    'titulo'           => 'Cliente — recibido a conformidad',
+                    'rol'              => 'Cliente — recibido a conformidad',
+                    'action'           => route('servicio.firmar', [$orden->id, 'cliente']),
+                    'nombrePorDefecto' => $orden->cliente?->nombre_contacto,
+                    'ccPorDefecto'     => $orden->cliente?->numero_identificacion,
+                    'puedeQuitar'      => $esAdmin,
+                    'urlQuitar'        => route('servicio.firmar.quitar', [$orden->id, 'cliente']),
+                  ])
+                </div>
+              </div>
+              <small class="text-muted d-block mt-2">
+                <i class="bi bi-info-circle"></i>
+                Las firmas capturadas aquí se imprimen en el PDF del formato técnico.
+                El cliente también puede firmar desde el enlace de seguimiento cuando la orden está finalizada.
+              </small>
+            </div>
+          </div>
         </div>
 
         {{-- ============ Columna derecha ============ --}}
@@ -228,6 +268,8 @@
         </div>
       </div>
     </div>
+
+    @include('servicio.partials.firma-assets')
 
     @push('scripts')
     <script>

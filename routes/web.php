@@ -30,6 +30,7 @@ use App\Http\Controllers\OrdenServicioController;
 Route::redirect('/', '/login'); // 302 por defecto
 
 Route::get('/dashboard', [DashboardController::class, 'index'])->middleware(['auth', 'verified'])->name('dashboard');
+Route::get('/dashboard/exportar', [DashboardController::class, 'exportar'])->middleware(['auth', 'verified'])->name('dashboard.exportar');
 
 Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
@@ -197,6 +198,7 @@ Route::middleware(['auth'])->group(function () {
 });
 // ===== Seguimiento público de orden de servicio (sin autenticación) =====
 Route::get('/seguimiento/{token}', [OrdenServicioController::class, 'seguimientoPublico'])->name('servicio.seguimiento');
+Route::post('/seguimiento/{token}/firmar', [OrdenServicioController::class, 'firmarPublico'])->name('servicio.seguimiento.firmar');
 
 // ===== Módulo de Servicio Técnico (Innpro) =====
 Route::middleware('auth')->prefix('servicio')->name('servicio.')->group(function () {
@@ -219,6 +221,10 @@ Route::middleware('auth')->prefix('servicio')->name('servicio.')->group(function
     // B3 — Imágenes / evidencia
     Route::post('/{orden}/imagenes', [OrdenServicioController::class, 'subirImagen'])->name('imagenes.subir');
     Route::delete('/{orden}/imagenes/{imagen}', [OrdenServicioController::class, 'eliminarImagen'])->name('imagenes.eliminar');
+
+    // Colector de firmas (técnico / cliente)
+    Route::post('/{orden}/firmar/{tipo}', [OrdenServicioController::class, 'firmar'])->name('firmar');
+    Route::delete('/{orden}/firmar/{tipo}', [OrdenServicioController::class, 'quitarFirma'])->name('firmar.quitar');
 });
 
 require __DIR__.'/auth.php';

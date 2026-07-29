@@ -129,8 +129,9 @@ class Producto extends Model
     // Obtener URL de imagen principal
     public function getUrlImagenPrincipalAttribute()
     {
+        // asset() y no Storage::url(): ver nota en ImagenProducto::getUrlAttribute().
         $imagenPrincipal = $this->imagenPrincipal ?? $this->imagenes->first();
-        return $imagenPrincipal ? Storage::url($imagenPrincipal->ruta_imagen) : asset('images/no-image.png');
+        return $imagenPrincipal ? asset($imagenPrincipal->ruta_imagen) : asset('images/no-image.png');
     }
 
     // Obtener stock total del producto (suma de todas las variantes o stock principal)

@@ -19,6 +19,8 @@ class OrdenServicio extends Model
         'estado', 'prioridad', 'costo_mano_obra',
         'fecha_ingreso', 'fecha_estimada', 'fecha_cierre',
         'bitacora_visible_cliente', 'observaciones',
+        'firma_tecnico_ruta', 'firma_tecnico_nombre', 'firma_tecnico_cc', 'firma_tecnico_at',
+        'firma_cliente_ruta', 'firma_cliente_nombre', 'firma_cliente_cc', 'firma_cliente_at',
     ];
 
     protected static function booted(): void
@@ -42,6 +44,8 @@ class OrdenServicio extends Model
         'fecha_estimada'           => 'date',
         'fecha_cierre'             => 'datetime',
         'bitacora_visible_cliente' => 'boolean',
+        'firma_tecnico_at'         => 'datetime',
+        'firma_cliente_at'         => 'datetime',
     ];
 
     /* ===================== Catálogos ===================== */
@@ -98,6 +102,46 @@ class OrdenServicio extends Model
     public function getHorasTotalesAttribute(): float
     {
         return (float) $this->bitacora->sum('horas_trabajadas');
+    }
+
+    /* ===================== Firmas (colector del formato técnico) ===================== */
+
+    public const TIPOS_FIRMA = ['tecnico', 'cliente'];
+
+    public function tieneFirma(string $tipo): bool
+    {
+        return ! empty($this->{"firma_{$tipo}_ruta"});
+    }
+
+    /** URL web de la firma (relativa al host actual, no depende de APP_URL cacheada). */
+    public function firmaUrl(string $tipo): ?string
+    {
+        $ruta = $this->{"firma_{$tipo}_ruta"};
+
+        return $ruta ? asset($ruta) : null;
+    }
+
+    /** Data URI para incrustar la firma en el PDF (DomPDF no resuelve URLs remotas). */
+    public function firmaDataUri(string $tipo): ?string
+    {
+        $ruta = $this->{"firma_{$tipo}_ruta"};
+        if (! $ruta) {
+            return null;
+        }
+
+        $absoluta = public_path($ruta);
+        if (! is_file($absoluta)) {
+            return null;
+        }
+
+        return 'data:image/png;base64,' . base64_encode(file_get_contents($absoluta));
+    }
+
+    // El nombre que se muestra bajo la línea de firma, con respaldo al dato maestro.
+    public function firmanteNombre(string $tipo): ?string
+    {
+        return $this->{"firma_{$tipo}_nombre"}
+            ?: ($tipo === 'tecnico' ? $this->tecnico?->name : $this->cliente?->nombre_contacto);
     }
 
     // Genera el siguiente número de orden (OS-000001)

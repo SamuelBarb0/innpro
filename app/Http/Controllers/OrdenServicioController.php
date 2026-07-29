@@ -35,6 +35,123 @@ class OrdenServicioController extends Controller
         return Auth::user()->hasRole('admin');
     }
 
+    /* ============ Helpers de archivos ============ */
+
+    /**
+     * Guarda un archivo subido dentro del webroot (public/) y devuelve la ruta relativa.
+     *
+     * Se usa public_path() —igual que el módulo de productos— en vez del disco 'public',
+     * que en esta plantilla apunta a ../public_html y no es fiable fuera de producción.
+     */
+    private function guardarImagen(\Illuminate\Http\UploadedFile $archivo, string $carpetaRelativa): string
+    {
+        $directorio = public_path($carpetaRelativa);
+        if (! is_dir($directorio)) {
+            mkdir($directorio, 0775, true);
+        }
+
+        $extension = strtolower($archivo->getClientOriginalExtension() ?: 'jpg');
+        $nombre    = time() . '_' . uniqid() . '.' . $extension;
+        $archivo->move($directorio, $nombre);
+
+        return $carpetaRelativa . '/' . $nombre;
+    }
+
+    /** Borra del disco un archivo referenciado por su ruta relativa al webroot. */
+    private function borrarArchivo(?string $rutaRelativa): void
+    {
+        if (! $rutaRelativa) {
+            return;
+        }
+        $absoluta = public_path($rutaRelativa);
+        if (is_file($absoluta)) {
+            @unlink($absoluta);
+        }
+    }
+
+    /** Decodifica el PNG del canvas de firma y lo deja en el webroot. */
+    private function guardarFirmaBase64(string $dataUri, string $carpetaRelativa): string
+    {
+        $binario = base64_decode(substr($dataUri, strpos($dataUri, ',') + 1), true);
+
+        abort_if($binario === false || strlen($binario) < 100, 422, 'La firma recibida no es válida.');
+
+        $directorio = public_path($carpetaRelativa);
+        if (! is_dir($directorio)) {
+            mkdir($directorio, 0775, true);
+        }
+
+        $plano = $this->aplanarSobreBlanco($binario);
+
+        // Nunca archivar una firma vacía: es peor que no tener firma.
+        abort_if($this->pixelesDeTrazo($plano) < 20, 422, 'La firma llegó en blanco. Vuelve a dibujarla.');
+
+        $nombre = time() . '_' . uniqid() . '.png';
+        file_put_contents($directorio . DIRECTORY_SEPARATOR . $nombre, $plano);
+
+        return $carpetaRelativa . '/' . $nombre;
+    }
+
+    /** Cuenta píxeles oscuros para detectar firmas en blanco. */
+    private function pixelesDeTrazo(string $png): int
+    {
+        if (! function_exists('imagecreatefromstring')) {
+            return PHP_INT_MAX; // sin GD no podemos comprobar; no bloqueamos
+        }
+
+        $im = @imagecreatefromstring($png);
+        if ($im === false) {
+            return 0;
+        }
+
+        $n = 0;
+        for ($y = 0; $y < imagesy($im); $y += 2) {
+            for ($x = 0; $x < imagesx($im); $x += 2) {
+                $p = imagecolorat($im, $x, $y);
+                if (((($p >> 24) & 0x7F) < 60) && ((($p >> 16) & 0xFF) < 200)) {
+                    $n++;
+                }
+            }
+        }
+        imagedestroy($im);
+
+        return $n;
+    }
+
+    /**
+     * Devuelve el PNG sin canal alfa, compuesto sobre blanco.
+     *
+     * DomPDF no compone la transparencia: una firma con fondo transparente se
+     * imprime invisible en el PDF. Si GD no está disponible se guarda tal cual.
+     */
+    private function aplanarSobreBlanco(string $png): string
+    {
+        if (! function_exists('imagecreatefromstring')) {
+            return $png;
+        }
+
+        $origen = @imagecreatefromstring($png);
+        if ($origen === false) {
+            return $png;
+        }
+
+        $ancho = imagesx($origen);
+        $alto  = imagesy($origen);
+        $lienzo = imagecreatetruecolor($ancho, $alto);
+        imagefill($lienzo, 0, 0, imagecolorallocate($lienzo, 255, 255, 255));
+        imagealphablending($lienzo, true);
+        imagecopy($lienzo, $origen, 0, 0, 0, 0, $ancho, $alto);
+
+        ob_start();
+        imagepng($lienzo);
+        $plano = ob_get_clean();
+
+        imagedestroy($origen);
+        imagedestroy($lienzo);
+
+        return $plano ?: $png;
+    }
+
     private function scopeVisible($query)
     {
         // El técnico solo ve sus órdenes asignadas; admin/vendedor ven todo.
@@ -224,7 +341,7 @@ class OrdenServicioController extends Controller
 
         if ($request->hasFile('fotos')) {
             foreach ($request->file('fotos') as $foto) {
-                $ruta = $foto->store("ordenes_servicio/{$orden->id}/bitacora", 'public');
+                $ruta = $this->guardarImagen($foto, "imagenes/ordenes/{$orden->id}/bitacora");
                 $entrada->fotos()->create(['ruta' => $ruta]);
             }
         }
@@ -265,7 +382,7 @@ class OrdenServicioController extends Controller
             'descripcion' => ['nullable', 'string', 'max:255'],
         ]);
 
-        $ruta = $request->file('imagen')->store("ordenes_servicio/{$orden->id}/evidencia", 'public');
+        $ruta = $this->guardarImagen($request->file('imagen'), "imagenes/ordenes/{$orden->id}/evidencia");
         $orden->imagenes()->create(['ruta' => $ruta, 'descripcion' => $request->descripcion]);
 
         return back()->with('success', 'Imagen agregada.');
@@ -276,8 +393,82 @@ class OrdenServicioController extends Controller
         abort_unless($this->puedeGestionar(), 403);
         abort_unless($imagen->orden_servicio_id === $orden->id, 404);
 
+        $this->borrarArchivo($imagen->ruta);
         $imagen->delete();
         return back()->with('success', 'Imagen eliminada.');
+    }
+
+    /* ============ Colector de firmas del formato técnico ============ */
+
+    public function firmar(Request $request, OrdenServicio $orden, string $tipo)
+    {
+        abort_unless($this->puedeGestionar(), 403);
+        abort_unless(in_array($tipo, OrdenServicio::TIPOS_FIRMA, true), 404);
+
+        $this->registrarFirma($request, $orden, $tipo);
+
+        return back()->with('success', $tipo === 'tecnico'
+            ? 'Firma del técnico registrada.'
+            : 'Firma del cliente registrada.');
+    }
+
+    public function quitarFirma(OrdenServicio $orden, string $tipo)
+    {
+        abort_unless($this->esAdmin(), 403);
+        abort_unless(in_array($tipo, OrdenServicio::TIPOS_FIRMA, true), 404);
+
+        $this->borrarArchivo($orden->{"firma_{$tipo}_ruta"});
+
+        $orden->update([
+            "firma_{$tipo}_ruta"   => null,
+            "firma_{$tipo}_nombre" => null,
+            "firma_{$tipo}_cc"     => null,
+            "firma_{$tipo}_at"     => null,
+        ]);
+
+        return back()->with('success', 'Firma eliminada.');
+    }
+
+    /**
+     * Firma del cliente desde el enlace público de seguimiento (sin autenticación).
+     * Solo se habilita con el trabajo finalizado y no permite sobrescribir una firma existente.
+     */
+    public function firmarPublico(Request $request, string $token)
+    {
+        $orden = OrdenServicio::where('token_publico', $token)->firstOrFail();
+
+        abort_if($orden->tieneFirma('cliente'), 403, 'Esta orden ya fue firmada por el cliente.');
+        abort_unless(in_array($orden->estado, ['finalizada', 'entregada'], true), 403,
+            'La orden aún no está finalizada.');
+
+        $this->registrarFirma($request, $orden, 'cliente');
+
+        return back()->with('success', 'Firma registrada. ¡Gracias!');
+    }
+
+    /** Valida el payload del canvas y persiste la firma. */
+    private function registrarFirma(Request $request, OrdenServicio $orden, string $tipo): void
+    {
+        $data = $request->validate([
+            'firma'  => ['required', 'string', 'starts_with:data:image/png;base64,', 'max:600000'],
+            'nombre' => ['required', 'string', 'max:255'],
+            'cc'     => ['nullable', 'string', 'max:60'],
+        ], [
+            'firma.required'    => 'Debes dibujar la firma antes de guardar.',
+            'firma.starts_with' => 'El formato de la firma no es válido.',
+            'firma.max'         => 'La firma es demasiado grande.',
+            'nombre.required'   => 'Indica el nombre de quien firma.',
+        ]);
+
+        // Una firma nueva reemplaza a la anterior: no dejamos huérfano el PNG viejo.
+        $this->borrarArchivo($orden->{"firma_{$tipo}_ruta"});
+
+        $orden->update([
+            "firma_{$tipo}_ruta"   => $this->guardarFirmaBase64($data['firma'], "imagenes/ordenes/{$orden->id}/firmas"),
+            "firma_{$tipo}_nombre" => $data['nombre'],
+            "firma_{$tipo}_cc"     => $data['cc'] ?? null,
+            "firma_{$tipo}_at"     => now(),
+        ]);
     }
 
     /* ============ Seguimiento público del cliente (solo lectura) ============ */

@@ -29,9 +29,17 @@ class ImagenProducto extends Model
         return $this->belongsTo(Producto::class, 'producto_id');
     }
 
+    /**
+     * URL pública de la imagen.
+     *
+     * Las imágenes se guardan dentro del webroot (public/imagenes/productos/...),
+     * así que se resuelven con asset(): Storage::url() antepone el APP_URL de la
+     * configuración cacheada y, si ese valor no coincide con el dominio real,
+     * las imágenes no se ven.
+     */
     public function getUrlAttribute()
     {
-        return Storage::url($this->ruta_imagen);
+        return asset($this->ruta_imagen);
     }
 
     protected static function boot()

@@ -161,9 +161,66 @@
             @endif
         </div>
 
+        {{-- Firma del cliente (recibido a conformidad) --}}
+        @if(in_array($orden->estado, ['finalizada','entregada'], true))
+        <div class="card">
+            <div class="sec-title">Recibido a conformidad</div>
+
+            @if (session('success'))
+                <div class="aviso" style="color:var(--in-teal-600);font-weight:600;">{{ session('success') }}</div>
+            @endif
+            @if ($errors->any())
+                <div class="aviso" style="color:#c0392b;">{{ $errors->first() }}</div>
+            @endif
+
+            @if($orden->tieneFirma('cliente'))
+                <div class="firma-guardada" style="max-width:340px;">
+                    <img src="{{ $orden->firmaUrl('cliente') }}" alt="Firma del cliente">
+                    <div class="firma-datos">
+                        <div style="font-weight:600;">{{ $orden->firmanteNombre('cliente') }}</div>
+                        @if($orden->firma_cliente_cc)<div style="color:#6b7185;font-size:.85rem;">C.C. {{ $orden->firma_cliente_cc }}</div>@endif
+                        <div style="color:#6b7185;font-size:.85rem;">
+                            Firmado el {{ $orden->firma_cliente_at?->format('d/m/Y H:i') }}
+                        </div>
+                    </div>
+                </div>
+            @else
+                <p style="color:#5b6070;margin:.2rem 0 1rem;">
+                    El trabajo está finalizado. Firma aquí para dejar constancia de que lo recibiste a conformidad.
+                </p>
+                <form method="POST" action="{{ route('servicio.seguimiento.firmar', $orden->token_publico) }}" data-firma-form>
+                    @csrf
+                    <div class="firma-pad" data-firma-pad>
+                        <canvas></canvas>
+                        <span class="firma-pad-hint">Firme aquí</span>
+                        <button type="button" class="firma-pad-clear" data-firma-clear
+                                style="background:none;border:0;cursor:pointer;">Limpiar</button>
+                    </div>
+                    <input type="hidden" name="firma" data-firma-input>
+                    <div style="display:flex;gap:.6rem;flex-wrap:wrap;margin-top:.7rem;">
+                        <input type="text" name="nombre" placeholder="Nombre de quien recibe" required
+                               value="{{ old('nombre', $orden->cliente?->nombre_contacto) }}"
+                               style="flex:2 1 220px;padding:.55rem .7rem;border:1px solid rgba(36,29,94,.2);border-radius:9px;font-family:var(--body);">
+                        <input type="text" name="cc" placeholder="C.C. / NIT"
+                               value="{{ old('cc', $orden->cliente?->numero_identificacion) }}"
+                               style="flex:1 1 140px;padding:.55rem .7rem;border:1px solid rgba(36,29,94,.2);border-radius:9px;font-family:var(--body);">
+                    </div>
+                    <button type="submit"
+                            style="margin-top:.8rem;padding:.6rem 1.4rem;border:0;border-radius:10px;cursor:pointer;
+                                   background:linear-gradient(90deg,var(--in-indigo),var(--in-blue));color:#fff;
+                                   font-family:var(--disp);font-weight:600;letter-spacing:.04em;">
+                        Firmar recibido
+                    </button>
+                </form>
+            @endif
+        </div>
+        @endif
+
         <div class="foot">
             Innpro Ingeniería SAS · Bogotá, Colombia · <a href="https://innproingenieria.com" target="_blank">innproingenieria.com</a>
         </div>
     </div>
+
+    @include('servicio.partials.firma-assets')
 </body>
 </html>

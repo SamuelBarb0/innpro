@@ -63,12 +63,6 @@
         table.data tr:nth-child(even) td { background: #f6f7fb; }
         .num { text-align: right; }
 
-        .totals { width: 42%; margin-left: 58%; margin-top: 8px; border-collapse: collapse; }
-        .totals td { padding: 4px 8px; font-size: 11px; }
-        .totals .lbl { color: #6b7185; }
-        .totals .num { text-align: right; font-weight: bold; }
-        .totals .grand td { border-top: 2px solid #241D5E; color: #241D5E; font-size: 13px; padding-top: 6px; }
-
         /* Bitácora */
         .bit-entry { border-left: 2px solid #2AA995; padding: 3px 0 6px 10px; margin-bottom: 6px; }
         .bit-meta { font-size: 9px; color: #8a8f9c; }
@@ -76,8 +70,10 @@
         .bit-desc { font-size: 10.5px; margin-top: 2px; }
 
         /* Firmas */
-        .firmas { width: 100%; margin-top: 34px; border-collapse: collapse; }
+        .firmas { width: 100%; margin-top: 10px; border-collapse: collapse; page-break-inside: avoid; }
         .firmas td { width: 50%; padding: 0 22px; text-align: center; vertical-align: bottom; }
+        .firma-img { height: 62px; text-align: center; }
+        .firma-img img { max-height: 60px; max-width: 100%; }
         .firma-line { border-top: 1px solid #6b7185; padding-top: 5px; font-size: 10px; color: #4b5061; }
         .firma-line .rol { color: #8a8f9c; font-size: 9px; }
 
@@ -157,14 +153,12 @@
         <div class="desc-box muted">Sin equipos registrados.</div>
     @else
         <table class="data">
-            <thead><tr><th>Descripción</th><th class="num">Cant.</th><th class="num">Precio unit.</th><th class="num">Subtotal</th></tr></thead>
+            <thead><tr><th>Descripción</th><th class="num" style="width:70px;">Cant.</th></tr></thead>
             <tbody>
                 @foreach($orden->equipos as $it)
                     <tr>
                         <td>{{ $it->descripcion }}@if($it->notas)<br><span class="muted" style="font-size:9px">{{ $it->notas }}</span>@endif</td>
                         <td class="num">{{ rtrim(rtrim(number_format($it->cantidad,2),'0'),'.') }}</td>
-                        <td class="num">$ {{ number_format($it->precio_unitario,0) }}</td>
-                        <td class="num">$ {{ number_format($it->subtotal,0) }}</td>
                     </tr>
                 @endforeach
             </tbody>
@@ -175,26 +169,19 @@
     @if($orden->repuestos->isNotEmpty())
         <div class="section-title">Repuestos utilizados</div>
         <table class="data">
-            <thead><tr><th>Descripción</th><th class="num">Cant.</th><th class="num">Precio unit.</th><th class="num">Subtotal</th></tr></thead>
+            <thead><tr><th>Descripción</th><th class="num" style="width:70px;">Cant.</th></tr></thead>
             <tbody>
                 @foreach($orden->repuestos as $it)
                     <tr>
-                        <td>{{ $it->descripcion }}</td>
+                        <td>{{ $it->descripcion }}@if($it->notas)<br><span class="muted" style="font-size:9px">{{ $it->notas }}</span>@endif</td>
                         <td class="num">{{ rtrim(rtrim(number_format($it->cantidad,2),'0'),'.') }}</td>
-                        <td class="num">$ {{ number_format($it->precio_unitario,0) }}</td>
-                        <td class="num">$ {{ number_format($it->subtotal,0) }}</td>
                     </tr>
                 @endforeach
             </tbody>
         </table>
     @endif
 
-    {{-- Totales --}}
-    <table class="totals">
-        <tr><td class="lbl">Mano de obra</td><td class="num">$ {{ number_format($orden->costo_mano_obra,0) }}</td></tr>
-        <tr><td class="lbl">Equipos + repuestos</td><td class="num">$ {{ number_format($orden->total_items,0) }}</td></tr>
-        <tr class="grand"><td class="lbl">TOTAL</td><td class="num">$ {{ number_format($orden->total,0) }}</td></tr>
-    </table>
+    {{-- El costo del servicio NO se incluye en el formato técnico: se define en el proceso de cotización. --}}
 
     {{-- Bitácora (B4: incluida en el PDF) --}}
     <div class="section-title" style="margin-top:20px;">Bitácora del trabajo</div>
@@ -211,21 +198,33 @@
         <div style="font-size:9.5px; color:#6b7185; margin-top:4px;">Total de horas registradas: <strong>{{ number_format($orden->horas_totales,1) }} h</strong></div>
     @endif
 
-    {{-- Firmas --}}
+    {{-- Firmas (capturadas con el colector de firmas; si no hay, queda el espacio para firmar a mano) --}}
+    <div class="section-title" style="margin-top:22px;">Firmas</div>
     <table class="firmas">
         <tr>
-            <td>
-                <div class="firma-line">
-                    {{ $orden->tecnico?->name ?? '________________________' }}<br>
-                    <span class="rol">Técnico responsable</span>
-                </div>
-            </td>
-            <td>
-                <div class="firma-line">
-                    {{ $orden->cliente?->nombre_contacto ?? '________________________' }}<br>
-                    <span class="rol">Cliente — Recibido a conformidad</span>
-                </div>
-            </td>
+            @foreach([
+                ['tipo' => 'tecnico', 'rol' => 'Técnico responsable'],
+                ['tipo' => 'cliente', 'rol' => 'Cliente — Recibido a conformidad'],
+            ] as $f)
+                @php($img = $orden->firmaDataUri($f['tipo']))
+                <td>
+                    <div class="firma-img">
+                        @if($img)
+                            <img src="{{ $img }}" alt="Firma">
+                        @endif
+                    </div>
+                    <div class="firma-line">
+                        {{ $orden->firmanteNombre($f['tipo']) ?: '&nbsp;' }}<br>
+                        @if($orden->{"firma_{$f['tipo']}_cc"})
+                            <span class="rol">C.C. {{ $orden->{"firma_{$f['tipo']}_cc"} }}</span><br>
+                        @endif
+                        <span class="rol">{{ $f['rol'] }}</span>
+                        @if($orden->{"firma_{$f['tipo']}_at"})
+                            <br><span class="rol">Firmado el {{ $orden->{"firma_{$f['tipo']}_at"}->format('d/m/Y H:i') }}</span>
+                        @endif
+                    </div>
+                </td>
+            @endforeach
         </tr>
     </table>
 </body>

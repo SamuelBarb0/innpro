@@ -4,7 +4,6 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Support\Facades\Storage;
 
 class OrdenServicioBitacoraFoto extends Model
 {
@@ -16,8 +15,9 @@ class OrdenServicioBitacoraFoto extends Model
 
     public function bitacora() { return $this->belongsTo(OrdenServicioBitacora::class, 'bitacora_id'); }
 
+    // Ver nota en OrdenServicioImagen::getUrlAttribute() sobre por qué no se usa Storage::url().
     public function getUrlAttribute(): string
     {
-        return Storage::url($this->ruta);
+        return asset($this->ruta);
     }
 }
