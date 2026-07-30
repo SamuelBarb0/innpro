@@ -12,6 +12,7 @@ use App\Models\Producto;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Validation\Rule;
 use Yajra\DataTables\Facades\DataTables;
 use Barryvdh\DomPDF\Facade\Pdf;
 
@@ -232,7 +233,9 @@ class OrdenServicioController extends Controller
         abort_unless($this->puedeGestionar(), 403);
 
         $orden    = $orden ?? new OrdenServicio(['fecha_ingreso' => now()]);
-        $clientes = Cliente::activos()->orderBy('nombre_contacto')->get();
+        // Las sedes viajan con el cliente para poder filtrar el segundo select
+        // sin ir al servidor cada vez que se cambia de cliente.
+        $clientes = Cliente::activos()->with('sucursalesActivas')->orderBy('nombre_contacto')->get();
         $tecnicos = User::role('tecnico')->orderBy('name')->pluck('name', 'id');
 
         return view('servicio.form', [
@@ -288,6 +291,12 @@ class OrdenServicioController extends Controller
 
         $data = $request->validate([
             'cliente_id'           => ['required', 'exists:clientes,id'],
+            // La sede tiene que ser de ESE cliente: si no, se podría colar la
+            // sede de otro manipulando el formulario.
+            'sucursal_id'          => [
+                'nullable',
+                Rule::exists('cliente_sucursales', 'id')->where('cliente_id', $request->input('cliente_id')),
+            ],
             'tecnico_id'           => ['nullable', 'exists:users,id'],
             'titulo'               => ['required', 'string', 'max:255'],
             'descripcion_problema' => ['nullable', 'string'],
@@ -327,7 +336,7 @@ class OrdenServicioController extends Controller
         abort_unless($this->puedeGestionar(), 403);
 
         $orden->load([
-            'cliente', 'tecnico', 'creador',
+            'cliente', 'sucursal', 'tecnico', 'creador',
             'items.producto',
             'bitacora.tecnico', 'bitacora.fotos',
             'imagenes',
@@ -564,7 +573,7 @@ class OrdenServicioController extends Controller
     public function seguimientoPublico(string $token)
     {
         $orden = OrdenServicio::where('token_publico', $token)->firstOrFail();
-        $orden->load(['cliente', 'tecnico', 'bitacora.tecnico', 'bitacora.fotos', 'equipos']);
+        $orden->load(['cliente', 'sucursal', 'tecnico', 'bitacora.tecnico', 'bitacora.fotos', 'equipos']);
 
         return view('servicio.seguimiento', [
             'orden'   => $orden,
@@ -578,7 +587,7 @@ class OrdenServicioController extends Controller
     {
         abort_unless($this->puedeGestionar(), 403);
 
-        $orden->load(['cliente', 'tecnico', 'items.producto', 'bitacora.tecnico']);
+        $orden->load(['cliente', 'sucursal', 'tecnico', 'items.producto', 'bitacora.tecnico']);
 
         $pdf = Pdf::loadView('pdf.orden-servicio', ['orden' => $orden]);
         $pdf->setPaper('letter', 'portrait');

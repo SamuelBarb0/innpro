@@ -22,7 +22,9 @@
               </div>
               <div class="fw-semibold">{{ $orden->titulo }}</div>
               <small class="text-muted">
-                <i class="bi bi-person-badge"></i> {{ $orden->cliente?->nombre_empresa ?: $orden->cliente?->nombre_contacto }}
+                <i class="bi bi-person-badge"></i> {{ $orden->cliente?->nombre_empresa ?: $orden->cliente?->nombre_contacto }}@if($orden->sucursal)
+                  <span class="ms-2"><i class="bi bi-geo-alt"></i> {{ $orden->sucursal->etiqueta }}</span>
+                @endif
                 &nbsp;·&nbsp; <i class="bi bi-tools"></i> {{ $orden->tecnico?->name ?? 'Sin técnico' }}
                 &nbsp;·&nbsp; <i class="bi bi-calendar-event"></i> Ingreso {{ optional($orden->fecha_ingreso)->format('d/m/Y') }}
                 @if($orden->fecha_estimada) &nbsp;·&nbsp; <i class="bi bi-flag"></i> Estimada {{ $orden->fecha_estimada->format('d/m/Y') }} @endif

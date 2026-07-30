@@ -118,6 +118,12 @@
                     <div class="lbl">Cliente</div>
                     <div class="row"><span class="v">{{ $orden->cliente?->nombre_empresa ?: $orden->cliente?->nombre_contacto }}</span></div>
                     <div class="row"><span class="k">Contacto:</span> {{ $orden->cliente?->nombre_contacto }}</div>
+                    @if($orden->sucursal)
+                      <div class="row"><span class="k">Sede:</span> {{ $orden->sucursal->etiqueta }}</div>
+                      @if($orden->sucursal->direccion)
+                        <div class="row"><span class="k">Dirección:</span> {{ $orden->sucursal->direccion }}</div>
+                      @endif
+                    @endif
                     <div class="row"><span class="k">NIT/CC:</span> {{ $orden->cliente?->numero_identificacion }}</div>
                     <div class="row"><span class="k">Teléfono:</span> {{ $orden->cliente?->telefono ?: '—' }}</div>
                     <div class="row"><span class="k">Ciudad:</span> {{ $orden->cliente?->ciudad }}</div>

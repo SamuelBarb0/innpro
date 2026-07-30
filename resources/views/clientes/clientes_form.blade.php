@@ -127,7 +127,16 @@
 
             <div class="d-flex justify-content-between mt-4">
               <button type="submit" class="btn btn-primary">Guardar</button>
-              <a href="{{ route('clientes') }}" class="btn btn-outline-secondary">Cancelar</a>
+              <div class="d-flex gap-2">
+                @if($cliente->exists)
+                  {{-- Las sedes viven en su propia pantalla para que agregar una
+                       no obligue a guardar lo que se esté editando aquí. --}}
+                  <a href="{{ route('clientes.sucursales', $cliente->id) }}" class="btn btn-outline-primary">
+                    <i class="bi bi-geo-alt"></i> Sedes ({{ $cliente->sucursales()->count() }})
+                  </a>
+                @endif
+                <a href="{{ route('clientes') }}" class="btn btn-outline-secondary">Cancelar</a>
+              </div>
             </div>
           </form>
         </div>

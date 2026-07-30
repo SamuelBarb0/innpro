@@ -48,6 +48,15 @@
               </div>
 
               <div class="col-md-6 mb-3">
+                <label class="form-label">Sede del cliente</label>
+                <select name="sucursal_id" id="selectSucursalOrden" class="form-select">
+                  <option value="">-- Sin sede específica --</option>
+                </select>
+                <small class="text-muted">Solo se listan las sedes del cliente seleccionado.</small>
+                @error('sucursal_id') <small class="text-danger d-block">{{ $message }}</small> @enderror
+              </div>
+
+              <div class="col-md-6 mb-3">
                 <label class="form-label">Técnico asignado</label>
                 <select name="tecnico_id" class="form-select">
                   <option value="">-- Sin asignar --</option>
@@ -148,6 +157,32 @@
 
     @push('scripts')
     <script>
+      // Sedes por cliente, para repoblar el segundo select sin ir al servidor.
+      const SEDES = @json($clientes->mapWithKeys(fn ($c) => [
+        $c->id => $c->sucursalesActivas->map(fn ($s) => ['id' => $s->id, 'etiqueta' => $s->etiqueta])->values(),
+      ]));
+      const SEDE_ACTUAL = @json(old('sucursal_id', $orden->sucursal_id));
+
+      const selCliente = document.getElementById('selectClienteOrden');
+      const selSucursal = document.getElementById('selectSucursalOrden');
+
+      function pintarSedes(seleccionar) {
+        const sedes = SEDES[selCliente.value] || [];
+        selSucursal.innerHTML = '';
+        selSucursal.add(new Option(
+          sedes.length ? '-- Sin sede específica --' : '-- Este cliente no tiene sedes --',
+          ''
+        ));
+        sedes.forEach(function (s) {
+          selSucursal.add(new Option(s.etiqueta, s.id, false, String(s.id) === String(seleccionar)));
+        });
+        selSucursal.disabled = sedes.length === 0;
+      }
+
+      // Al cambiar de cliente la sede anterior deja de tener sentido.
+      selCliente.addEventListener('change', function () { pintarSedes(null); });
+      pintarSedes(SEDE_ACTUAL);
+
       document.getElementById('btnGuardarProspecto').addEventListener('click', function () {
         const boton = this;
         const error = document.getElementById('prospectoOrdenError');
@@ -195,6 +230,10 @@
             const opcion = new Option(data.etiqueta, data.id, true, true);
             select.add(opcion);
             select.value = data.id;
+
+            // Un prospecto recién creado todavía no tiene sedes.
+            SEDES[data.id] = [];
+            pintarSedes(null);
 
             bootstrap.Modal.getInstance(document.getElementById('modalProspectoOrden')).hide();
             ['prospNombre', 'prospEmpresa', 'prospTelefono', 'prospCiudad', 'prospEmail']

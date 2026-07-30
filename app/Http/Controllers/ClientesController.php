@@ -14,7 +14,9 @@ class ClientesController extends Controller
     public function index(Request $request)
     {
         if ($request->ajax()) {
-            $query = Cliente::with(['vendedor', 'listaPrecio'])->select('clientes.*');
+            $query = Cliente::with(['vendedor', 'listaPrecio'])
+                ->withCount('sucursales')
+                ->select('clientes.*');
 
             return DataTables::of($query)
                 ->addColumn('vendedor', fn($c) => $c->vendedor?->name)
@@ -43,8 +45,13 @@ class ClientesController extends Controller
                     $toggleClass = $c->activo ? 'btn-outline-warning' : 'btn-outline-success';
                     $toggleTitle = $c->activo ? 'Inactivar' : 'Activar';
 
+                    $sedesUrl = route('clientes.sucursales', $c->id);
+                    $sedes    = $c->sucursales_count ?? 0;
+
                     $html  = '<div class="d-flex justify-content-center align-items-center gap-1">';
                     $html .= '<a href="'.$editUrl.'" class="btn btn-outline-info btn-sm" title="Editar"><i class="bi bi-pencil"></i></a>';
+                    $html .= '<a href="'.$sedesUrl.'" class="btn btn-outline-primary btn-sm" title="Sedes del cliente"><i class="bi bi-geo-alt"></i>'
+                          .($sedes ? ' <span class="badge bg-primary">'.$sedes.'</span>' : '').'</a>';
 
                     $html .= '<form method="POST" action="'.$toggleUrl.'" style="display:inline">';
                     $html .= '<input type="hidden" name="_token" value="'.$csrf.'">';

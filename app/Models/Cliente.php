@@ -58,6 +58,17 @@ class Cliente extends Model
         return $this->hasMany(SolicitudCotizacion::class, 'cliente_id');
     }
 
+    /** Sedes/proyectos del cliente, una por ciudad donde se le atiende. */
+    public function sucursales()
+    {
+        return $this->hasMany(ClienteSucursal::class, 'cliente_id');
+    }
+
+    public function sucursalesActivas()
+    {
+        return $this->hasMany(ClienteSucursal::class, 'cliente_id')->where('activo', true);
+    }
+
     public function scopeActivos($query)
     {
         return $query->where('activo', true);

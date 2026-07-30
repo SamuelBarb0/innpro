@@ -69,6 +69,16 @@ Route::get('ajax/ciudades', [CiudadController::class,'byDepartamento'])
     Route::delete('clientes/{cliente}', [ClientesController::class, 'eliminar'])
         ->name('clientes.eliminar');
 
+    // Sedes / proyectos por cliente
+    Route::get('clientes/{cliente}/sucursales', [App\Http\Controllers\ClienteSucursalController::class, 'index'])
+        ->name('clientes.sucursales');
+    Route::post('clientes/{cliente}/sucursales', [App\Http\Controllers\ClienteSucursalController::class, 'guardar'])
+        ->name('clientes.sucursales.guardar');
+    Route::post('clientes/{cliente}/sucursales/{sucursal}/toggle', [App\Http\Controllers\ClienteSucursalController::class, 'toggleActivo'])
+        ->name('clientes.sucursales.toggle');
+    Route::delete('clientes/{cliente}/sucursales/{sucursal}', [App\Http\Controllers\ClienteSucursalController::class, 'eliminar'])
+        ->name('clientes.sucursales.eliminar');
+
             // Listado & AJAX
     Route::get('categorias', [CategoriasController::class, 'index'])
          ->name('categorias');

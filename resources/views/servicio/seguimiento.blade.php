@@ -105,7 +105,7 @@
                     <span class="pill">{{ $orden->estadoLabel() }}</span>
                 </div>
                 <div class="meta">
-                    <b>Cliente:</b> {{ $orden->cliente?->nombre_empresa ?: $orden->cliente?->nombre_contacto }} &nbsp;·&nbsp;
+                    <b>Cliente:</b> {{ $orden->cliente?->nombre_empresa ?: $orden->cliente?->nombre_contacto }}@if($orden->sucursal) &nbsp;·&nbsp; <b>Sede:</b> {{ $orden->sucursal->etiqueta }}@endif &nbsp;·&nbsp;
                     <b>Técnico:</b> {{ $orden->tecnico?->name ?? 'Por asignar' }}<br>
                     <b>Ingreso:</b> {{ optional($orden->fecha_ingreso)->format('d/m/Y') }}
                     @if($orden->fecha_estimada) &nbsp;·&nbsp; <b>Entrega estimada:</b> {{ $orden->fecha_estimada->format('d/m/Y') }} @endif

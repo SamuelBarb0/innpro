@@ -14,7 +14,7 @@ class OrdenServicio extends Model
     protected $table = 'ordenes_servicio';
 
     protected $fillable = [
-        'numero', 'token_publico', 'cliente_id', 'tecnico_id', 'creado_por',
+        'numero', 'token_publico', 'cliente_id', 'sucursal_id', 'tecnico_id', 'creado_por',
         'titulo', 'descripcion_problema', 'diagnostico',
         'estado', 'prioridad', 'costo_mano_obra',
         'fecha_ingreso', 'fecha_estimada', 'fecha_cierre',
@@ -76,6 +76,7 @@ class OrdenServicio extends Model
     /* ===================== Relaciones ===================== */
 
     public function cliente()   { return $this->belongsTo(Cliente::class, 'cliente_id'); }
+    public function sucursal()  { return $this->belongsTo(ClienteSucursal::class, 'sucursal_id'); }
     public function tecnico()   { return $this->belongsTo(User::class, 'tecnico_id'); }
     public function creador()   { return $this->belongsTo(User::class, 'creado_por'); }
 
