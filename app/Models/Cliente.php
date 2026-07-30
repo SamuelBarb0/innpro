@@ -68,6 +68,47 @@ class Cliente extends Model
         return $query->where('vendedor_id', $vendedorId);
     }
 
+    /**
+     * Da de alta un prospecto: lo mínimo para poder cotizarle o abrirle una
+     * orden sin inventarle NIT, correo ni ciudad.
+     *
+     * @param  array{nombre_contacto:string,nombre_empresa?:?string,telefono?:?string,email?:?string,ciudad?:?string}  $datos
+     */
+    public static function crearProspecto(array $datos, int $vendedorId): self
+    {
+        return self::create([
+            'numero_identificacion' => null,
+            'nombre_contacto' => $datos['nombre_contacto'],
+            'nombre_empresa' => $datos['nombre_empresa'] ?? null,
+            'email' => $datos['email'] ?? null,
+            'telefono' => $datos['telefono'] ?? null,
+            'pais' => null,
+            'ciudad' => $datos['ciudad'] ?? null,
+            'vendedor_id' => $vendedorId,
+            'lista_precio_id' => self::listaPrecioProspectos(),
+            'activo' => true,
+            'es_temporal' => true,
+        ]);
+    }
+
+    /**
+     * Lista de precios estándar para prospectos (pedido 16 de la reunión).
+     *
+     * Sale del parámetro `lista_precio_temporales`; si quedó vacío o apunta a
+     * una lista borrada, se cae a la primera disponible para no dejar el
+     * cotizador inservible.
+     */
+    public static function listaPrecioProspectos(): ?int
+    {
+        $configurada = Parametros::valor('lista_precio_temporales');
+
+        if (filled($configurada) && ListaPrecio::whereKey($configurada)->exists()) {
+            return (int) $configurada;
+        }
+
+        return ListaPrecio::orderBy('id')->value('id');
+    }
+
     /** Prospectos creados al vuelo desde el cotizador. */
     public function scopeTemporales($query)
     {

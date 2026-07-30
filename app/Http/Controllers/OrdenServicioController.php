@@ -243,6 +243,43 @@ class OrdenServicioController extends Controller
         ]);
     }
 
+    /**
+     * Da de alta un prospecto sin salir del formulario de la orden.
+     *
+     * Pedido 8 de la reunión del 29/07: el cliente temporal debía servir tanto
+     * en el cotizador como en las órdenes. Va por AJAX a propósito — un envío
+     * normal recargaría la página y se perdería lo que ya se había escrito en
+     * la orden.
+     */
+    public function crearClienteTemporal(Request $request)
+    {
+        abort_unless($this->puedeGestionar(), 403);
+
+        $datos = $request->validate([
+            'nombre_contacto' => 'required|string|max:255',
+            'nombre_empresa' => 'nullable|string|max:255',
+            'telefono' => 'nullable|string|max:100',
+            'email' => 'nullable|email|max:255',
+            'ciudad' => 'nullable|string|max:255',
+        ], [
+            'nombre_contacto.required' => 'El nombre del prospecto es obligatorio.',
+            'email.email' => 'El correo no tiene un formato válido.',
+        ]);
+
+        if (! Cliente::listaPrecioProspectos()) {
+            return response()->json([
+                'message' => 'No hay ninguna lista de precios configurada, así que no se puede crear el prospecto.',
+            ], 422);
+        }
+
+        $cliente = Cliente::crearProspecto($datos, Auth::id());
+
+        return response()->json([
+            'id' => $cliente->id,
+            'etiqueta' => trim(($cliente->nombre_empresa ?: $cliente->nombre_contacto).' · Prospecto'),
+        ]);
+    }
+
     public function guardar(Request $request)
     {
         abort_unless($this->puedeGestionar(), 403);

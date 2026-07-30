@@ -9,8 +9,6 @@ use App\Models\Producto;
 use App\Models\Categoria;
 use App\Models\SolicitudCotizacion;
 use App\Models\ItemSolicitudCotizacion;
-use App\Models\ListaPrecio;
-use App\Models\Parametros;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
@@ -101,26 +99,12 @@ class CatalogoController extends Controller
             'email.email' => 'El correo no tiene un formato válido.',
         ]);
 
-        $listaPrecioId = $this->listaPrecioTemporales();
-
-        if (! $listaPrecioId) {
+        if (! Cliente::listaPrecioProspectos()) {
             return redirect()->route('catalogo')
                 ->with('error', 'No hay ninguna lista de precios configurada, así que no se puede cotizar a un prospecto.');
         }
 
-        $cliente = Cliente::create([
-            'numero_identificacion' => null,
-            'nombre_contacto' => $datos['nombre_contacto'],
-            'nombre_empresa' => $datos['nombre_empresa'] ?? null,
-            'email' => $datos['email'] ?? null,
-            'telefono' => $datos['telefono'] ?? null,
-            'pais' => null,
-            'ciudad' => $datos['ciudad'] ?? null,
-            'vendedor_id' => $user->id,
-            'lista_precio_id' => $listaPrecioId,
-            'activo' => true,
-            'es_temporal' => true,
-        ]);
+        $cliente = Cliente::crearProspecto($datos, $user->id);
 
         // Se entra directo a cotizar: obligar a buscarlo en la lista después de
         // acabar de crearlo sería un paso de más.
@@ -128,24 +112,6 @@ class CatalogoController extends Controller
         $enlace = null;
 
         return view('catalogo.index', compact('cliente', 'categorias', 'enlace'));
-    }
-
-    /**
-     * Lista de precios estándar para prospectos.
-     *
-     * Sale del parámetro `lista_precio_temporales`; si quedó vacío o apunta a
-     * una lista borrada, se cae a la primera disponible para no dejar el
-     * cotizador inservible.
-     */
-    private function listaPrecioTemporales(): ?int
-    {
-        $configurada = Parametros::valor('lista_precio_temporales');
-
-        if (filled($configurada) && ListaPrecio::whereKey($configurada)->exists()) {
-            return (int) $configurada;
-        }
-
-        return ListaPrecio::orderBy('id')->value('id');
     }
 
     /**

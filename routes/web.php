@@ -206,6 +206,7 @@ Route::middleware('auth')->prefix('servicio')->name('servicio.')->group(function
     Route::get('/', [OrdenServicioController::class, 'index'])->name('index');
     Route::get('/form/{orden?}', [OrdenServicioController::class, 'form'])->name('form');
     Route::post('/guardar', [OrdenServicioController::class, 'guardar'])->name('guardar');
+    Route::post('/cliente-temporal', [OrdenServicioController::class, 'crearClienteTemporal'])->name('cliente.temporal');
     Route::get('/{orden}/detalle', [OrdenServicioController::class, 'detalle'])->name('detalle');
     Route::get('/{orden}/pdf', [OrdenServicioController::class, 'pdf'])->name('pdf');
     Route::post('/{orden}/actualizar', [OrdenServicioController::class, 'actualizar'])->name('actualizar');
