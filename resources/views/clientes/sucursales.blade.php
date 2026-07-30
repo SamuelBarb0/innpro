@@ -77,6 +77,11 @@
                         <i class="bi bi-pencil"></i>
                       </button>
 
+                      <a href="{{ route('clientes.sucursales.stock', [$cliente->id, $s->id]) }}"
+                         class="btn btn-outline-success btn-sm" title="Equipos recibidos en esta sede">
+                        <i class="bi bi-box-seam"></i>
+                      </a>
+
                       <form method="POST" action="{{ route('clientes.sucursales.toggle', [$cliente->id, $s->id]) }}">
                         @csrf
                         <button type="submit" class="btn btn-sm {{ $s->activo ? 'btn-outline-warning' : 'btn-outline-success' }}"

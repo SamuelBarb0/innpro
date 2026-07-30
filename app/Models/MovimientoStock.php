@@ -14,6 +14,8 @@ class MovimientoStock extends Model
     protected $fillable = [
         'producto_id',
         'variante_producto_id',
+        'cliente_id',
+        'sucursal_id',
         'tipo_movimiento',
         'cantidad',
         'stock_anterior',
@@ -28,6 +30,17 @@ class MovimientoStock extends Model
     public function producto()
     {
         return $this->belongsTo(Producto::class, 'producto_id');
+    }
+
+    /** A qué proyecto se atribuye el movimiento (null = bodega general). */
+    public function cliente()
+    {
+        return $this->belongsTo(Cliente::class, 'cliente_id');
+    }
+
+    public function sucursal()
+    {
+        return $this->belongsTo(ClienteSucursal::class, 'sucursal_id');
     }
 
     public function variante()

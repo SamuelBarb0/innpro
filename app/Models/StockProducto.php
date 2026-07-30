@@ -14,6 +14,8 @@ class StockProducto extends Model
     protected $fillable = [
         'producto_id',
         'variante_producto_id',
+        'cliente_id',
+        'sucursal_id',
         'cantidad_disponible',
         'cantidad_reservada',
         'stock_minimo',
@@ -55,6 +57,29 @@ class StockProducto extends Model
     public function variante()
     {
         return $this->belongsTo(VarianteProducto::class, 'variante_producto_id');
+    }
+
+    /** Dueño de la existencia: null = bodega general, sin proyecto asociado. */
+    public function cliente()
+    {
+        return $this->belongsTo(Cliente::class, 'cliente_id');
+    }
+
+    public function sucursal()
+    {
+        return $this->belongsTo(ClienteSucursal::class, 'sucursal_id');
+    }
+
+    /** Existencias recibidas para una sede concreta. */
+    public function scopeDeSucursal($query, $sucursalId)
+    {
+        return $query->where('sucursal_id', $sucursalId);
+    }
+
+    /** Existencias de bodega, las que no pertenecen a ningún proyecto. */
+    public function scopeGenerales($query)
+    {
+        return $query->whereNull('cliente_id')->whereNull('sucursal_id');
     }
 
     public function movimientos()

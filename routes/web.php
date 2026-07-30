@@ -76,6 +76,10 @@ Route::get('ajax/ciudades', [CiudadController::class,'byDepartamento'])
         ->name('clientes.sucursales.guardar');
     Route::post('clientes/{cliente}/sucursales/{sucursal}/toggle', [App\Http\Controllers\ClienteSucursalController::class, 'toggleActivo'])
         ->name('clientes.sucursales.toggle');
+    Route::get('clientes/{cliente}/sucursales/{sucursal}/stock', [App\Http\Controllers\ClienteSucursalController::class, 'stock'])
+        ->name('clientes.sucursales.stock');
+    Route::post('clientes/{cliente}/sucursales/{sucursal}/stock', [App\Http\Controllers\ClienteSucursalController::class, 'guardarStock'])
+        ->name('clientes.sucursales.stock.guardar');
     Route::delete('clientes/{cliente}/sucursales/{sucursal}', [App\Http\Controllers\ClienteSucursalController::class, 'eliminar'])
         ->name('clientes.sucursales.eliminar');
 
