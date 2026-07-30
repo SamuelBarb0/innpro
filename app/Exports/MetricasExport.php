@@ -90,9 +90,22 @@ class MetricasExport implements WithMultipleSheets
             $filas[] = ['Solicitudes pendientes', (int) $d['solicitudesPendientes']];
             $filas[] = ['Monto solicitado', (float) $d['montoSolicitado']];
             $filas[] = ['Clientes activos', (int) $d['clientesActivos']];
+            $filas[] = ['Clientes nuevos en el periodo', (int) ($d['clientesNuevos'] ?? 0)];
+            $filas[] = ['Clientes nuevos periodo anterior', (int) ($d['clientesNuevosPrevio'] ?? 0)];
+            $filas[] = ['Prospectos nuevos en el periodo', (int) ($d['prospectosNuevos'] ?? 0)];
             $filas[] = ['Productos activos', (int) $d['productosActivos']];
             $filas[] = ['Productos con stock', (int) $d['productosConStock']];
             $filas[] = ['Productos sin stock', (int) $d['productosSinStock']];
+
+            if (! empty($d['proyeccion'])) {
+                $p = $d['proyeccion'];
+                $filas[] = ['— PROYECCIÓN DEL MES —', ''];
+                $filas[] = ['Días transcurridos del mes', $p['dias_transcurridos'].' de '.$p['dias_mes']];
+                $filas[] = ['Clientes nuevos este mes', (int) $p['clientes_real']];
+                $filas[] = ['Clientes nuevos proyectados a fin de mes', (int) $p['clientes_proyectado']];
+                $filas[] = ['Monto solicitado este mes', (float) $p['monto_real']];
+                $filas[] = ['Monto proyectado a fin de mes', (float) $p['monto_proyectado']];
+            }
         }
 
         return $filas;

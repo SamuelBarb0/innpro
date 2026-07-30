@@ -297,6 +297,37 @@
                 </div>
             </div>
 
+            {{-- Ingreso de clientes nuevos (pedido 15 de la reunión) --}}
+            <div class="col-12 col-md-6 col-xl-3">
+                <div class="card kpi-card h-100 shadow-sm" style="--kpi-color:#5DCEBA;">
+                    <div class="card-body d-flex align-items-center gap-3">
+                        <span class="kpi-icon"><i class="bi bi-person-plus"></i></span>
+                        <div class="flex-grow-1">
+                            <div class="kpi-label">Clientes nuevos</div>
+                            <div class="kpi-value">
+                                {{ number_format($clientesNuevos) }}
+                                @if(!is_null($variacionClientes))
+                                    <small class="ms-1 {{ $variacionClientes >= 0 ? 'text-success' : 'text-danger' }}"
+                                           style="font-size:.55em;">
+                                        <i class="bi bi-arrow-{{ $variacionClientes >= 0 ? 'up' : 'down' }}"></i>{{ abs($variacionClientes) }}%
+                                    </small>
+                                @endif
+                            </div>
+                            <div class="kpi-extra">
+                                @if(!is_null($variacionClientes))
+                                    vs {{ number_format($clientesNuevosPrevio) }} del periodo anterior
+                                @else
+                                    en el periodo
+                                @endif
+                                @if($prospectosNuevos > 0)
+                                    · +{{ number_format($prospectosNuevos) }} prospecto(s)
+                                @endif
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             <div class="col-12 col-md-6 col-xl-3">
                 <div class="card kpi-card h-100 shadow-sm" style="--kpi-color:#12669B;">
                     <div class="card-body d-flex align-items-center gap-3">
@@ -428,6 +459,59 @@
                     </div>
                 </div>
             </div>
+
+            {{-- Serie de clientes nuevos + proyección del mes (pedido 15) --}}
+            <div class="col-12 col-xl-6">
+                <div class="card shadow-sm h-100">
+                    <div class="card-header bg-white">
+                        <h6 class="mb-0"><i class="bi bi-person-plus"></i> Ingreso de clientes nuevos</h6>
+                    </div>
+                    <div class="card-body">
+                        <canvas id="chartClientesNuevos" height="150"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-12 col-xl-6">
+                <div class="card shadow-sm h-100">
+                    <div class="card-header bg-white">
+                        <h6 class="mb-0"><i class="bi bi-graph-up-arrow"></i> Proyección del mes</h6>
+                    </div>
+                    <div class="card-body">
+                        @if($proyeccion)
+                            <p class="text-muted small">
+                                Van {{ $proyeccion['dias_transcurridos'] }} de {{ $proyeccion['dias_mes'] }} días del mes.
+                                La proyección extrapola el ritmo actual hasta fin de mes; no es un pronóstico,
+                                solo el ritmo que se lleva.
+                            </p>
+
+                            <div class="row text-center">
+                                <div class="col-6 border-end">
+                                    <div class="text-muted small">Clientes nuevos</div>
+                                    <div class="fs-4 fw-semibold">{{ number_format($proyeccion['clientes_real']) }}</div>
+                                    <div class="text-muted small">van este mes</div>
+                                    <hr class="my-2">
+                                    <div class="fs-5 text-primary">{{ number_format($proyeccion['clientes_proyectado']) }}</div>
+                                    <div class="text-muted small">proyectados a fin de mes</div>
+                                </div>
+                                <div class="col-6">
+                                    <div class="text-muted small">Monto solicitado</div>
+                                    <div class="fs-4 fw-semibold">$ {{ number_format($proyeccion['monto_real'], 0) }}</div>
+                                    <div class="text-muted small">va este mes</div>
+                                    <hr class="my-2">
+                                    <div class="fs-5 text-primary">$ {{ number_format($proyeccion['monto_proyectado'], 0) }}</div>
+                                    <div class="text-muted small">proyectado a fin de mes</div>
+                                </div>
+                            </div>
+                        @else
+                            <p class="text-muted mb-0">
+                                La proyección solo se calcula sobre el mes en curso y con al menos tres días
+                                transcurridos. Ajusta el rango de fechas para que llegue hasta hoy.
+                            </p>
+                        @endif
+                    </div>
+                </div>
+            </div>
         </div>
         @endif
     </div>
@@ -486,6 +570,7 @@
 
             @if($verComercial)
                 barra('chartSolicitudesMes', @json($chartLabels), @json($chartValores), 'Solicitudes');
+                barra('chartClientesNuevos', @json($chartClientesLabels), @json($chartClientesValores), 'Clientes nuevos');
                 dona('chartStock', ['Con stock', 'Sin stock'],
                      [{{ $productosConStock }}, {{ $productosSinStock }}], ['#2AA995', '#E4572E']);
             @endif

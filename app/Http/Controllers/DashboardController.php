@@ -101,6 +101,47 @@ class DashboardController extends Controller
             ->limit(8)
             ->get();
 
+        /* --- Ingreso de clientes nuevos y proyección (pedido 15) --- */
+
+        $clientesNuevosQuery = Cliente::query();
+        if ($esVendedor) {
+            $clientesNuevosQuery->where('vendedor_id', $user->id);
+        }
+
+        $nuevosRango = (clone $clientesNuevosQuery)->whereBetween('created_at', [$desde, $hasta]);
+
+        // Un prospecto todavía no es un cliente: se cuentan aparte para no
+        // inflar la cifra que mira la gerencia.
+        $clientesNuevos = (clone $nuevosRango)->where('es_temporal', false)->count();
+        $prospectosNuevos = (clone $nuevosRango)->where('es_temporal', true)->count();
+
+        // Mismo número de días justo antes del rango, para saber si se va mejor
+        // o peor que en el periodo equivalente.
+        $diasRango = max(1, $desde->diffInDays($hasta) + 1);
+        $previoHasta = $desde->copy()->subSecond();
+        $previoDesde = $previoHasta->copy()->subDays($diasRango)->startOfDay();
+
+        $clientesNuevosPrevio = (clone $clientesNuevosQuery)
+            ->where('es_temporal', false)
+            ->whereBetween('created_at', [$previoDesde, $previoHasta])
+            ->count();
+
+        $variacionClientes = $clientesNuevosPrevio > 0
+            ? (int) round((($clientesNuevos - $clientesNuevosPrevio) / $clientesNuevosPrevio) * 100)
+            : null;
+
+        [$labelsClientes, $valoresClientes] = $this->serieMensual(
+            (clone $nuevosRango)
+                ->where('es_temporal', false)
+                ->select(DB::raw("DATE_FORMAT(created_at, '%Y-%m') as ym"), DB::raw('COUNT(*) as conteo'))
+                ->groupBy('ym')
+                ->pluck('conteo', 'ym'),
+            $desde,
+            $hasta
+        );
+
+        $proyeccion = $this->proyeccionMes($clientesNuevosQuery, $solicitudesQuery, $hasta);
+
         $topClientes = (clone $solicitudesRango)
             ->select('cliente_id', DB::raw('COUNT(*) as solicitudes'), DB::raw('SUM(monto_total) as monto'))
             ->groupBy('cliente_id')
@@ -135,7 +176,66 @@ class DashboardController extends Controller
             'chartValores'          => $valores,
             'topProductos'          => $topProductos,
             'topClientes'           => $topClientes,
+            'clientesNuevos'        => $clientesNuevos,
+            'prospectosNuevos'      => $prospectosNuevos,
+            'clientesNuevosPrevio'  => $clientesNuevosPrevio,
+            'variacionClientes'     => $variacionClientes,
+            'chartClientesLabels'   => $labelsClientes,
+            'chartClientesValores'  => $valoresClientes,
+            'proyeccion'            => $proyeccion,
         ], $servicio);
+    }
+
+    /**
+     * Proyección a fin de mes: lo que va del mes extrapolado por días.
+     *
+     * Es una regla de tres sobre los días transcurridos, a propósito. Con este
+     * volumen de datos cualquier modelo más elaborado daría una falsa
+     * sensación de precisión; en pantalla va etiquetada como proyección y
+     * acompañada de lo que va real.
+     *
+     * Devuelve null si el rango no llega al mes en curso (no tiene sentido
+     * proyectar un mes ya cerrado) o si el mes acaba de empezar.
+     *
+     * @return array{dias_transcurridos:int,dias_mes:int,clientes_real:int,clientes_proyectado:int,monto_real:float,monto_proyectado:float}|null
+     */
+    private function proyeccionMes($clientesQuery, $solicitudesQuery, Carbon $hasta): ?array
+    {
+        $hoy = now();
+
+        if (! $hasta->isSameMonth($hoy) || ! $hasta->isSameYear($hoy)) {
+            return null;
+        }
+
+        $diasTranscurridos = $hoy->day;
+        $diasMes = $hoy->daysInMonth;
+
+        // Con uno o dos días la extrapolación es ruido, no información.
+        if ($diasTranscurridos < 3) {
+            return null;
+        }
+
+        $inicioMes = $hoy->copy()->startOfMonth();
+
+        $clientesReal = (clone $clientesQuery)
+            ->where('es_temporal', false)
+            ->whereBetween('created_at', [$inicioMes, $hoy])
+            ->count();
+
+        $montoReal = (float) (clone $solicitudesQuery)
+            ->whereBetween('created_at', [$inicioMes, $hoy])
+            ->sum('monto_total');
+
+        $factor = $diasMes / $diasTranscurridos;
+
+        return [
+            'dias_transcurridos'  => $diasTranscurridos,
+            'dias_mes'            => $diasMes,
+            'clientes_real'       => $clientesReal,
+            'clientes_proyectado' => (int) round($clientesReal * $factor),
+            'monto_real'          => $montoReal,
+            'monto_proyectado'    => round($montoReal * $factor, 2),
+        ];
     }
 
     /** Indicadores del módulo de Servicio Técnico. */
