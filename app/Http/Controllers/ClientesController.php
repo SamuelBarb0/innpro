@@ -20,9 +20,18 @@ class ClientesController extends Controller
                 ->addColumn('vendedor', fn($c) => $c->vendedor?->name)
                 ->addColumn('lista_precio', fn($c) => $c->listaPrecio?->nombre)
                 ->addColumn('estado', function($c) {
-                    return $c->activo
+                    $estado = $c->activo
                         ? '<span class="badge bg-success">Activo</span>'
                         : '<span class="badge bg-secondary">Inactivo</span>';
+
+                    // Los prospectos creados desde el cotizador vienen sin NIT,
+                    // correo ni ciudad: hay que poder distinguirlos de un
+                    // cliente de verdad al que le falten datos.
+                    if ($c->es_temporal) {
+                        $estado .= ' <span class="badge bg-warning text-dark">Prospecto</span>';
+                    }
+
+                    return $estado;
                 })
                 ->addColumn('action', function($c) {
                     $editUrl   = route('clientes.form', $c->id);
@@ -102,6 +111,11 @@ class ClientesController extends Controller
 
         $data = $request->validate($rules, $messages);
         $data['activo'] = $request->boolean('activo', true);
+
+        // Guardar desde aquí exige NIT, correo, país y ciudad, que es justo lo
+        // que le falta a un prospecto: si pasó por este formulario, ya es un
+        // cliente de verdad y deja de mostrarse como temporal.
+        $data['es_temporal'] = false;
 
         $cliente->fill($data)->save();
 

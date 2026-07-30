@@ -15,9 +15,26 @@
           <h4 class="text-2xl font-semibold mb-4">Seleccionar Cliente para Cotizar</h4>
           
           <p class="text-muted mb-4">
-            Seleccione el cliente para el cual desea generar una cotización. 
+            Seleccione el cliente para el cual desea generar una cotización.
             Se mostrarán los precios correspondientes a la lista de precios asignada al cliente.
           </p>
+
+          @if($errors->any())
+            <div class="alert alert-danger">
+              <ul class="mb-0">
+                @foreach($errors->all() as $error)
+                  <li>{{ $error }}</li>
+                @endforeach
+              </ul>
+            </div>
+          @endif
+
+          {{-- Prospectos: cotizar sin dar de alta un cliente completo --}}
+          <div class="d-flex justify-content-end mb-3">
+            <button type="button" class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#modalProspecto">
+              <i class="bi bi-person-plus"></i> Cotizar a un prospecto
+            </button>
+          </div>
 
           {{-- Filtros de búsqueda --}}
           <div class="card mb-4">
@@ -64,7 +81,12 @@
                    data-lista="{{ $cliente->lista_precio_id }}">
                 <div class="card h-100">
                   <div class="card-body">
-                    <h5 class="card-title">{{ $cliente->nombre_contacto }}</h5>
+                    <h5 class="card-title">
+                      {{ $cliente->nombre_contacto }}
+                      @if($cliente->es_temporal)
+                        <span class="badge bg-warning text-dark align-middle">Prospecto</span>
+                      @endif
+                    </h5>
                     <p class="card-text">
                       <small class="text-muted">
                         <i class="bi bi-geo-alt"></i> {{ $cliente->ciudad ?: 'Sin ciudad' }}<br>
@@ -103,6 +125,60 @@
           </div>
         </div>
       </div>
+    </div>
+  </div>
+
+  {{-- Alta rápida de prospecto: solo el nombre es obligatorio --}}
+  <div class="modal fade" id="modalProspecto" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <form action="{{ route('catalogo.cliente.temporal') }}" method="POST" class="modal-content">
+        @csrf
+        <div class="modal-header">
+          <h5 class="modal-title"><i class="bi bi-person-plus"></i> Cotizar a un prospecto</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+        </div>
+        <div class="modal-body">
+          <p class="text-muted small">
+            Para cotizarle a alguien que todavía no es cliente. Se crea marcado como
+            <strong>prospecto</strong> y cotiza con la lista de precios estándar; cuando se
+            concrete, se completan sus datos desde Clientes.
+          </p>
+
+          <div class="mb-3">
+            <label class="form-label">Nombre del contacto <span class="text-danger">*</span></label>
+            <input type="text" name="nombre_contacto" class="form-control" required maxlength="255"
+                   value="{{ old('nombre_contacto') }}" autofocus>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Empresa</label>
+            <input type="text" name="nombre_empresa" class="form-control" maxlength="255"
+                   value="{{ old('nombre_empresa') }}">
+          </div>
+          <div class="row">
+            <div class="col-md-6 mb-3">
+              <label class="form-label">Teléfono</label>
+              <input type="text" name="telefono" class="form-control" maxlength="100"
+                     value="{{ old('telefono') }}">
+            </div>
+            <div class="col-md-6 mb-3">
+              <label class="form-label">Ciudad</label>
+              <input type="text" name="ciudad" class="form-control" maxlength="255"
+                     value="{{ old('ciudad') }}">
+            </div>
+          </div>
+          <div class="mb-1">
+            <label class="form-label">Correo</label>
+            <input type="email" name="email" class="form-control" maxlength="255"
+                   value="{{ old('email') }}">
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+          <button type="submit" class="btn btn-primary">
+            <i class="bi bi-cart"></i> Crear y cotizar
+          </button>
+        </div>
+      </form>
     </div>
   </div>
 

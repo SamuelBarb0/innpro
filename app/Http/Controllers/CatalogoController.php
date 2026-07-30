@@ -9,6 +9,8 @@ use App\Models\Producto;
 use App\Models\Categoria;
 use App\Models\SolicitudCotizacion;
 use App\Models\ItemSolicitudCotizacion;
+use App\Models\ListaPrecio;
+use App\Models\Parametros;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
@@ -70,7 +72,82 @@ class CatalogoController extends Controller
         
         return redirect()->route('dashboard')->with('error', 'No tiene permisos para acceder al catálogo.');
     }
-    
+
+    /**
+     * Crea un prospecto al vuelo y entra directo a cotizarle.
+     *
+     * Pedido de Jorge (reunión del 29/07): poder cotizarle a alguien que
+     * todavía no es cliente sin tener que darlo de alta con NIT, correo y
+     * ciudad. Queda marcado con `es_temporal` para no ensuciar la base y
+     * cotiza con la lista de precios estándar (pedido 16).
+     */
+    public function crearClienteTemporal(Request $request)
+    {
+        $user = Auth::user();
+
+        if (! $user->hasRole('admin') && ! $user->hasRole('vendedor')) {
+            return redirect()->route('dashboard')
+                ->with('error', 'No tiene permisos para acceder al catálogo.');
+        }
+
+        $datos = $request->validate([
+            'nombre_contacto' => 'required|string|max:255',
+            'nombre_empresa' => 'nullable|string|max:255',
+            'telefono' => 'nullable|string|max:100',
+            'email' => 'nullable|email|max:255',
+            'ciudad' => 'nullable|string|max:255',
+        ], [
+            'nombre_contacto.required' => 'El nombre del prospecto es obligatorio.',
+            'email.email' => 'El correo no tiene un formato válido.',
+        ]);
+
+        $listaPrecioId = $this->listaPrecioTemporales();
+
+        if (! $listaPrecioId) {
+            return redirect()->route('catalogo')
+                ->with('error', 'No hay ninguna lista de precios configurada, así que no se puede cotizar a un prospecto.');
+        }
+
+        $cliente = Cliente::create([
+            'numero_identificacion' => null,
+            'nombre_contacto' => $datos['nombre_contacto'],
+            'nombre_empresa' => $datos['nombre_empresa'] ?? null,
+            'email' => $datos['email'] ?? null,
+            'telefono' => $datos['telefono'] ?? null,
+            'pais' => null,
+            'ciudad' => $datos['ciudad'] ?? null,
+            'vendedor_id' => $user->id,
+            'lista_precio_id' => $listaPrecioId,
+            'activo' => true,
+            'es_temporal' => true,
+        ]);
+
+        // Se entra directo a cotizar: obligar a buscarlo en la lista después de
+        // acabar de crearlo sería un paso de más.
+        $categorias = Categoria::activas()->get();
+        $enlace = null;
+
+        return view('catalogo.index', compact('cliente', 'categorias', 'enlace'));
+    }
+
+    /**
+     * Lista de precios estándar para prospectos.
+     *
+     * Sale del parámetro `lista_precio_temporales`; si quedó vacío o apunta a
+     * una lista borrada, se cae a la primera disponible para no dejar el
+     * cotizador inservible.
+     */
+    private function listaPrecioTemporales(): ?int
+    {
+        $configurada = Parametros::valor('lista_precio_temporales');
+
+        if (filled($configurada) && ListaPrecio::whereKey($configurada)->exists()) {
+            return (int) $configurada;
+        }
+
+        return ListaPrecio::orderBy('id')->value('id');
+    }
+
     /**
      * Flujo B: Mostrar catálogo para cliente seleccionado
      */

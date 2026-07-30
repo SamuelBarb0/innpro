@@ -127,6 +127,7 @@ Route::get('/catalogo/{token}', [App\Http\Controllers\CatalogoController::class,
 Route::middleware(['auth'])->group(function () {
     Route::get('/catalogo', [CatalogoController::class, 'index'])->name('catalogo');
     Route::post('/catalogo/cliente', [CatalogoController::class, 'mostrarParaCliente'])->name('catalogo.cliente');
+    Route::post('/catalogo/cliente-temporal', [CatalogoController::class, 'crearClienteTemporal'])->name('catalogo.cliente.temporal');
 });
 
 // Rutas AJAX del catálogo (pueden ser públicas o autenticadas)
