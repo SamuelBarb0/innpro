@@ -53,6 +53,11 @@
                 <i class="bi bi-basket3"></i>
                 <span>Productos</span>
             </a>
+            <a href="{{ route('listas-precios') }}"
+               class="nav-link mb-2 d-flex align-items-center gap-2 {{ request()->is('listas-precios*') ? 'active' : 'text-dark' }}">
+                <i class="bi bi-tags"></i>
+                <span>Listas de precios</span>
+            </a>
             {{-- Empresa salió del menú principal: es solo el encabezado de la cotización.
                  Se accede desde Inicio, con perfil administrador. --}}
         @endif

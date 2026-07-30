@@ -69,6 +69,20 @@ Route::get('ajax/ciudades', [CiudadController::class,'byDepartamento'])
     Route::delete('clientes/{cliente}', [ClientesController::class, 'eliminar'])
         ->name('clientes.eliminar');
 
+    // Listas de precios (solo admin; la autorización va en el controlador)
+    Route::get('listas-precios', [App\Http\Controllers\ListaPrecioController::class, 'index'])
+        ->name('listas-precios');
+    Route::post('listas-precios/guardar', [App\Http\Controllers\ListaPrecioController::class, 'guardar'])
+        ->name('listas-precios.guardar');
+    Route::post('listas-precios/{lista}/toggle', [App\Http\Controllers\ListaPrecioController::class, 'toggleActivo'])
+        ->name('listas-precios.toggle');
+    Route::get('listas-precios/{lista}/precios', [App\Http\Controllers\ListaPrecioController::class, 'precios'])
+        ->name('listas-precios.precios');
+    Route::get('listas-precios/{lista}/plantilla', [App\Http\Controllers\ListaPrecioController::class, 'plantilla'])
+        ->name('listas-precios.plantilla');
+    Route::post('listas-precios/{lista}/importar', [App\Http\Controllers\ListaPrecioController::class, 'importar'])
+        ->name('listas-precios.importar');
+
     // Sedes / proyectos por cliente
     Route::get('clientes/{cliente}/sucursales', [App\Http\Controllers\ClienteSucursalController::class, 'index'])
         ->name('clientes.sucursales');
