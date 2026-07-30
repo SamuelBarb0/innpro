@@ -2,8 +2,6 @@
 
 namespace App\Exports;
 
-use App\Models\Producto;
-use App\Models\VarianteProducto;
 use Maatwebsite\Excel\Concerns\FromArray;
 use Maatwebsite\Excel\Concerns\WithHeadings;
 use Maatwebsite\Excel\Concerns\WithStyles;
@@ -41,28 +39,21 @@ class PlantillaStockHoja implements FromArray, WithHeadings, WithStyles, WithCol
         ];
     }
 
+    /**
+     * La hoja de datos va VACÍA a propósito.
+     *
+     * Antes traía filas de ejemplo armadas con referencias reales de la base.
+     * Quien descargaba la plantilla, escribía debajo sus filas y la subía tal
+     * cual, terminaba importando también el ejemplo: en el mejor caso un error
+     * ("referencia no encontrada"), y en el peor un movimiento de stock real
+     * sobre un producto que nadie quiso tocar.
+     *
+     * Los ejemplos viven ahora en la hoja "Instrucciones", donde se leen pero
+     * no se importan.
+     */
     public function array(): array
     {
-        $rows = [];
-
-        $variante = VarianteProducto::whereNotNull('sku')->where('sku', '!=', '')->first();
-        if ($variante) {
-            $rows[] = [$variante->sku, 25, 'set', 5, 100, 'Bodega A'];
-        }
-
-        $producto = Producto::where('tiene_variantes', false)
-            ->orWhereDoesntHave('variantes')
-            ->first();
-        if ($producto) {
-            $rows[] = [$producto->referencia, 10, 'sumar', 2, null, 'Estante 3'];
-        }
-
-        if (empty($rows)) {
-            $rows[] = ['SKU-001', 25, 'set', 5, 100, 'Bodega A'];
-            $rows[] = ['REF-001', 10, 'sumar', 2, null, 'Estante 3'];
-        }
-
-        return $rows;
+        return [];
     }
 
     public function title(): string
@@ -145,7 +136,12 @@ class PlantillaStockInstrucciones implements FromArray, WithHeadings, WithStyles
             ['stock_maximo', 'No', 'Capacidad máxima de referencia.'],
             ['ubicacion',    'No', 'Ubicación física (bodega, estante, etc).'],
             ['',             '',   ''],
-            ['Notas',        '',   'Encabezados en la fila 1, exactamente como en la hoja "Stock". Una fila por referencia.'],
+            ['Notas',        '',   'Encabezados en la fila 1, exactamente como en la hoja "Stock". Una fila por referencia. La hoja "Stock" viene vacía: escribe tus filas a partir de la fila 2.'],
+            ['',             '',   'En "referencia" puedes pegar la referencia del producto o su nombre. No importan las mayúsculas, las tildes ni los espacios de más.'],
+            ['',             '',   ''],
+            ['Ejemplos',     '',   'referencia | cantidad | modo | stock_minimo | stock_maximo | ubicacion'],
+            ['',             '',   'SKU-001 | 25 | set | 5 | 100 | Bodega A'],
+            ['',             '',   'REF-001 | 10 | sumar | 2 | | Estante 3'],
         ];
     }
 

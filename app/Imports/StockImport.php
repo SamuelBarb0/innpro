@@ -89,9 +89,9 @@ class StockImport implements ToCollection, WithHeadingRow, WithCustomCsvSettings
             $producto = $variante->producto;
             $varianteId = $variante->id;
         } else {
-            $producto = Producto::where('referencia', $referencia)->first();
+            $producto = $this->buscarProducto($referencia);
             if (!$producto) {
-                throw new \RuntimeException("Producto/SKU '{$referencia}' no encontrado.");
+                throw new \RuntimeException($this->mensajeNoEncontrado($referencia));
             }
             $varianteId = null;
         }
@@ -132,6 +132,113 @@ class StockImport implements ToCollection, WithHeadingRow, WithCustomCsvSettings
                 'usuario_id'           => auth()->id() ?? 1,
             ]);
         }
+    }
+
+    /**
+     * Índice de búsqueda tolerante: clave normalizada => producto.
+     *
+     * Se arma UNA vez por importación (no por fila) porque se recorre entero
+     * para sugerir parecidos cuando algo no cuadra.
+     *
+     * @var array<string,Producto>|null
+     */
+    private ?array $indice = null;
+
+    /**
+     * Busca el producto siendo indulgente con cómo quedó escrita la referencia.
+     *
+     * Hace falta porque aquí la `referencia` no es un código corto: suele ser la
+     * descripción completa del producto (80+ caracteres). Pedir coincidencia
+     * exacta de esa cadena hacía fallar la importación por una tilde, un espacio
+     * doble o el espacio duro que mete Excel al copiar y pegar.
+     */
+    private function buscarProducto(string $referencia): ?Producto
+    {
+        $exacto = Producto::where('referencia', $referencia)->first()
+            ?: Producto::where('nombre', $referencia)->first();
+
+        if ($exacto) {
+            return $exacto;
+        }
+
+        return $this->indice()[$this->comparable($referencia)] ?? null;
+    }
+
+    /**
+     * @return array<string,Producto>
+     */
+    private function indice(): array
+    {
+        if ($this->indice !== null) {
+            return $this->indice;
+        }
+
+        $this->indice = [];
+
+        Producto::select('id', 'referencia', 'nombre')->chunk(500, function ($productos) {
+            foreach ($productos as $producto) {
+                // Se indexa por referencia Y por nombre: en la práctica el
+                // usuario pega cualquiera de los dos en la columna.
+                foreach ([$producto->referencia, $producto->nombre] as $texto) {
+                    $clave = $this->comparable((string) $texto);
+                    if ($clave !== '' && ! isset($this->indice[$clave])) {
+                        $this->indice[$clave] = $producto;
+                    }
+                }
+            }
+        });
+
+        return $this->indice;
+    }
+
+    /**
+     * Deja el texto en una forma comparable: sin tildes, en minúsculas y con los
+     * espacios colapsados (incluido el espacio duro U+00A0 de Excel).
+     */
+    private function comparable(string $texto): string
+    {
+        $t = str_replace("\xC2\xA0", ' ', $texto);
+        $t = mb_strtolower(trim($t), 'UTF-8');
+        $t = strtr($t, [
+            'á' => 'a', 'é' => 'e', 'í' => 'i', 'ó' => 'o', 'ú' => 'u',
+            'ü' => 'u', 'ñ' => 'n', 'à' => 'a', 'è' => 'e', 'ì' => 'i',
+            'ò' => 'o', 'ù' => 'u',
+        ]);
+
+        return trim(preg_replace('/\s+/u', ' ', $t));
+    }
+
+    /**
+     * Error con una pista: decir solo "no encontrado" sobre una descripción de
+     * 80 caracteres no le sirve de nada a quien está cargando el Excel.
+     */
+    private function mensajeNoEncontrado(string $referencia): string
+    {
+        $base = "Producto/SKU '{$referencia}' no encontrado.";
+
+        // Buscar el parecido cuesta O(catálogo) por fila fallida; con muchos
+        // errores no vale la pena seguir sugiriendo.
+        if (count($this->errores) >= 20) {
+            return $base;
+        }
+
+        $buscado = $this->comparable($referencia);
+        $mejor = null;
+        $mejorPuntaje = 0.0;
+
+        foreach ($this->indice() as $clave => $producto) {
+            similar_text($buscado, $clave, $porcentaje);
+            if ($porcentaje > $mejorPuntaje) {
+                $mejorPuntaje = $porcentaje;
+                $mejor = $producto;
+            }
+        }
+
+        if ($mejor && $mejorPuntaje >= 60) {
+            return $base." ¿Querías decir «{$mejor->referencia}»?";
+        }
+
+        return $base;
     }
 
     private function normalizar(array $row): array
