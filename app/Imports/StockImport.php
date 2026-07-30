@@ -2,6 +2,7 @@
 
 namespace App\Imports;
 
+use App\Models\Cliente;
 use App\Models\MovimientoStock;
 use App\Models\Producto;
 use App\Models\StockProducto;
@@ -96,9 +97,13 @@ class StockImport implements ToCollection, WithHeadingRow, WithCustomCsvSettings
             $varianteId = null;
         }
 
+        [$clienteId, $sucursalId] = $this->resolverDestino($r);
+
         $stock = StockProducto::firstOrNew([
             'producto_id'          => $producto->id,
             'variante_producto_id' => $varianteId,
+            'cliente_id'           => $clienteId,
+            'sucursal_id'          => $sucursalId,
         ]);
 
         $stockAnterior = (int) ($stock->cantidad_disponible ?? 0);
@@ -110,6 +115,8 @@ class StockImport implements ToCollection, WithHeadingRow, WithCustomCsvSettings
         };
 
         $stock->fill([
+            'cliente_id'          => $clienteId,
+            'sucursal_id'         => $sucursalId,
             'cantidad_disponible' => $stockNuevo,
             'cantidad_reservada'  => $stock->cantidad_reservada ?? 0,
             'stock_minimo'        => $r['stockminimo'] ?? $r['stock_minimo'] ?? $stock->stock_minimo ?? 0,
@@ -123,6 +130,8 @@ class StockImport implements ToCollection, WithHeadingRow, WithCustomCsvSettings
             MovimientoStock::create([
                 'producto_id'          => $producto->id,
                 'variante_producto_id' => $varianteId,
+                'cliente_id'           => $clienteId,
+                'sucursal_id'          => $sucursalId,
                 'tipo_movimiento'      => $diferencia > 0 ? 'entrada' : 'salida',
                 'cantidad'             => abs($diferencia),
                 'stock_anterior'       => $stockAnterior,
@@ -132,6 +141,85 @@ class StockImport implements ToCollection, WithHeadingRow, WithCustomCsvSettings
                 'usuario_id'           => auth()->id() ?? 1,
             ]);
         }
+    }
+
+    /**
+     * A qué bolsa de existencias va la fila: bodega general o la sede de un
+     * cliente (pedido 11 de la reunión).
+     *
+     * Reglas, pensadas para que un Excel a medio llenar falle claro:
+     *   - sin cliente ni sucursal → existencia general, como siempre
+     *   - cliente y sucursal      → esa sede
+     *   - solo cliente            → del cliente, sin sede concreta
+     *   - solo sucursal           → error: los nombres de sede se repiten entre
+     *                               clientes, así que no se puede adivinar
+     *
+     * @return array{0: ?int, 1: ?int}
+     */
+    private function resolverDestino(array $r): array
+    {
+        $cliente = trim((string) ($r['cliente'] ?? ''));
+        $sucursal = trim((string) ($r['sucursal'] ?? $r['sede'] ?? ''));
+
+        if ($cliente === '' && $sucursal === '') {
+            return [null, null];
+        }
+
+        if ($cliente === '') {
+            throw new \RuntimeException("Se indicó la sede '{$sucursal}' pero no el cliente; sin el cliente no se sabe de qué sede se trata.");
+        }
+
+        $modelo = $this->buscarCliente($cliente);
+        if (! $modelo) {
+            throw new \RuntimeException("Cliente '{$cliente}' no encontrado.");
+        }
+
+        if ($sucursal === '') {
+            return [$modelo->id, null];
+        }
+
+        $clave = $this->comparable($sucursal);
+        $sede = $modelo->sucursales->first(
+            fn ($s) => $this->comparable((string) $s->nombre) === $clave
+                || $this->comparable((string) $s->ciudad) === $clave
+        );
+
+        if (! $sede) {
+            $disponibles = $modelo->sucursales->pluck('nombre')->implode(', ');
+
+            throw new \RuntimeException(
+                "El cliente '{$modelo->nombre_contacto}' no tiene la sede '{$sucursal}'."
+                .($disponibles !== '' ? " Tiene: {$disponibles}." : ' No tiene ninguna sede registrada.')
+            );
+        }
+
+        return [$modelo->id, $sede->id];
+    }
+
+    /**
+     * Cliente por empresa, contacto o NIT, con la misma tolerancia que las
+     * referencias (mayúsculas, tildes y espacios).
+     *
+     * @var array<string,Cliente>|null
+     */
+    private ?array $indiceClientes = null;
+
+    private function buscarCliente(string $texto): ?Cliente
+    {
+        if ($this->indiceClientes === null) {
+            $this->indiceClientes = [];
+
+            foreach (Cliente::with('sucursales')->get() as $c) {
+                foreach ([$c->nombre_empresa, $c->nombre_contacto, $c->numero_identificacion] as $campo) {
+                    $clave = $this->comparable((string) $campo);
+                    if ($clave !== '' && ! isset($this->indiceClientes[$clave])) {
+                        $this->indiceClientes[$clave] = $c;
+                    }
+                }
+            }
+        }
+
+        return $this->indiceClientes[$this->comparable($texto)] ?? null;
     }
 
     /**

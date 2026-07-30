@@ -36,6 +36,8 @@ class PlantillaStockHoja implements FromArray, WithHeadings, WithStyles, WithCol
             'stock_minimo',
             'stock_maximo',
             'ubicacion',
+            'cliente',
+            'sucursal',
         ];
     }
 
@@ -70,13 +72,15 @@ class PlantillaStockHoja implements FromArray, WithHeadings, WithStyles, WithCol
             'D' => 14, // stock_minimo
             'E' => 14, // stock_maximo
             'F' => 22, // ubicacion
+            'G' => 26, // cliente
+            'H' => 22, // sucursal
         ];
     }
 
     public function styles(Worksheet $sheet)
     {
         // Encabezado general
-        $sheet->getStyle('A1:F1')->applyFromArray([
+        $sheet->getStyle('A1:H1')->applyFromArray([
             'font' => [
                 'bold'  => true,
                 'color' => ['rgb' => 'FFFFFF'],
@@ -106,7 +110,7 @@ class PlantillaStockHoja implements FromArray, WithHeadings, WithStyles, WithCol
         $sheet->getRowDimension(1)->setRowHeight(28);
 
         $highestRow = max(2, $sheet->getHighestRow());
-        $sheet->getStyle("A2:F{$highestRow}")->applyFromArray([
+        $sheet->getStyle("A2:H{$highestRow}")->applyFromArray([
             'borders' => [
                 'allBorders' => [
                     'borderStyle' => Border::BORDER_THIN,
@@ -135,13 +139,16 @@ class PlantillaStockInstrucciones implements FromArray, WithHeadings, WithStyles
             ['stock_minimo', 'No', 'Umbral para la alerta de stock bajo.'],
             ['stock_maximo', 'No', 'Capacidad máxima de referencia.'],
             ['ubicacion',    'No', 'Ubicación física (bodega, estante, etc).'],
+            ['cliente',      'No', 'Empresa, contacto o NIT del cliente. Déjalo vacío para cargar existencia general de bodega.'],
+            ['sucursal',     'No', 'Sede del cliente (su nombre o su ciudad). Requiere que también venga "cliente".'],
             ['',             '',   ''],
             ['Notas',        '',   'Encabezados en la fila 1, exactamente como en la hoja "Stock". Una fila por referencia. La hoja "Stock" viene vacía: escribe tus filas a partir de la fila 2.'],
-            ['',             '',   'En "referencia" puedes pegar la referencia del producto o su nombre. No importan las mayúsculas, las tildes ni los espacios de más.'],
+            ['',             '',   'En "referencia" puedes pegar la referencia del producto o su nombre. No importan las mayúsculas, las tildes ni los espacios de más. Lo mismo vale para "cliente" y "sucursal".'],
+            ['',             '',   'Sin cliente ni sucursal la cantidad va a la bodega general. Con los dos, va a esa sede. Con solo el cliente, queda a su nombre sin sede concreta.'],
             ['',             '',   ''],
-            ['Ejemplos',     '',   'referencia | cantidad | modo | stock_minimo | stock_maximo | ubicacion'],
-            ['',             '',   'SKU-001 | 25 | set | 5 | 100 | Bodega A'],
-            ['',             '',   'REF-001 | 10 | sumar | 2 | | Estante 3'],
+            ['Ejemplos',     '',   'referencia | cantidad | modo | stock_minimo | stock_maximo | ubicacion | cliente | sucursal'],
+            ['',             '',   'SKU-001 | 25 | set | 5 | 100 | Bodega A | | (existencia general)'],
+            ['',             '',   'REF-001 | 10 | sumar | 2 | | Estante 3 | Comercial Andina | Sede Cali'],
         ];
     }
 
@@ -180,7 +187,8 @@ class PlantillaStockInstrucciones implements FromArray, WithHeadings, WithStyles
             'font' => ['color' => ['rgb' => 'C00000'], 'bold' => true],
         ]);
 
-        $sheet->getStyle('A1:C9')->applyFromArray([
+        // Hasta la 20: las notas y ejemplos crecieron con cliente/sucursal.
+        $sheet->getStyle('A1:C20')->applyFromArray([
             'alignment' => ['wrapText' => true, 'vertical' => Alignment::VERTICAL_TOP],
         ]);
 
