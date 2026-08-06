@@ -140,6 +140,13 @@ Route::get('ajax/ciudades', [CiudadController::class,'byDepartamento'])
         ->name('clientes.sucursales.stock');
     Route::post('clientes/{cliente}/sucursales/{sucursal}/stock', [App\Http\Controllers\ClienteSucursalController::class, 'guardarStock'])
         ->name('clientes.sucursales.stock.guardar');
+    // Cargar una remisión entera desde la propia sede. El módulo de stock
+    // general se ocultó del menú a petición de Innpro, así que su importador
+    // quedaba sin forma de llegar: esta es la puerta que sí se usa.
+    Route::post('clientes/{cliente}/sucursales/{sucursal}/stock/importar', [App\Http\Controllers\ClienteSucursalController::class, 'importarStock'])
+        ->name('clientes.sucursales.stock.importar');
+    Route::get('clientes/{cliente}/sucursales/{sucursal}/stock/plantilla', [App\Http\Controllers\ClienteSucursalController::class, 'plantillaStock'])
+        ->name('clientes.sucursales.stock.plantilla');
     Route::delete('clientes/{cliente}/sucursales/{sucursal}', [App\Http\Controllers\ClienteSucursalController::class, 'eliminar'])
         ->name('clientes.sucursales.eliminar');
 

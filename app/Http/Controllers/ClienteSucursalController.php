@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use App\Exports\PlantillaStockExport;
+use App\Imports\StockImport;
 use App\Models\Cliente;
 use App\Models\ClienteSucursal;
 use App\Models\MovimientoStock;
@@ -9,6 +11,8 @@ use App\Models\Producto;
 use App\Models\StockProducto;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Str;
+use Maatwebsite\Excel\Facades\Excel;
 
 /**
  * Sedes/proyectos de un cliente (pedido 9 de la reunión del 29 de julio).
@@ -98,6 +102,54 @@ class ClienteSucursalController extends Controller
         $productos = Producto::activos()->orderBy('nombre')->get(['id', 'referencia', 'nombre']);
 
         return view('clientes.sucursal_stock', compact('cliente', 'sucursal', 'existencias', 'movimientos', 'productos'));
+    }
+
+    /**
+     * Carga una remisión entera desde la propia sede.
+     *
+     * El importador ya aceptaba columnas de cliente y sucursal, pero vivía en
+     * el módulo de stock general, que Innpro pidió ocultar del menú: la función
+     * existía y no había cómo llegar a ella. Aquí, además, la sede la pone la
+     * pantalla, así que el Excel solo necesita referencia y cantidad.
+     */
+    public function importarStock(Request $request, Cliente $cliente, ClienteSucursal $sucursal)
+    {
+        $this->autorizar($cliente);
+        abort_if($sucursal->cliente_id !== $cliente->id, 404);
+
+        $request->validate([
+            'archivo' => ['required', 'file', 'mimes:xlsx,xls,csv,txt', 'max:10240'],
+        ], [
+            'archivo.required' => 'Elige el archivo de la remisión.',
+            'archivo.mimes' => 'El archivo debe ser Excel (.xlsx, .xls) o CSV.',
+        ]);
+
+        // Se pasa el UploadedFile tal cual: con `getRealPath()` llega sin
+        // extensión y Maatwebsite no sabe qué lector usar.
+        $import = new StockImport($sucursal);
+        Excel::import($import, $request->file('archivo'));
+
+        $mensaje = "Remisión cargada en {$sucursal->nombre}: {$import->exito} línea(s).";
+
+        if ($import->fallo > 0) {
+            $detalle = collect($import->errores)
+                ->take(5)
+                ->map(fn ($e) => is_array($e) ? 'Fila '.($e['fila'] ?? '?').': '.($e['mensaje'] ?? '') : (string) $e)
+                ->implode(' · ');
+
+            return back()->with('error', $mensaje." Con problemas: {$import->fallo}. {$detalle}");
+        }
+
+        return back()->with('success', $mensaje);
+    }
+
+    /** La plantilla del importador, con las instrucciones. */
+    public function plantillaStock(Cliente $cliente, ClienteSucursal $sucursal)
+    {
+        $this->autorizar($cliente);
+        abort_if($sucursal->cliente_id !== $cliente->id, 404);
+
+        return Excel::download(new PlantillaStockExport(), 'remision-'.Str::slug($sucursal->nombre).'.xlsx');
     }
 
     /**

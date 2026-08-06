@@ -12,6 +12,15 @@
       </div>
     @endif
 
+    {{-- Los problemas de una importación se cuentan fila por fila, así que no
+         pueden salir por el mismo canal que un guardado correcto. --}}
+    @if(session('error'))
+      <div class="alert alert-danger alert-dismissible fade show" role="alert">
+        {{ session('error') }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+      </div>
+    @endif
+
     @if($errors->any())
       <div class="alert alert-danger">
         <ul class="mb-0">
@@ -31,6 +40,35 @@
       <a href="{{ route('clientes.sucursales', $cliente->id) }}" class="btn btn-outline-secondary btn-sm">
         <i class="bi bi-arrow-left"></i> Sedes
       </a>
+    </div>
+
+    {{-- Cargar la remisión de golpe. Registrar equipo por equipo sirve para un
+         ajuste suelto, pero una remisión trae veinte líneas y nadie las teclea. --}}
+    <div class="card shadow mb-4">
+      <div class="card-body">
+        <h6 class="mb-1">Cargar una remisión desde Excel</h6>
+        <p class="text-muted small mb-3">
+          Descarga la plantilla, escribe la <strong>referencia</strong> y la <strong>cantidad</strong> de cada equipo,
+          y súbela. <strong>No hace falta llenar las columnas de cliente y sucursal</strong>: todo lo que subas aquí
+          entra en <strong>{{ $sucursal->nombre }}</strong>.
+        </p>
+
+        <form method="POST" action="{{ route('clientes.sucursales.stock.importar', [$cliente->id, $sucursal->id]) }}"
+              enctype="multipart/form-data" class="row g-2 align-items-center">
+          @csrf
+          <div class="col-md-4">
+            <a class="btn btn-outline-success w-100" href="{{ route('clientes.sucursales.stock.plantilla', [$cliente->id, $sucursal->id]) }}">
+              <i class="bi bi-file-earmark-excel"></i> Descargar plantilla
+            </a>
+          </div>
+          <div class="col-md-6">
+            <input type="file" name="archivo" class="form-control" accept=".xlsx,.xls,.csv" required>
+          </div>
+          <div class="col-md-2">
+            <button class="btn btn-primary w-100"><i class="bi bi-upload"></i> Cargar</button>
+          </div>
+        </form>
+      </div>
     </div>
 
     <div class="card shadow mb-4">

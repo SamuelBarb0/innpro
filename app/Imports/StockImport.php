@@ -3,6 +3,7 @@
 namespace App\Imports;
 
 use App\Models\Cliente;
+use App\Models\ClienteSucursal;
 use App\Models\MovimientoStock;
 use App\Models\Producto;
 use App\Models\StockProducto;
@@ -30,6 +31,19 @@ class StockImport implements ToCollection, WithHeadingRow, WithCustomCsvSettings
     public int $exito = 0;
     public int $fallo = 0;
     public array $errores = [];
+
+    /**
+     * Sede a la que va TODO el archivo, cuando la carga se hace desde la
+     * pantalla de esa sede.
+     *
+     * Quien tiene la remisión en la mano ya está mirando la obra: obligarle a
+     * repetir cliente y sede en cada fila es pedirle un dato que la pantalla ya
+     * sabe, y es una fuente de errores más. Con esto el Excel solo necesita
+     * referencia y cantidad.
+     */
+    public function __construct(private ?ClienteSucursal $sedeFija = null)
+    {
+    }
 
     public function getCsvSettings(): array
     {
@@ -166,6 +180,39 @@ class StockImport implements ToCollection, WithHeadingRow, WithCustomCsvSettings
         $cliente = trim((string) ($r['cliente'] ?? ''));
         $sucursal = trim((string) ($r['sucursal'] ?? $r['sede'] ?? ''));
 
+        if ($this->sedeFija) {
+            // Sin columnas: todo va a la sede desde la que se subió el archivo.
+            if ($cliente === '' && $sucursal === '') {
+                return [$this->sedeFija->cliente_id, $this->sedeFija->id];
+            }
+
+            // Con columnas: se resuelven igual que siempre, pero si apuntan a
+            // otro sitio se rechaza en vez de obedecerlas. Subir una remisión
+            // desde «Obra Popayán» y que la mitad acabe en Cali porque el Excel
+            // traía otra cosa escrita es el error caro de este módulo, y sería
+            // invisible: las cantidades cuadran, solo están en la sede que no es.
+            [$idCliente, $idSede] = $this->resolverPorColumnas($cliente, $sucursal);
+
+            if ($idCliente !== $this->sedeFija->cliente_id || $idSede !== $this->sedeFija->id) {
+                throw new \RuntimeException(
+                    "Esta carga es para la sede '{$this->sedeFija->nombre}', pero la fila apunta a otra. "
+                    .'Deja las columnas cliente y sucursal vacías, o sube el archivo desde la sede que corresponde.'
+                );
+            }
+
+            return [$idCliente, $idSede];
+        }
+
+        return $this->resolverPorColumnas($cliente, $sucursal);
+    }
+
+    /**
+     * Resuelve el destino a partir de lo escrito en las columnas.
+     *
+     * @return array{0: ?int, 1: ?int}
+     */
+    private function resolverPorColumnas(string $cliente, string $sucursal): array
+    {
         if ($cliente === '' && $sucursal === '') {
             return [null, null];
         }
