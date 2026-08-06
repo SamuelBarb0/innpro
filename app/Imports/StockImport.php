@@ -6,6 +6,7 @@ use App\Models\Cliente;
 use App\Models\MovimientoStock;
 use App\Models\Producto;
 use App\Models\StockProducto;
+use App\Models\User;
 use App\Models\VarianteProducto;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Log;
@@ -138,7 +139,11 @@ class StockImport implements ToCollection, WithHeadingRow, WithCustomCsvSettings
                 'stock_nuevo'          => $stockNuevo,
                 'origen'               => 'otro',
                 'motivo'               => 'Importación desde Excel (modo: ' . $modo . ')',
-                'usuario_id'           => auth()->id() ?? 1,
+                // `usuario_id` es NOT NULL con clave foránea, así que hace falta
+                // un respaldo. Era un `1` fijo, que revienta con un error de
+                // base de datos —disfrazado de "fila con problema"— en cuanto
+                // el usuario 1 no existe: basta con haberlo borrado alguna vez.
+                'usuario_id'           => auth()->id() ?? User::query()->min('id'),
             ]);
         }
     }

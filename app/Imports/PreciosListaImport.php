@@ -113,7 +113,17 @@ class PreciosListaImport implements ToCollection, WithHeadingRow, WithCustomCsvS
      */
     private function aNumero(mixed $valor): ?float
     {
-        if (is_numeric($valor)) {
+        // Solo los tipos numéricos de verdad se aceptan tal cual: son los que
+        // vienen de una celda con formato de número, donde Excel ya resolvió el
+        // separador y no hay nada que interpretar.
+        //
+        // OJO con `is_numeric()` sobre CADENAS, que es lo que había aquí:
+        // `is_numeric('345.600')` devuelve true, así que un precio de trescientos
+        // cuarenta y cinco mil seiscientos entraba como 345,6 —dividido por mil—
+        // sin pasar por la heurística de abajo y sin avisar. No se había visto
+        // porque los casos probados eran de dos grupos ('1.250.000'), que no son
+        // numéricos y sí llegaban a la heurística.
+        if (is_int($valor) || is_float($valor)) {
             return (float) $valor;
         }
 
