@@ -21,8 +21,21 @@
         <env name="APP_ENV" value="testing"/>
         <env name="BCRYPT_ROUNDS" value="4"/>
         <env name="CACHE_DRIVER" value="array"/>
-        <!-- <env name="DB_CONNECTION" value="sqlite"/> -->
-        <!-- <env name="DB_DATABASE" value=":memory:"/> -->
+        <!--
+            Base de pruebas APARTE. Estaba comentado, y con estas dos líneas
+            fuera `php artisan test` corría contra la base de DESARROLLO: como
+            las pruebas usan RefreshDatabase, cada corrida la reconstruía desde
+            cero y se llevaba por delante los datos locales.
+
+            No se usa sqlite en memoria —que sería lo típico— porque el proyecto
+            tiene SQL propio de MySQL (`->change()` con SQL crudo en varias
+            migraciones y `FIELD()` en algunos ordenamientos) que sqlite no
+            entiende: las pruebas fallarían por el motor, no por el código.
+
+            Crear la base una vez:
+              CREATE DATABASE portfolio_testing CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+        -->
+        <env name="DB_DATABASE" value="portfolio_testing"/>
         <env name="MAIL_MAILER" value="array"/>
         <env name="QUEUE_CONNECTION" value="sync"/>
         <env name="SESSION_DRIVER" value="array"/>

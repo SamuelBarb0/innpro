@@ -27,7 +27,53 @@ use App\Http\Controllers\OrdenServicioController;
 |
 */
 
-Route::redirect('/', '/login'); // 302 por defecto
+/*
+ * Sitio público. La raíz es la cara comercial de Innpro —con el acceso a la
+ * plataforma en «Ingresar»— y cada servicio tiene su propia URL: el diagnóstico
+ * marcó como CRÍTICO que los diez servicios compartieran una sola página,
+ * porque así ninguno puede posicionarse.
+ *
+ * Los slugs llevan la palabra clave y la ciudad, así que van con `where` para
+ * no chocar con las rutas internas de la plataforma.
+ */
+Route::get('/', [App\Http\Controllers\SitioController::class, 'portada'])->name('landing');
+
+Route::get('/servicios/{slug}', [App\Http\Controllers\SitioController::class, 'servicio'])
+    ->where('slug', '[a-z0-9-]+')
+    ->name('sitio.servicio');
+
+Route::get('/noticias/{slug}', [App\Http\Controllers\SitioController::class, 'noticia'])
+    ->where('slug', '[a-z0-9-]+')
+    ->name('sitio.noticia');
+
+// Se sirven desde la app, no como archivos, para que reflejen lo que el cliente
+// publique desde el panel sin tener que regenerarlos a mano.
+Route::get('/sitemap.xml', [App\Http\Controllers\SitioController::class, 'sitemap'])->name('sitio.sitemap');
+Route::get('/robots.txt', [App\Http\Controllers\SitioController::class, 'robots'])->name('sitio.robots');
+
+/*
+ * Panel del sitio. Solo admin —la autorización va en el controlador, como en
+ * el resto de módulos— para que Innpro publique sin depender del proveedor.
+ */
+Route::middleware('auth')->prefix('sitio')->name('sitio.admin.')->group(function () {
+    $c = App\Http\Controllers\SitioAdminController::class;
+
+    Route::get('ajustes', [$c, 'ajustes'])->name('ajustes');
+    Route::post('ajustes', [$c, 'guardarAjustes'])->name('ajustes.guardar');
+
+    Route::get('secciones', [$c, 'secciones'])->name('secciones');
+    Route::post('secciones/{bloque}', [$c, 'guardarSeccion'])->name('secciones.guardar');
+
+    Route::get('paginas', [$c, 'paginas'])->name('paginas');
+    Route::get('paginas/form/{pagina?}', [$c, 'formPagina'])->name('paginas.form');
+    Route::post('paginas/guardar', [$c, 'guardarPagina'])->name('paginas.guardar');
+    Route::post('paginas/{pagina}/toggle-activo', [$c, 'toggleActivoPagina'])->name('paginas.toggle-activo');
+    Route::delete('paginas/{pagina}', [$c, 'eliminarPagina'])->name('paginas.eliminar');
+
+    Route::get('redirecciones', [$c, 'redirecciones'])->name('redirecciones');
+    Route::post('redirecciones/guardar', [$c, 'guardarRedireccion'])->name('redirecciones.guardar');
+    Route::delete('redirecciones/{redireccion}', [$c, 'eliminarRedireccion'])->name('redirecciones.eliminar');
+});
 
 Route::get('/dashboard', [DashboardController::class, 'index'])->middleware(['auth', 'verified'])->name('dashboard');
 Route::get('/dashboard/exportar', [DashboardController::class, 'exportar'])->middleware(['auth', 'verified'])->name('dashboard.exportar');

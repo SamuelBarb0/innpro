@@ -21,6 +21,12 @@ class Kernel extends HttpKernel
         \Illuminate\Foundation\Http\Middleware\ValidatePostSize::class,
         \App\Http\Middleware\TrimStrings::class,
         \Illuminate\Foundation\Http\Middleware\ConvertEmptyStringsToNull::class,
+
+        // Rescata las URLs del WordPress viejo. Va en la pila GLOBAL y no en el
+        // grupo `web` a propósito: cuando ninguna ruta coincide, Laravel lanza
+        // el 404 durante el enrutado, o sea ANTES de que corra el middleware de
+        // grupo — que es justo el caso que hay que atender aquí.
+        \App\Http\Middleware\RedireccionesSitio::class,
     ];
 
     /**

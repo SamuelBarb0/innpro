@@ -58,6 +58,34 @@
                 <i class="bi bi-tags"></i>
                 <span>Listas de precios</span>
             </a>
+            {{-- Sitio web público. Va en un desplegable porque son cuatro
+                 pantallas que solo se tocan juntas, y meterlas sueltas al menú
+                 lo alargaría para algo que se usa de vez en cuando. --}}
+            <a class="nav-link mb-2 d-flex align-items-center gap-2 {{ request()->is('sitio*') ? 'active' : 'text-dark' }}"
+               data-bs-toggle="collapse" href="#menuSitio" role="button"
+               aria-expanded="{{ request()->is('sitio*') ? 'true' : 'false' }}">
+                <i class="bi bi-globe2"></i>
+                <span>Sitio web</span>
+            </a>
+            <div class="collapse {{ request()->is('sitio*') ? 'show' : '' }}" id="menuSitio">
+                <a href="{{ route('sitio.admin.secciones') }}"
+                   class="nav-link mb-1 ms-4 small d-flex align-items-center gap-2 {{ request()->is('sitio/secciones*') ? 'active' : 'text-dark' }}">
+                    <i class="bi bi-layout-text-window"></i><span>Portada</span>
+                </a>
+                <a href="{{ route('sitio.admin.paginas') }}"
+                   class="nav-link mb-1 ms-4 small d-flex align-items-center gap-2 {{ request()->is('sitio/paginas*') ? 'active' : 'text-dark' }}">
+                    <i class="bi bi-file-earmark-text"></i><span>Páginas</span>
+                </a>
+                <a href="{{ route('sitio.admin.ajustes') }}"
+                   class="nav-link mb-1 ms-4 small d-flex align-items-center gap-2 {{ request()->is('sitio/ajustes*') ? 'active' : 'text-dark' }}">
+                    <i class="bi bi-sliders"></i><span>Ajustes y SEO</span>
+                </a>
+                <a href="{{ route('sitio.admin.redirecciones') }}"
+                   class="nav-link mb-2 ms-4 small d-flex align-items-center gap-2 {{ request()->is('sitio/redirecciones*') ? 'active' : 'text-dark' }}">
+                    <i class="bi bi-signpost-split"></i><span>Redirecciones</span>
+                </a>
+            </div>
+
             {{-- Empresa salió del menú principal: es solo el encabezado de la cotización.
                  Se accede desde Inicio, con perfil administrador. --}}
         @endif
