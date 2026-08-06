@@ -50,4 +50,24 @@ class SitioBloque extends Model
 
         return (is_array($valor) || $valor === null || $valor === '') ? $default : $valor;
     }
+
+    /**
+     * Un grupo de campos de `datos` —un botón, por ejemplo, que son texto y
+     * URL juntos—, siempre como array.
+     *
+     * Existe porque `dato()` descarta los arrays a propósito (para no devolver
+     * una lista donde se espera un texto), y usarlo para los botones los hacía
+     * desaparecer sin más: la portada perdió sus dos llamados a la acción y no
+     * se vio hasta mirar la página, porque no hay error que mirar — un `null`
+     * simplemente no pinta nada.
+     *
+     * @return array<string,mixed>
+     */
+    public function grupo(string $clave): array
+    {
+        $valor = $this->datos[$clave] ?? null;
+
+        // Una LISTA (0,1,2…) no es un grupo de campos: eso lo sirve `lista()`.
+        return is_array($valor) && ! array_is_list($valor) ? $valor : [];
+    }
 }

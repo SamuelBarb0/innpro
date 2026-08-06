@@ -102,6 +102,32 @@ class SitioPublicoTest extends TestCase
             ->assertSee('rel="canonical"', false);
     }
 
+    /**
+     * Los llamados a la acción del hero.
+     *
+     * Se perdieron en el paso a base de datos y nadie se enteró: se guardan
+     * como grupo de campos (texto + URL) y el ayudante que los leía descartaba
+     * los arrays, así que devolvía null y la plantilla no pintaba nada. Sin
+     * error, sin log, solo dos botones que dejaron de existir en la página
+     * cuyo trabajo es convertir visitas en contactos.
+     */
+    public function test_la_portada_pinta_los_botones_de_llamada_a_la_accion(): void
+    {
+        $pagina = $this->portada();
+
+        $pagina->bloque('hero')->update(['datos' => [
+            'cta_principal' => ['texto' => 'Ver servicios', 'url' => '#servicios'],
+            'cta_secundario' => ['texto' => 'Contáctenos', 'url' => '#contacto'],
+            'estadisticas' => [['numero' => '13', 'etiqueta' => 'Años']],
+        ]]);
+
+        $this->get('/')
+            ->assertOk()
+            ->assertSee('Ver servicios', false)
+            ->assertSee('Contáctenos', false)
+            ->assertSee('href="#servicios"', false);
+    }
+
     public function test_cada_servicio_tiene_su_propia_url(): void
     {
         $this->portada();

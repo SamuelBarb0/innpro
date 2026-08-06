@@ -27,8 +27,8 @@
       // etiquetas; la segunda mitad se resalta sola.
       $palabras = preg_split('/\s+/', trim($hero?->titulo ?: $pagina->subtitulo), -1, PREG_SPLIT_NO_EMPTY);
       $corte = (int) ceil(count($palabras) / 2);
-      $ctaUno = $hero?->dato('cta_principal');
-      $ctaDos = $hero?->dato('cta_secundario');
+      $ctaUno = $hero?->grupo('cta_principal') ?: [];
+      $ctaDos = $hero?->grupo('cta_secundario') ?: [];
     @endphp
 
     <div>
@@ -47,10 +47,10 @@
       @endif
 
       <div class="hero__cta">
-        @if (is_array($ctaUno) && filled($ctaUno['texto'] ?? null))
+        @if (filled($ctaUno['texto'] ?? null))
           <a href="{{ $ctaUno['url'] ?? '#contacto' }}" class="btn"><span>{{ $ctaUno['texto'] }}</span></a>
         @endif
-        @if (is_array($ctaDos) && filled($ctaDos['texto'] ?? null))
+        @if (filled($ctaDos['texto'] ?? null))
           <a href="{{ $ctaDos['url'] ?? '#contacto' }}" class="btn btn--ghost"><span>{{ $ctaDos['texto'] }}</span></a>
         @endif
       </div>
@@ -133,14 +133,14 @@
 
     @php
       $emp = $pagina->bloque('empresa');
-      $ctaEmp = $emp?->dato('cta');
+      $ctaEmp = $emp?->grupo('cta') ?: [];
     @endphp
 
     <div class="reveal" style="--d:140ms">
       @if ($emp?->antetitulo)<div class="eyebrow">{{ $emp->antetitulo }}</div>@endif
       <h2 class="h-sec">{{ $emp?->titulo }}</h2>
       <p class="lead" style="margin-top:1.6rem">{{ $emp?->texto }}</p>
-      @if (is_array($ctaEmp) && filled($ctaEmp['texto'] ?? null))
+      @if (filled($ctaEmp['texto'] ?? null))
         <div class="hero__cta" style="opacity:1;animation:none;margin-top:2.2rem">
           <a href="{{ $ctaEmp['url'] ?? '#contacto' }}" class="btn"><span>{{ $ctaEmp['texto'] }}</span></a>
         </div>
