@@ -9,6 +9,12 @@
     enlazado desde el menú es lo que le dice a Google que esas páginas importan,
     y la propuesta lo pide explícitamente ("enlazado desde el menú y la página
     de servicios").
+
+    El interruptor de tema aparece dos veces —en el menú y en la barra
+    superior— porque en móvil el menú está detrás de la hamburguesa y el
+    control quedaría escondido justo donde más se usa. Solo se ve uno a la vez;
+    de eso se encarga el CSS. No necesitan sincronizarse entre sí: los dos leen
+    su aspecto del atributo `data-tema` del <html>.
 --}}
 @php
     use App\Support\Sitio;
@@ -19,6 +25,9 @@
         'Instagram' => Sitio::valor('sitio_instagram'),
     ];
 @endphp
+
+{{-- Cuánto falta para el final de la página. --}}
+<div class="prog" id="prog"></div>
 
 <div class="topbar">
   <div class="shell">
@@ -44,6 +53,7 @@
         @endif
       @endforeach
     </span>
+    @include('sitio.partials.tema', ['extra' => 'tema--top'])
   </div>
 </div>
 
@@ -52,7 +62,7 @@
     <a href="{{ ($enPortada ?? false) ? '#top' : url('/') }}" class="nav__logo">
       <img src="{{ asset('images/logo.png') }}" alt="{{ Sitio::nombre() }}">
     </a>
-    <button class="nav__burger" id="burger" aria-label="Menú"><span></span><span></span><span></span></button>
+    <button class="nav__burger" id="burger" aria-label="Menú" aria-expanded="false"><span></span><span></span><span></span></button>
     <nav class="nav__links" id="links">
       <a href="{{ $base }}#empresa">Nuestra Empresa</a>
 
@@ -72,6 +82,7 @@
       <a href="{{ $base }}#experiencia">Experiencia</a>
       <a href="{{ $base }}#contacto">Contáctenos</a>
       <a href="{{ route('login') }}" class="btn"><span>Ingresar</span></a>
+      @include('sitio.partials.tema', ['extra' => 'tema--nav'])
     </nav>
   </div>
 </header>

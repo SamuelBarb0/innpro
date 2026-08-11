@@ -4,8 +4,10 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 @include('sitio.partials.seo', ['pagina' => $pagina])
-<meta name="theme-color" content="#020B3C">
+<meta name="theme-color" content="#eff2f9">
 <link rel="icon" href="{{ asset('images/logo.png') }}">
+
+@include('sitio.partials.tema_head')
 
 <link rel="preconnect" href="https://fonts.bunny.net">
 <link href="https://fonts.bunny.net/css?family=chakra-petch:400,500,600,700|sora:300,400,500,600,700&display=swap" rel="stylesheet">
@@ -88,23 +90,8 @@
 </a>
 @endif
 
-<script>
-/* El menú móvil es el mismo de la portada; sin esto la hamburguesa no abre en
-   las páginas de servicio, que es justo donde llega el tráfico de Google. */
-(function(){
-  var nav = document.getElementById('nav');
-  var burger = document.getElementById('burger');
-  var links = document.getElementById('links');
-
-  window.addEventListener('scroll', function(){
-    nav.classList.toggle('is-stuck', window.scrollY > 40);
-  }, {passive:true});
-
-  burger.addEventListener('click', function(){
-    burger.classList.toggle('open');
-    links.classList.toggle('open');
-  });
-})();
-</script>
+{{-- El mismo comportamiento de la portada. Los bloques que aquí no tienen a
+     quién aplicarse (lente, contadores, tarjetas) se saltan solos. --}}
+@include('sitio.partials.scripts')
 </body>
 </html>

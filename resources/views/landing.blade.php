@@ -4,8 +4,10 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 @include('sitio.partials.seo', ['pagina' => $pagina])
-<meta name="theme-color" content="#020B3C">
+<meta name="theme-color" content="#eff2f9">
 <link rel="icon" href="{{ asset('images/logo.png') }}">
+
+@include('sitio.partials.tema_head')
 
 <link rel="preconnect" href="https://fonts.bunny.net">
 <link href="https://fonts.bunny.net/css?family=chakra-petch:400,500,600,700|sora:300,400,500,600,700&display=swap" rel="stylesheet">
@@ -14,11 +16,52 @@
 </head>
 <body>
 
+@include('sitio.partials.cargador')
+
 <!-- ══════════════ BARRA SUPERIOR ══════════════ -->
 @include('sitio.partials.cabecera', ['servicios' => $servicios, 'enPortada' => true])
 
 <!-- ══════════════ HERO ══════════════ -->
 <section class="hero" id="top">
+
+  {{-- La sala de control, de fondo. El `src` va en data-src a propósito: lo
+       pone el JavaScript solo en escritorio, sin prefers-reduced-motion y sin
+       ahorro de datos. Si estuviera en el src, el móvil se bajaría 1,2 MB de
+       video que ni siquiera va a enseñar. El cartel (80 KB) cubre esos casos
+       y además es lo que se ve mientras el video llega. --}}
+  <video class="hero__video" id="heroVideo"
+         muted loop playsinline preload="none" tabindex="-1" aria-hidden="true"
+         poster="{{ asset('images/hero-poster.jpg') }}"
+         data-src="{{ asset('videos/innpro-hero.mp4') }}"></video>
+  <div class="hero__scrim"></div>
+
+  {{-- Fondo del hero: dos orbes que respiran y un trazado de pistas que se
+       dibuja solo con un pulso viajando por dentro. Todo es SVG y degradados,
+       no hay ni una imagen que descargar. Se esconde en móvil y con
+       prefers-reduced-motion. --}}
+  <span class="orb orb--1"></span>
+  <span class="orb orb--2"></span>
+
+  <svg class="circuit" viewBox="0 0 1440 900" preserveAspectRatio="xMidYMid slice" aria-hidden="true" focusable="false">
+    <path id="t1" style="--len:900;--t:0"   d="M-20 706 H180 L240 646 H420 L470 696 H700"/>
+    <path id="t2" style="--len:800;--t:.5"  d="M1460 178 H1280 L1220 238 H1040 L990 188 H820"/>
+    <path id="t3" style="--len:400;--t:1"   d="M118 920 V800 L178 740 V596"/>
+    <path id="t4" style="--len:450;--t:1.5" d="M1338 920 V762 L1278 702 V556"/>
+
+    <circle r="2.6" style="--t:0">
+      <animateMotion dur="9s" begin="2.2s" repeatCount="indefinite"><mpath href="#t1"/></animateMotion>
+    </circle>
+    <circle r="2.6" style="--t:.5">
+      <animateMotion dur="11s" begin="3s" repeatCount="indefinite"><mpath href="#t2"/></animateMotion>
+    </circle>
+    <circle r="2.2" style="--t:1">
+      <animateMotion dur="7s" begin="3.6s" repeatCount="indefinite"><mpath href="#t3"/></animateMotion>
+    </circle>
+    <circle r="2.2" style="--t:1.5">
+      <animateMotion dur="8s" begin="4.2s" repeatCount="indefinite"><mpath href="#t4"/></animateMotion>
+    </circle>
+  </svg>
+
   <div class="shell">
     @php
       $hero = $pagina->bloque('hero');
@@ -69,6 +112,10 @@
       <div class="lens__ring"></div>
       <div class="lens__ring"></div>
       <div class="lens__ring"></div>
+      {{-- Las marcas de grado van DESPUÉS de los tres anillos a propósito:
+           los anillos se posicionan con :nth-child(1..3) y meter esto antes
+           les correría el índice a todos. --}}
+      <div class="lens__ticks"></div>
       <div class="lens__sweep"></div>
       <div class="lens__cross"><i></i><i></i></div>
       <div class="lens__iris"><span class="lens__glint"></span></div>
@@ -87,6 +134,11 @@
     <div class="reveal">
       @if ($svc?->antetitulo)<div class="eyebrow">{{ $svc->antetitulo }}</div>@endif
       <h2 class="h-sec">{{ $svc?->titulo ?: 'Nuestros servicios' }}</h2>
+      {{-- Párrafo de entrada, opcional. Si el panel lo deja vacío no se pinta
+           y las tarjetas suben, sin dejar un hueco raro. --}}
+      @if ($svc?->texto)
+        <p class="lead" style="margin-top:1.4rem;max-width:64ch">{{ $svc->texto }}</p>
+      @endif
     </div>
 
     <div class="svc">
@@ -98,10 +150,30 @@
           $destino = $tarjeta['url'] ?? '';
         @endphp
         <article class="card bracket reveal" style="--d:{{ 80 + $i * 120 }}ms">
+          {{-- El brillo que sigue al cursor necesita su propio elemento: los
+               pseudoelementos de la tarjeta se los quedan los corchetes. --}}
+          <span class="card__glow"></span>
+          @if (filled($tarjeta['destacado'] ?? null))
+            <span class="card__sello">{{ $tarjeta['destacado'] }}</span>
+          @endif
           <div class="card__n">{{ $tarjeta['numero'] ?? '' }}</div>
           <div class="card__ico">@include('sitio.partials.icono', ['nombre' => $tarjeta['icono'] ?? null, 'indice' => $i])</div>
           <h3>{{ $tarjeta['titulo'] ?? '' }}</h3>
           <p>{{ $tarjeta['texto'] ?? '' }}</p>
+
+          {{-- «Qué incluye». Es lo que convierte una tarjeta de eslogan en una
+               tarjeta que responde de verdad a qué compra el cliente. Se llena
+               desde el panel, una cosa por línea; sin nada escrito, la tarjeta
+               se queda exactamente como estaba. --}}
+          @php $puntos = array_filter((array) ($tarjeta['puntos'] ?? []), 'is_string'); @endphp
+          @if (! empty($puntos))
+            <ul class="card__puntos">
+              @foreach ($puntos as $punto)
+                <li>{{ $punto }}</li>
+              @endforeach
+            </ul>
+          @endif
+
           @if (filled($destino))
             <a class="card__more" href="{{ $destino }}">Ver más →</a>
           @else
@@ -126,7 +198,7 @@
 <!-- ══════════════ EMPRESA ══════════════ -->
 <section class="sect" id="empresa">
   <div class="shell about">
-    <div class="about__art reveal">
+    <div class="about__art reveal reveal--left">
       <span class="pulse"></span><span class="pulse"></span>
       <img src="{{ asset('images/logo.png') }}" alt="Innpro Ingeniería">
     </div>
@@ -136,7 +208,7 @@
       $ctaEmp = $emp?->grupo('cta') ?: [];
     @endphp
 
-    <div class="reveal" style="--d:140ms">
+    <div class="reveal reveal--right" style="--d:140ms">
       @if ($emp?->antetitulo)<div class="eyebrow">{{ $emp->antetitulo }}</div>@endif
       <h2 class="h-sec">{{ $emp?->titulo }}</h2>
       <p class="lead" style="margin-top:1.6rem">{{ $emp?->texto }}</p>
@@ -183,7 +255,7 @@
         <h2 class="h-sec">{{ $exp?->titulo }}</h2>
       </div>
 
-      <div class="reveal" style="--d:140ms">
+      <div class="reveal reveal--right" style="--d:140ms">
         {{-- Los saltos de línea del editor se vuelven párrafos: quien escribe
              no tiene por qué saber HTML para separar dos ideas. --}}
         @foreach (preg_split('/\n\s*\n/', trim((string) $exp?->texto), -1, PREG_SPLIT_NO_EMPTY) as $i => $parrafo)
@@ -256,7 +328,7 @@
       </div>
     </div>
 
-    <div class="cta-band bracket reveal" style="--d:120ms">
+    <div class="cta-band bracket reveal reveal--zoom" style="--d:120ms">
       <h3>¿Ya es cliente de Innpro?</h3>
       <p>Ingrese a la plataforma para consultar cotizaciones y órdenes de servicio.</p>
       <a href="{{ route('login') }}" class="btn"><span>Ingresar a la plataforma</span></a>
@@ -285,73 +357,6 @@
 </a>
 @endif
 
-<script>
-(function(){
-  var reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-
-  /* ---- Nav: sombra al hacer scroll + menú móvil ---- */
-  var nav = document.getElementById('nav');
-  var burger = document.getElementById('burger');
-  var links = document.getElementById('links');
-
-  window.addEventListener('scroll', function(){
-    nav.classList.toggle('is-stuck', window.scrollY > 40);
-  }, {passive:true});
-
-  burger.addEventListener('click', function(){
-    burger.classList.toggle('open');
-    links.classList.toggle('open');
-  });
-  links.addEventListener('click', function(e){
-    if (e.target.closest('a')) { burger.classList.remove('open'); links.classList.remove('open'); }
-  });
-
-  /* ---- Revelado al entrar en pantalla ---- */
-  var io = new IntersectionObserver(function(entries){
-    entries.forEach(function(en){
-      if (en.isIntersecting){ en.target.classList.add('in'); io.unobserve(en.target); }
-    });
-  }, {threshold:.14, rootMargin:'0px 0px -60px 0px'});
-  document.querySelectorAll('.reveal').forEach(function(el){ io.observe(el); });
-
-  /* ---- Contadores: arrancan cuando el bloque es visible ---- */
-  function animarContador(el){
-    var fin = parseInt(el.dataset.count, 10), t0 = null, dur = 1400;
-    if (reduce){ el.textContent = fin; return; }
-    function paso(t){
-      if (!t0) t0 = t;
-      var p = Math.min((t - t0) / dur, 1);
-      el.textContent = Math.round(fin * (1 - Math.pow(1 - p, 3)));
-      if (p < 1) requestAnimationFrame(paso);
-    }
-    requestAnimationFrame(paso);
-  }
-  var ioNum = new IntersectionObserver(function(entries){
-    entries.forEach(function(en){
-      if (en.isIntersecting){ animarContador(en.target); ioNum.unobserve(en.target); }
-    });
-  }, {threshold:.6});
-  document.querySelectorAll('[data-count]').forEach(function(el){ ioNum.observe(el); });
-
-  /* ---- Glow de las tarjetas siguiendo el cursor ---- */
-  document.querySelectorAll('.card').forEach(function(card){
-    card.addEventListener('mousemove', function(e){
-      var r = card.getBoundingClientRect();
-      card.style.setProperty('--mx', ((e.clientX - r.left) / r.width * 100) + '%');
-      card.style.setProperty('--my', ((e.clientY - r.top) / r.height * 100) + '%');
-    });
-  });
-
-  /* ---- Paralaje suave del lente ---- */
-  var lens = document.getElementById('lens');
-  if (lens && !reduce && window.matchMedia('(hover:hover)').matches){
-    window.addEventListener('mousemove', function(e){
-      var x = (e.clientX / window.innerWidth - .5) * 18;
-      var y = (e.clientY / window.innerHeight - .5) * 18;
-      lens.style.transform = 'translate3d(' + x + 'px,' + y + 'px,0)';
-    }, {passive:true});
-  }
-})();
-</script>
+@include('sitio.partials.scripts')
 </body>
 </html>
