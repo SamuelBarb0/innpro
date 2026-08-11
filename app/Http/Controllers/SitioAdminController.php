@@ -6,6 +6,7 @@ use App\Models\Parametros;
 use App\Models\SitioBloque;
 use App\Models\SitioPagina;
 use App\Models\SitioRedireccion;
+use App\Support\PortadaEsquema;
 use App\Support\Sitio;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -203,7 +204,10 @@ class SitioAdminController extends Controller
 
         $portada = SitioPagina::deTipo(SitioPagina::LANDING)->with('bloques')->firstOrFail();
 
-        return view('sitio_admin.secciones', ['portada' => $portada]);
+        return view('sitio_admin.secciones', [
+            'portada' => $portada,
+            'esquema' => PortadaEsquema::bloques(),
+        ]);
     }
 
     public function guardarSeccion(Request $request, SitioBloque $bloque): RedirectResponse
@@ -218,10 +222,84 @@ class SitioAdminController extends Controller
         ]);
 
         $datos['activo'] = $request->boolean('activo');
+        $datos['datos'] = $this->componerDatos($request, $bloque);
 
         $bloque->fill($datos)->save();
 
-        return back()->with('success', 'Sección «'.$bloque->clave.'» actualizada.');
+        return back()->with('success', 'Sección «'.PortadaEsquema::de($bloque->clave)['nombre'].'» actualizada.');
+    }
+
+    /**
+     * Reconstruye la columna `datos` a partir del formulario, siguiendo el
+     * esquema del bloque.
+     *
+     * Se compone desde cero en lugar de mezclar con lo que había, para que
+     * borrar la última tarjeta de una lista signifique de verdad borrarla. Pero
+     * SOLO se tocan las claves declaradas en el esquema: cualquier otra cosa
+     * que alguien haya dejado en el JSON se conserva tal cual, porque este
+     * formulario no sabe qué es y no le corresponde tirarla.
+     */
+    private function componerDatos(Request $request, SitioBloque $bloque): array
+    {
+        $esquema = PortadaEsquema::de($bloque->clave);
+        $datos = $bloque->datos ?? [];
+        $enviado = (array) $request->input('datos', []);
+
+        // ── Grupos (un botón: texto + enlace) ──
+        foreach ($esquema['grupos'] ?? [] as $clave => $_) {
+            $grupo = (array) ($enviado[$clave] ?? []);
+            $texto = trim((string) ($grupo['texto'] ?? ''));
+            $url = trim((string) ($grupo['url'] ?? ''));
+
+            // Un botón sin texto no se pinta, así que se guarda vacío entero:
+            // dejar la URL suelta solo confunde a quien lo revise después.
+            $datos[$clave] = $texto === '' ? [] : ['texto' => $texto, 'url' => $url];
+        }
+
+        // ── Listas (tarjetas, cifras, viñetas) ──
+        foreach ($esquema['listas'] ?? [] as $clave => $lista) {
+            $filas = [];
+
+            foreach ((array) ($enviado[$clave] ?? []) as $fila) {
+                if (! is_array($fila)) {
+                    continue;
+                }
+
+                $limpia = [];
+                foreach ($lista['campos'] as $campo => $def) {
+                    $valor = $fila[$campo] ?? '';
+
+                    if (($def['tipo'] ?? 'text') === 'lineas') {
+                        // Un textarea de «una cosa por línea» se guarda como
+                        // lista. Se descartan las líneas en blanco: si no, un
+                        // salto de más pinta una viñeta vacía en la portada.
+                        $limpia[$campo] = array_values(array_filter(array_map(
+                            'trim',
+                            preg_split('/\r\n|\r|\n/', (string) $valor) ?: []
+                        ), fn ($l) => $l !== ''));
+
+                        continue;
+                    }
+
+                    $limpia[$campo] = trim((string) $valor);
+                }
+
+                // Una fila entera en blanco es una fila que se acaba de añadir
+                // y no se llegó a rellenar. No se guarda.
+                $tieneAlgo = collect($limpia)->contains(fn ($v) => is_array($v) ? $v !== [] : $v !== '');
+                if ($tieneAlgo) {
+                    $filas[] = $limpia;
+                }
+            }
+
+            if (isset($lista['max'])) {
+                $filas = array_slice($filas, 0, (int) $lista['max']);
+            }
+
+            $datos[$clave] = $filas;
+        }
+
+        return $datos;
     }
 
     // ──────────────────────── Redirecciones ────────────────────────

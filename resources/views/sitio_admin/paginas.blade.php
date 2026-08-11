@@ -3,6 +3,7 @@
 
   <div class="container py-4">
     @include('sitio_admin.partials.avisos')
+    @include('sitio_admin.partials.pestanas')
 
     <div class="d-flex justify-content-between align-items-center mb-3">
       <div>

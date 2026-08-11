@@ -3,6 +3,7 @@
 
   <div class="container py-4">
     @include('sitio_admin.partials.avisos')
+    @include('sitio_admin.partials.pestanas')
 
     <div class="alert alert-info">
       Cuando el dominio pase a este sitio, las direcciones del sitio anterior que Google ya tiene guardadas

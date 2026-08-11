@@ -3,6 +3,7 @@
 
   <div class="container py-4">
     @include('sitio_admin.partials.avisos')
+    @include('sitio_admin.partials.pestanas')
 
     <div class="alert alert-info">
       <strong>Estos datos salen en tres sitios a la vez:</strong> en la página, en la ficha que lee Google
