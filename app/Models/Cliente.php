@@ -96,7 +96,9 @@ class Cliente extends Model
             'pais' => null,
             'ciudad' => $datos['ciudad'] ?? null,
             'vendedor_id' => $vendedorId,
-            'lista_precio_id' => self::listaPrecioProspectos(),
+            // Si el vendedor eligió una lista en el alta rápida se respeta; si no,
+            // cae en la estándar de prospectos (pedido 16 de la reunión).
+            'lista_precio_id' => $datos['lista_precio_id'] ?? self::listaPrecioProspectos(),
             'activo' => true,
             'es_temporal' => true,
         ]);

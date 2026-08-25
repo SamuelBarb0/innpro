@@ -6,7 +6,7 @@ use Illuminate\Http\Request;
 use App\Models\EnlaceAcceso;
 use App\Models\Cliente;
 use App\Models\Producto;
-use App\Models\Categoria;
+use App\Models\ListaPrecio;
 use App\Models\SolicitudCotizacion;
 use App\Models\ItemSolicitudCotizacion;
 use Illuminate\Support\Facades\DB;
@@ -18,6 +18,9 @@ use App\Models\User;
 
 class CatalogoController extends Controller
 {
+    /** Productos por página en el cotizador. */
+    private const PRODUCTOS_POR_PAGINA = 24;
+
     /**
      * Flujo A: Acceso por cliente vía link/token
      */
@@ -33,9 +36,8 @@ class CatalogoController extends Controller
         $enlace->registrarAcceso();
         
         $cliente = $enlace->cliente;
-        $categorias = Categoria::activas()->get();
         
-        return view('catalogo.index_cliente', compact('enlace', 'cliente', 'categorias'));
+        return view('catalogo.index_cliente', compact('enlace', 'cliente'));
     }
     
     /**
@@ -47,25 +49,31 @@ class CatalogoController extends Controller
         $this->middleware('auth');
         
         $user = Auth::user();
-        
+
+        // Listas disponibles para el alta rápida de prospectos. La estándar
+        // (parámetro `lista_precio_temporales`) viene preseleccionada, así que
+        // quien no toque nada cotiza igual que antes.
+        $listas          = ListaPrecio::activas()->get(['id', 'nombre']);
+        $listaProspectos = Cliente::listaPrecioProspectos();
+
         // Si es vendedor, mostrar selector de clientes
         if ($user->hasRole('vendedor')) {
             $clientes = Cliente::where('vendedor_id', $user->id)
                               ->activos()
                               ->orderBy('nombre_contacto')
                               ->get();
-                              
-            return view('catalogo.seleccionar_cliente', compact('clientes'));
+
+            return view('catalogo.seleccionar_cliente', compact('clientes', 'listas', 'listaProspectos'));
         }
-        
+
         // Si es admin, puede ver todos los clientes
         if ($user->hasRole('admin')) {
             $clientes = Cliente::activos()
                               ->with('vendedor')
                               ->orderBy('nombre_contacto')
                               ->get();
-                              
-            return view('catalogo.seleccionar_cliente', compact('clientes'));
+
+            return view('catalogo.seleccionar_cliente', compact('clientes', 'listas', 'listaProspectos'));
         }
         
         return redirect()->route('dashboard')->with('error', 'No tiene permisos para acceder al catálogo.');
@@ -94,12 +102,16 @@ class CatalogoController extends Controller
             'telefono' => 'nullable|string|max:100',
             'email' => 'nullable|email|max:255',
             'ciudad' => 'nullable|string|max:255',
+            'lista_precio_id' => 'nullable|exists:listas_precios,id',
         ], [
             'nombre_contacto.required' => 'El nombre del prospecto es obligatorio.',
             'email.email' => 'El correo no tiene un formato válido.',
+            'lista_precio_id.exists' => 'La lista de precios seleccionada ya no existe.',
         ]);
 
-        if (! Cliente::listaPrecioProspectos()) {
+        // Si el vendedor eligió lista, con eso basta; el respaldo solo hace falta
+        // cuando no eligió ninguna.
+        if (empty($datos['lista_precio_id']) && ! Cliente::listaPrecioProspectos()) {
             return redirect()->route('catalogo')
                 ->with('error', 'No hay ninguna lista de precios configurada, así que no se puede cotizar a un prospecto.');
         }
@@ -108,10 +120,9 @@ class CatalogoController extends Controller
 
         // Se entra directo a cotizar: obligar a buscarlo en la lista después de
         // acabar de crearlo sería un paso de más.
-        $categorias = Categoria::activas()->get();
         $enlace = null;
 
-        return view('catalogo.index', compact('cliente', 'categorias', 'enlace'));
+        return view('catalogo.index', compact('cliente', 'enlace'));
     }
 
     /**
@@ -134,10 +145,9 @@ class CatalogoController extends Controller
                            ->with('error', 'No tiene permisos para cotizar a este cliente.');
         }
         
-        $categorias = Categoria::activas()->get();
         $enlace = null; // No hay enlace en el flujo B
         
-        return view('catalogo.index', compact('cliente', 'categorias', 'enlace'));
+        return view('catalogo.index', compact('cliente', 'enlace'));
     }
     
     /**
@@ -145,10 +155,17 @@ class CatalogoController extends Controller
      */
     public function obtenerProductos(Request $request)
     {
+        // La configuración se resuelve ANTES de la consulta: saber qué lista de
+        // precios aplica permite precargarlos de una sola vez en vez de pedirlos
+        // producto por producto.
+        [$listaPrecioId, $mostrarPrecios, $mostrarStock] = $this->configuracionVisualizacion($request);
+
         $query = Producto::activos()
             ->with([
-                'imagenPrincipal', 
-                'categoria',
+                'imagenPrincipal',
+                // obtenerStockProducto() lee `stockPrincipal`, que es una relación
+                // distinta de `stock`. Sin precargarla era una consulta por producto.
+                'stockPrincipal',
                 'stock' => function($q) {
                     $q->select('producto_id', 'variante_producto_id', 'cantidad_disponible', 'cantidad_reservada');
                 },
@@ -159,8 +176,19 @@ class CatalogoController extends Controller
                 }
             ])
             ->select('productos.*'); // Asegurarse de que se incluyan todos los campos, incluyendo unidad_venta
-        
-        // Filtro por categoría
+
+        // Precios de la lista que aplica, precargados. getPrecioPorLista() usa la
+        // relación ya cargada cuando existe, así que esto elimina la otra consulta
+        // por producto.
+        if ($mostrarPrecios && $listaPrecioId) {
+            $query->with(['precios' => function($q) use ($listaPrecioId) {
+                $q->where('lista_precio_id', $listaPrecioId)->where('activo', true);
+            }]);
+        }
+
+        // Filtro por categoría. El cotizador ya no lo ofrece —Innpro no clasifica
+        // por categoría y la lista que se mostraba la creaba sola el importador—,
+        // pero el parámetro se respeta si alguien lo manda a mano.
         if ($request->filled('categoria_id')) {
             $query->where('categoria_id', $request->input('categoria_id'));
         }
@@ -170,34 +198,16 @@ class CatalogoController extends Controller
         if ($busqueda !== '') {
             $query->buscar($busqueda);
         }
-        
-        // Si hay filtro de categoría, paginar de 12 en 12. Si no, mostrar todos.
-        $perPage = $request->filled('categoria_id') ? 12 : 10000;
+
+        // Paginación real y constante. Antes, sin filtro de categoría, se pedían
+        // 10.000 productos de golpe porque buildPagination() en la vista estaba
+        // vacía y no había forma de pasar de página. Con catálogos grandes eso
+        // eran megabytes de JSON y la petición se caía dejando la pantalla en
+        // blanco, sin mensaje.
+        $perPage = (int) $request->input('per_page', self::PRODUCTOS_POR_PAGINA);
+        $perPage = max(12, min($perPage, 96));
         $productos = $query->orderBy('nombre')->paginate($perPage);
-        
-        // Obtener configuración de visualización
-        $listaPrecioId = null;
-        $mostrarPrecios = false;
-        $mostrarStock = false;
-        
-        if ($request->has('cliente_id')) {
-            // Flujo B: Cliente seleccionado por vendedor
-            $cliente = Cliente::find($request->cliente_id);
-            if ($cliente) {
-                $listaPrecioId = $cliente->lista_precio_id;
-                $mostrarPrecios = true; // Siempre mostrar precios en flujo B
-                $mostrarStock = true;   // Siempre mostrar stock en flujo B
-            }
-        } elseif ($request->has('enlace_token')) {
-            // Flujo A: Acceso por token
-            $enlace = EnlaceAcceso::where('token', $request->enlace_token)->first();
-            if ($enlace && $enlace->esValido()) {
-                $listaPrecioId = $enlace->cliente->lista_precio_id;
-                $mostrarPrecios = $enlace->mostrar_precios;
-                $mostrarStock = $enlace->mostrar_stock;
-            }
-        }
-        
+
         // Agregar precios y stock a los productos
         foreach ($productos as $producto) {
             // Agregar precios
@@ -226,6 +236,35 @@ class CatalogoController extends Controller
     }
     
     /**
+     * Quién está mirando el catálogo y qué puede ver.
+     *
+     * Flujo B (vendedor/admin cotizando a un cliente o prospecto): precios y
+     * stock siempre visibles. Flujo A (enlace por token): lo que diga el enlace.
+     *
+     * @return array{0:?int,1:bool,2:bool}  [listaPrecioId, mostrarPrecios, mostrarStock]
+     */
+    private function configuracionVisualizacion(Request $request): array
+    {
+        if ($request->filled('cliente_id')) {
+            $cliente = Cliente::find($request->input('cliente_id'));
+            if ($cliente) {
+                return [$cliente->lista_precio_id, true, true];
+            }
+        } elseif ($request->filled('enlace_token')) {
+            $enlace = EnlaceAcceso::where('token', $request->input('enlace_token'))->first();
+            if ($enlace && $enlace->esValido()) {
+                return [
+                    $enlace->cliente->lista_precio_id,
+                    (bool) $enlace->mostrar_precios,
+                    (bool) $enlace->mostrar_stock,
+                ];
+            }
+        }
+
+        return [null, false, false];
+    }
+
+    /**
      * Obtener detalle de producto con variantes (AJAX)
      */
     public function detalleProducto(Request $request, Producto $producto)
@@ -243,26 +282,8 @@ class CatalogoController extends Controller
         ]);
         
         // Obtener configuración según el contexto
-        $listaPrecioId = null;
-        $mostrarPrecios = false;
-        $mostrarStock = false;
-        
-        if ($request->has('cliente_id')) {
-            $cliente = Cliente::find($request->cliente_id);
-            if ($cliente) {
-                $listaPrecioId = $cliente->lista_precio_id;
-                $mostrarPrecios = true;
-                $mostrarStock = true;
-            }
-        } elseif ($request->has('enlace_token')) {
-            $enlace = EnlaceAcceso::where('token', $request->enlace_token)->first();
-            if ($enlace && $enlace->esValido()) {
-                $listaPrecioId = $enlace->cliente->lista_precio_id;
-                $mostrarPrecios = $enlace->mostrar_precios;
-                $mostrarStock = $enlace->mostrar_stock;
-            }
-        }
-        
+        [$listaPrecioId, $mostrarPrecios, $mostrarStock] = $this->configuracionVisualizacion($request);
+
         // Agregar precios y stock
         if ($mostrarPrecios && $listaPrecioId) {
             $producto->precio = $producto->getPrecioPorLista($listaPrecioId);

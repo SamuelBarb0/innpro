@@ -17,6 +17,7 @@
             <table id="clientes-table" class="table-responsive w-full text-sm text-left">
               <thead class="text-xs uppercase bg-gray-100">
                 <tr>
+                  <th class="noVis"><input type="checkbox" class="lote-todas" title="Seleccionar los de esta página"></th>
                   <th>Acciones</th>
                   <th>NIT/CC</th>
                   <th>Contacto</th>
@@ -38,6 +39,7 @@
     </div>
 
     @push('scripts')
+  <script src="{{ asset('js/acciones-lote.js') }}"></script>
     <script>
     document.addEventListener('DOMContentLoaded', () => {
       const table = $('#clientes-table').DataTable({
@@ -47,6 +49,7 @@
         scrollX: true,
         ajax: "{{ route('clientes') }}",
         columns: [
+          { data:'seleccion',             orderable:false, searchable:false, className:'noVis text-center' },
           { data:'action',                orderable:false, searchable:false },
           { data:'numero_identificacion', name:'numero_identificacion' },
           { data:'nombre_contacto',       name:'nombre_contacto' },
@@ -73,6 +76,19 @@
         lengthMenu: [[10,25,50,-1],[10,25,50,'Todos']]
       });
 
+      AccionesEnLote({
+        tabla: table,
+        selector: '#clientes-table',
+        url: "{{ route('clientes.lote') }}",
+        urlIds: "{{ route('clientes') }}",
+        etiqueta: { singular:'cliente', plural:'clientes' },
+        acciones: [
+          { clave:'activar',    texto:'Activar',    clase:'btn-outline-success' },
+          { clave:'desactivar', texto:'Desactivar', clase:'btn-outline-warning' },
+          { clave:'eliminar',   texto:'Eliminar',   clase:'btn-outline-danger', destructiva:true },
+        ],
+      });
+
       table.on('buttons-action', () => {
         setTimeout(() => {
           $('.dt-button-collection')
@@ -84,6 +100,7 @@
         }, 50);
       });
     });
+
     </script>
     @endpush
 </x-app-layout>

@@ -30,6 +30,7 @@
           <table id="enlaces-table" class="table-responsive w-full text-sm text-left">
             <thead class="text-xs uppercase bg-gray-100">
               <tr>
+                <th class="noVis"><input type="checkbox" class="lote-todas" title="Seleccionar los de esta página"></th>
                 <th>Acciones</th>
                 <th>Cliente</th>
                 <th>Estado</th>
@@ -51,6 +52,7 @@
   </div>
 
   @push('scripts')
+  <script src="{{ asset('js/acciones-lote.js') }}"></script>
   <script>
   document.addEventListener('DOMContentLoaded', () => {
     const table = $('#enlaces-table').DataTable({
@@ -60,6 +62,7 @@
       scrollX: true,
       ajax: "{{ route('enlaces') }}",
       columns: [
+        { data:'seleccion', orderable:false, searchable:false, className:'noVis text-center' },
         { data:'action', orderable:false, searchable:false },
         { data:'cliente_nombre', name:'cliente_nombre' },
         { data:'estado', orderable:false, searchable:false },
@@ -86,6 +89,18 @@
       ],
       language: { url: '{{ asset("js/datatables/es-ES.json") }}' },
       lengthMenu: [[10,25,50,-1],[10,25,50,'Todos']]
+    });
+
+    AccionesEnLote({
+      tabla: table,
+      selector: '#enlaces-table',
+      url: "{{ route('enlaces.lote') }}",
+      urlIds: "{{ route('enlaces') }}",
+      etiqueta: { singular:'enlace', plural:'enlaces' },
+      acciones: [
+        { clave:'activar',    texto:'Activar',    clase:'btn-outline-success' },
+        { clave:'desactivar', texto:'Desactivar', clase:'btn-outline-warning' },
+      ],
     });
 
     table.on('buttons-action', () => {

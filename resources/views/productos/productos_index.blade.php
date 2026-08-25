@@ -25,6 +25,7 @@
           <table id="productos-table" class="table-responsive w-full text-sm text-left">
             <thead class="text-xs uppercase bg-gray-100">
               <tr>
+                <th class="noVis"><input type="checkbox" class="lote-todas" title="Seleccionar los de esta página"></th>
                 <th>Acciones</th>
                 <th>Imagen</th>
                 <th>Referencia</th>
@@ -44,6 +45,7 @@
   </div>
 
   @push('scripts')
+  <script src="{{ asset('js/acciones-lote.js') }}"></script>
   <script>
   document.addEventListener('DOMContentLoaded', () => {
     const table = $('#productos-table').DataTable({
@@ -53,6 +55,7 @@
       scrollX: true,
       ajax: "{{ route('productos') }}",
       columns: [
+        { data:'seleccion',    orderable:false, searchable:false, className:'noVis text-center' },
         { data:'action',       orderable:false, searchable:false },
         { data:'imagen',       orderable:false, searchable:false },
         { data:'referencia',   name:'referencia' },
@@ -86,6 +89,19 @@
       ],
       language: { url: '{{ asset("js/datatables/es-ES.json") }}' },
       lengthMenu: [[10,25,50,-1],[10,25,50,'Todos']]
+    });
+
+    AccionesEnLote({
+      tabla: table,
+      selector: '#productos-table',
+      url: "{{ route('productos.lote') }}",
+      urlIds: "{{ route('productos') }}",
+      etiqueta: { singular:'producto', plural:'productos' },
+      acciones: [
+        { clave:'activar',    texto:'Activar',    clase:'btn-outline-success' },
+        { clave:'desactivar', texto:'Desactivar', clase:'btn-outline-warning' },
+        { clave:'eliminar',   texto:'Eliminar',   clase:'btn-outline-danger', destructiva:true },
+      ],
     });
 
     table.on('buttons-action', () => {

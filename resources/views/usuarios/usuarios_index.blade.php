@@ -22,6 +22,7 @@
                         <table id="users-table" class="table-responsive w-full text-sm text-left text-gray-700">
                             <thead class="text-xs text-gray-700 uppercase bg-gray-100">
                                 <tr class="border-b border-gray-300">
+                                    <th class="px-6 py-3 noVis"><input type="checkbox" class="lote-todas" title="Seleccionar los de esta página"></th>
                                     <th class="px-6 py-3" data-priority="1">Acciones</th>
                                     <th class="px-6 py-3">Nombre</th>
                                     <th class="px-6 py-3">Email</th>
@@ -40,6 +41,7 @@
     </div>
 
 @push('scripts')
+  <script src="{{ asset('js/acciones-lote.js') }}"></script>
 <script>
 document.addEventListener('DOMContentLoaded', function () {
     const table = $('#users-table').DataTable({
@@ -50,6 +52,7 @@ document.addEventListener('DOMContentLoaded', function () {
         autoWidth: false,
         ajax: "{{ route('usuarios') }}",
         columns: [
+            { data:'seleccion', orderable:false, searchable:false, className:'noVis text-center' },
             {
                 data: 'action',
                 name: 'action',
@@ -102,6 +105,19 @@ document.addEventListener('DOMContentLoaded', function () {
             }
         },
         lengthMenu: [[10, 25, 50, -1], [10, 25, 50, "Todos"]]
+    });
+
+    AccionesEnLote({
+      tabla: table,
+      selector: '#users-table',
+      url: "{{ route('usuarios.lote') }}",
+      urlIds: "{{ route('usuarios') }}",
+      etiqueta: { singular:'usuario', plural:'usuarios' },
+      acciones: [
+        { clave:'activar',    texto:'Activar',    clase:'btn-outline-success' },
+        { clave:'desactivar', texto:'Desactivar', clase:'btn-outline-warning' },
+        { clave:'eliminar',   texto:'Eliminar',   clase:'btn-outline-danger', destructiva:true },
+      ],
     });
 
     table.on('buttons-action', function () {

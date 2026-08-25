@@ -140,14 +140,28 @@
         <div class="modal-body">
           <p class="text-muted small">
             Para cotizarle a alguien que todavía no es cliente. Se crea marcado como
-            <strong>prospecto</strong> y cotiza con la lista de precios estándar; cuando se
-            concrete, se completan sus datos desde Clientes.
+            <strong>prospecto</strong>; cuando se concrete, se completan sus datos desde Clientes.
           </p>
 
           <div class="mb-3">
             <label class="form-label">Nombre del contacto <span class="text-danger">*</span></label>
             <input type="text" name="nombre_contacto" class="form-control" required maxlength="255"
                    value="{{ old('nombre_contacto') }}" autofocus>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label">Lista de precios</label>
+            <select name="lista_precio_id" class="form-select">
+              @foreach($listas as $lista)
+                <option value="{{ $lista->id }}"
+                  @selected(old('lista_precio_id', $listaProspectos) == $lista->id)>
+                  {{ $lista->nombre }}@if($lista->id == $listaProspectos) (estándar){{-- --}}@endif
+                </option>
+              @endforeach
+            </select>
+            <div class="form-text">
+              Viene con la lista estándar de prospectos. Cámbiala solo si a este le cotizas con otra tarifa.
+            </div>
           </div>
           <div class="mb-3">
             <label class="form-label">Empresa</label>

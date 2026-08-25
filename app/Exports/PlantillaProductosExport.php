@@ -46,7 +46,7 @@ class PlantillaProductosHoja implements FromArray, WithHeadings, WithStyles, Wit
     public function headings(): array
     {
         return array_merge(
-            ['referencia', 'nombre', 'descripcion', 'unidad_venta', 'unidad_empaque', 'peso_paca', 'cubicaje_paca', 'unidades_por_paca', 'codigo_barras', 'categoria', 'color_o_motivo'],
+            ['referencia', 'nombre', 'descripcion', 'unidad_venta', 'unidad_empaque', 'peso_paca', 'cubicaje_paca', 'unidades_por_paca', 'codigo_barras', 'color_o_motivo'],
             $this->codigosListas
         );
     }
@@ -63,10 +63,10 @@ class PlantillaProductosHoja implements FromArray, WithHeadings, WithStyles, Wit
         };
 
         return [
-            array_merge(['EJEMPLO-001', 'Cámara de prueba',   'Cámara con visión nocturna 1080p', 'UND', 'UND',  12.5, 0.045, 12, '7701234567890', 'Tecnología', ''],      $precios(1.00)),
-            array_merge(['EJEMPLO-002', 'Caja con variantes', 'Caja en distintos colores',        'UND', 'CAJA', 8.0,  0.030, 24, '7709876543210', 'Empaques',   'Rojo'],  $precios(2.50)),
-            array_merge(['EJEMPLO-002', '',                    '',                                 '',    '',     '',   '',    '', '',              '',           'Azul'],  $precios(2.50)),
-            array_merge(['EJEMPLO-002', '',                    '',                                 '',    '',     '',   '',    '', '',              '',           'Verde'], $precios(2.80)),
+            array_merge(['EJEMPLO-001', 'Cámara de prueba',   'Cámara con visión nocturna 1080p', 'UND', 'UND',  12.5, 0.045, 12, '7701234567890', ''],      $precios(1.00)),
+            array_merge(['EJEMPLO-002', 'Caja con variantes', 'Caja en distintos colores',        'UND', 'CAJA', 8.0,  0.030, 24, '7709876543210', 'Rojo'],  $precios(2.50)),
+            array_merge(['EJEMPLO-002', '',                    '',                                 '',    '',     '',   '',    '', '',              'Azul'],  $precios(2.50)),
+            array_merge(['EJEMPLO-002', '',                    '',                                 '',    '',     '',   '',    '', '',              'Verde'], $precios(2.80)),
         ];
     }
 
@@ -87,11 +87,10 @@ class PlantillaProductosHoja implements FromArray, WithHeadings, WithStyles, Wit
             'G' => 14, // cubicaje_paca
             'H' => 16, // unidades_por_paca
             'I' => 18, // codigo_barras
-            'J' => 18, // categoria
-            'K' => 18, // color_o_motivo
+            'J' => 18, // color_o_motivo
         ];
         // Ancho 14 para cada columna de precio (a partir de L)
-        $letras = ['L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V'];
+        $letras = ['K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U'];
         foreach ($this->codigosListas as $i => $_) {
             if (isset($letras[$i])) $widths[$letras[$i]] = 14;
         }
@@ -186,7 +185,6 @@ class PlantillaProductosInstrucciones implements FromArray, WithHeadings, WithSt
             ['cubicaje_paca',     'No', 'Cubicaje (volumen) por paca en metros cúbicos (m³). Acepta decimales (ej. 0.045). Se usa para el cálculo de volumen en la cotización.'],
             ['unidades_por_paca', 'No', 'Cuántas unidades de venta trae una paca (ej. 12). Necesario para calcular el peso/volumen total según la cantidad pedida.'],
             ['codigo_barras',     'No', 'Código de barras del producto (útil para exportaciones/aduanas).'],
-            ['categoria',         'No', 'Nombre de la categoría del producto. Si no existe, se crea automáticamente. Si se deja vacía al crear, se usa "Sin categoría".'],
             ['color_o_motivo', 'No', 'Si trae valor, esa fila es una variante. Si repites la misma referencia con distinto color, todas son variantes del mismo producto.'],
         ];
         foreach ($this->listas as $lista) {
@@ -199,7 +197,7 @@ class PlantillaProductosInstrucciones implements FromArray, WithHeadings, WithSt
         $filas[] = ['', '', ''];
         $filas[] = ['REGLAS', '', ''];
         $filas[] = ['Si la referencia existe', '', 'Se actualizan solo los campos llenos. Vacíos = no se tocan.'];
-        $filas[] = ['Si la referencia no existe', '', 'Se crea el producto. Si descripcion está vacía, se usa la referencia como nombre. Si "categoria" viene llena se usa (creándola si no existe); si viene vacía, categoría default: "Sin categoría".'];
+        $filas[] = ['Si la referencia no existe', '', 'Se crea el producto. Si descripcion está vacía, se usa la referencia como nombre. El producto nace sin categoría: Innpro no clasifica por categoría.'];
         $filas[] = ['Variantes', '', 'Misma referencia repetida con distinto color/motivo → variantes del mismo producto. La primera fila define los precios base; las filas siguientes guardan SOLO la diferencia (ajuste).'];
 
         return $filas;

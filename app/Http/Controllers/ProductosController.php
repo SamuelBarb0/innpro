@@ -4,7 +4,6 @@ namespace App\Http\Controllers;
 use Excel;
 use Illuminate\Http\Request;
 use App\Models\Producto;
-use App\Models\Categoria;
 use App\Models\ImagenProducto;
 use App\Models\PrecioProducto;
 use App\Models\ActualizacionPrecio;
@@ -24,14 +23,23 @@ use Illuminate\Support\Facades\Log;
 
 class ProductosController extends Controller
 {
+    use \App\Http\Controllers\Concerns\AccionesEnLote;
+
     public function index(Request $request)
     {
         if ($request->ajax()) {
-            $query = Producto::with(['categoria', 'imagenPrincipal', 'stockPrincipal'])
+            $query = Producto::with(['imagenPrincipal', 'stockPrincipal', 'stock'])
                             ->select('productos.*');
 
+            // "Seleccionar todos los que coinciden con el filtro": mismos
+            // parámetros que está usando la tabla, así que mismos resultados.
+            if ($request->boolean('solo_ids')) {
+                return $this->idsDelFiltro($request, $query, 'productos.id');
+            }
+
             return DataTables::of($query)
-                ->addColumn('categoria', fn($p) => $p->categoria?->nombre)
+                ->addColumn('seleccion', fn($p) =>
+                    '<input type="checkbox" class="fila-lote" value="'.$p->id.'" aria-label="Seleccionar producto">')
                 ->addColumn('imagen', function($p) {
                     $url = $p->imagenPrincipal 
                         ? asset($p->imagenPrincipal->ruta_imagen)
@@ -100,7 +108,7 @@ class ProductosController extends Controller
 
                     return $buttons;
                 })
-                ->rawColumns(['imagen', 'stock', 'estado', 'action'])
+                ->rawColumns(['seleccion', 'imagen', 'stock', 'estado', 'action'])
                 ->make(true);
         }
 
@@ -110,7 +118,6 @@ class ProductosController extends Controller
     public function form(Producto $producto = null)
     {
         $producto = $producto ?? new Producto();
-        $categorias = Categoria::activas()->pluck('nombre', 'id');
         $listas = ListaPrecio::activas()->get();
         
         // Cargar stock si el producto existe (NUEVO)
@@ -126,7 +133,7 @@ class ProductosController extends Controller
             }
         }
         
-        return view('productos.productos_form', compact('producto', 'categorias', 'listas', 'stocks'));
+        return view('productos.productos_form', compact('producto', 'listas', 'stocks'));
     }
 
     public function guardar(Request $request)
@@ -194,11 +201,11 @@ class ProductosController extends Controller
             $data['permitir_venta_sin_stock'] = $request->input('permitir_venta_sin_stock', 0) == 1;  // NUEVO
             $data['activo'] = $producto->exists ? $request->boolean('activo') : true;
 
-            // Sin categoría explícita se usa la de reserva, igual que en la importación por Excel.
-            if (empty($data['categoria_id'])) {
-                $data['categoria_id'] = $producto->categoria_id
-                    ?: Categoria::firstOrCreate(['nombre' => 'Sin categoría'], ['activo' => true])->id;
-            }
+            // La categoría es opcional desde la migración 2026_08_25_100000. Antes
+            // esto inventaba una categoría "Sin categoría" porque la columna era
+            // NOT NULL; ahora un producto puede quedarse sin ninguna, que es lo
+            // normal en Innpro.
+            $data['categoria_id'] = $data['categoria_id'] ?: null;
 
             $esNuevo = !$producto->exists;  // NUEVO
             $producto->fill($data)->save();
@@ -702,5 +709,32 @@ public function actualizarPreciosExcel(Request $request)
     {
         $producto->delete();
         return redirect()->route('productos')->with('success', 'Producto eliminado.');
+    }
+
+    /**
+     * Activar, desactivar o eliminar varios productos de una vez.
+     *
+     * El borrado es suave (SoftDeletes), así que se recupera; y si el producto
+     * vuelve a aparecer en una importación de Excel, el importador lo restaura.
+     */
+    public function accionEnLote(Request $request)
+    {
+        [$accion, $ids] = $this->datosDelLote($request, ['activar', 'desactivar', 'eliminar']);
+
+        if ($accion === 'eliminar') {
+            // Se recorren de a uno para que corran los eventos del modelo.
+            $aplicados = 0;
+            foreach (Producto::whereIn('id', $ids)->get() as $producto) {
+                $producto->delete();
+                $aplicados++;
+            }
+
+            return $this->respuestaDelLote($accion, $aplicados);
+        }
+
+        $aplicados = Producto::whereIn('id', $ids)
+            ->update(['activo' => $accion === 'activar']);
+
+        return $this->respuestaDelLote($accion, $aplicados);
     }
 }

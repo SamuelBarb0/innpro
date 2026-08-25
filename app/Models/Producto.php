@@ -121,6 +121,16 @@ class Producto extends Model
     // Obtener precio por lista de precios
     public function getPrecioPorLista($listaPrecioId)
     {
+        // Si quien llama ya precargó `precios` (el cotizador lo hace), se resuelve
+        // en memoria. Sin esto era una consulta por producto: con 5.000 productos
+        // en pantalla, 5.000 consultas de más en una sola petición.
+        if ($this->relationLoaded('precios')) {
+            $precio = $this->precios->first(function ($p) use ($listaPrecioId) {
+                return (int) $p->lista_precio_id === (int) $listaPrecioId && $p->activo;
+            });
+            return $precio ? $precio->precio : null;
+        }
+
         $precio = $this->precios()->where('lista_precio_id', $listaPrecioId)->where('activo', true)->first();
         return $precio ? $precio->precio : null;
     }
@@ -148,16 +158,29 @@ class Producto extends Model
     public function getStockDisponibleAttribute()
     {
         if ($this->tiene_variantes) {
+            // Con la relación precargada se suma en memoria; si no, se consulta.
+            // Sin esto, un listado de N productos hacía N consultas de más.
+            if ($this->relationLoaded('stock')) {
+                return $this->stock->sum(fn ($s) => $s->cantidad_disponible - $s->cantidad_reservada);
+            }
+
             return $this->stock()->selectRaw('SUM(cantidad_disponible - cantidad_reservada) as total')->value('total') ?? 0;
-        } else {
-            $stockPrincipal = $this->stockPrincipal;
-            return $stockPrincipal ? $stockPrincipal->stock_real : 0;
         }
+
+        $stockPrincipal = $this->stockPrincipal;
+        return $stockPrincipal ? $stockPrincipal->stock_real : 0;
     }
 
     // Verificar si hay stock bajo
     public function getTieneStockBajoAttribute()
     {
+        if ($this->relationLoaded('stock')) {
+            return $this->stock->contains(fn ($s) =>
+                $s->alerta_stock_bajo
+                && ($s->cantidad_disponible - $s->cantidad_reservada) <= $s->stock_minimo
+            );
+        }
+
         return $this->stock()->where('alerta_stock_bajo', true)
                               ->whereRaw('(cantidad_disponible - cantidad_reservada) <= stock_minimo')
                               ->exists();

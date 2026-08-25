@@ -11,6 +11,8 @@ use Spatie\Permission\Models\Role;
 
 class UsuariosController extends Controller
 {
+    use \App\Http\Controllers\Concerns\AccionesEnLote;
+
 
     private UserCreationService $userService;
 
@@ -22,9 +24,17 @@ class UsuariosController extends Controller
     public function index(Request $request)
     {
         if ($request->ajax()) {
-            $users = User::query()->where('id', '!=', 1);
+            // `with('roles')`: el listado llama getRoleNames() por fila y sin precargar
+            // los roles eso era una consulta por usuario.
+            $users = User::query()->with('roles')->where('id', '!=', 1);
+
+            if ($request->boolean('solo_ids')) {
+                return $this->idsDelFiltro($request, $users, 'users.id');
+            }
 
             return DataTables::of($users)
+                    ->addColumn('seleccion', fn($u) =>
+                        '<input type="checkbox" class="fila-lote" value="'.$u->id.'" aria-label="Seleccionar usuario">')
                     ->addColumn('roles', function($u) {
                         return $u->getRoleNames()
                                 ->map(fn($r) => ucfirst($r))
@@ -62,7 +72,7 @@ class UsuariosController extends Controller
                         $html .= '</div>';
                         return $html;
                     })
-                ->rawColumns(['action', 'estado'])
+                ->rawColumns(['seleccion', 'action', 'estado'])
                 ->make(true);
         }
 
@@ -136,5 +146,39 @@ class UsuariosController extends Controller
 
         $user->delete();
         return redirect()->route('usuarios')->with('success', 'Usuario eliminado.');
+    }
+
+    /**
+     * Activar, desactivar o eliminar varios usuarios de una vez.
+     *
+     * Se respetan las mismas dos protecciones del borrado individual: el usuario
+     * 1 (que ademas ni siquiera aparece en el listado) y uno mismo, para que
+     * nadie se deje fuera de su propia plataforma sin darse cuenta.
+     */
+    public function accionEnLote(Request $request)
+    {
+        [$accion, $ids] = $this->datosDelLote($request, ['activar', 'desactivar', 'eliminar']);
+
+        $protegidos = array_values(array_intersect($ids, [1, (int) auth()->id()]));
+        $ids        = array_values(array_diff($ids, $protegidos));
+        $omitidos   = $protegidos ? ['son tu propio usuario o el administrador principal' => count($protegidos)] : [];
+
+        if (! $ids) {
+            return $this->respuestaDelLote($accion, 0, $omitidos);
+        }
+
+        if ($accion === 'eliminar') {
+            $aplicados = 0;
+            foreach (User::whereIn('id', $ids)->get() as $usuario) {
+                $usuario->delete();
+                $aplicados++;
+            }
+
+            return $this->respuestaDelLote($accion, $aplicados, $omitidos);
+        }
+
+        $aplicados = User::whereIn('id', $ids)->update(['activo' => $accion === 'activar']);
+
+        return $this->respuestaDelLote($accion, $aplicados, $omitidos);
     }
 }

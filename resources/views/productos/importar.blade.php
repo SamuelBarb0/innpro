@@ -142,11 +142,6 @@
                   <td>Código de barras del producto (útil para exportaciones/aduanas).</td>
                 </tr>
                 <tr>
-                  <td><code>categoria</code></td>
-                  <td><span class="badge bg-secondary">No</span></td>
-                  <td>Nombre de la categoría. Si no existe, se crea automáticamente. Si se deja vacía al crear, se usa "Sin categoría".</td>
-                </tr>
-                <tr>
                   <td><code>color_o_motivo</code></td>
                   <td><span class="badge bg-secondary">No</span></td>
                   <td>Si trae valor, esa fila es una variante. Repite la misma referencia con distintos colores para crear varias variantes.</td>

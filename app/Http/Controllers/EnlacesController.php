@@ -15,6 +15,8 @@ use Illuminate\Support\Facades\Log;
 
 class EnlacesController extends Controller
 {
+    use \App\Http\Controllers\Concerns\AccionesEnLote;
+
     public function __construct()
     {
         $this->middleware('auth');
@@ -28,8 +30,12 @@ class EnlacesController extends Controller
         if ($request->ajax()) {
             $user = Auth::user();
             
-            $query = EnlaceAcceso::with(['cliente', 'creadoPor'])
-                                ->select('enlaces_acceso.*');
+            // El conteo iba fila por fila; así viaja en la misma consulta.
+            // `select()` va PRIMERO: si va después borra la subconsulta del
+            // conteo y el valor llega nulo.
+            $query = EnlaceAcceso::select('enlaces_acceso.*')
+                                ->with(['cliente', 'creadoPor'])
+                                ->withCount('solicitudesCotizacion');
             
             // Filtrar por rol
             if ($user->hasRole('vendedor')) {
@@ -37,8 +43,14 @@ class EnlacesController extends Controller
                 $query->where('creado_por', $user->id);
             }
             // Admin ve todos los enlaces
-            
+
+            if ($request->boolean('solo_ids')) {
+                return $this->idsDelFiltro($request, $query, 'enlaces_acceso.id');
+            }
+
             return DataTables::of($query)
+                ->addColumn('seleccion', fn($e) =>
+                    '<input type="checkbox" class="fila-lote" value="'.$e->id.'" aria-label="Seleccionar enlace">')
                 ->addColumn('cliente_nombre', function($e) {
                     return $e->cliente->nombre_contacto;
                 })
@@ -75,9 +87,7 @@ class EnlacesController extends Controller
                         ? $e->ultimo_acceso->format('d/m/Y H:i') 
                         : '<span class="text-muted">Nunca</span>';
                 })
-                ->addColumn('solicitudes_count', function($e) {
-                    return $e->solicitudesCotizacion()->count();
-                })
+                ->addColumn('solicitudes_count', fn($e) => $e->solicitudes_cotizacion_count)
                 ->addColumn('action', function($e) {
                     $buttons = '<div class="d-flex justify-content-center gap-1">';
                     
@@ -118,7 +128,7 @@ class EnlacesController extends Controller
                         $q->where('nombre_contacto', 'like', "%{$keyword}%");
                     });
                 })
-                ->rawColumns(['estado', 'mostrar_precios_badge', 'mostrar_stock_badge', 'ultimo_acceso_formateado', 'action'])
+                ->rawColumns(['seleccion', 'estado', 'mostrar_precios_badge', 'mostrar_stock_badge', 'ultimo_acceso_formateado', 'action'])
                 ->make(true);
         }
         
@@ -359,5 +369,33 @@ class EnlacesController extends Controller
                 'mensaje' => 'Error al cambiar el estado: ' . $e->getMessage()
             ], 500);
         }
+    }
+
+    /**
+     * Activar o desactivar varios enlaces de una vez.
+     *
+     * No hay "eliminar" porque el modulo nunca tuvo borrado: un enlace se
+     * desactiva, no se borra, para no perder el rastro de a quien se le compartio.
+     * Se respeta el mismo limite que `cambiarEstado`: un vendedor solo puede
+     * tocar los enlaces que el creo.
+     */
+    public function accionEnLote(Request $request)
+    {
+        [$accion, $ids] = $this->datosDelLote($request, ['activar', 'desactivar']);
+
+        $query = EnlaceAcceso::whereIn('id', $ids);
+
+        $user = Auth::user();
+        if ($user->hasRole('vendedor')) {
+            $query->where('creado_por', $user->id);
+        }
+
+        $alcanzables = (clone $query)->count();
+        $aplicados   = $query->update(['activo' => $accion === 'activar']);
+
+        $ajenos   = count($ids) - $alcanzables;
+        $omitidos = $ajenos > 0 ? ['no los creaste tu' => $ajenos] : [];
+
+        return $this->respuestaDelLote($accion, $aplicados, $omitidos);
     }
 }

@@ -258,7 +258,7 @@
 
 <div class="container-fluid">
   <div>
-    {{-- Toolbar compacta (Cliente / Búsqueda / Categoría / Vista / Carrito) --}}
+    {{-- Toolbar compacta (Cliente / Búsqueda / Vista / Carrito) --}}
     <div class="bg-white shadow-sm rounded-lg mb-3 px-3 py-2 catalogo-toolbar">
       <div class="row align-items-center g-2">
         <div class="col-md-3">
@@ -267,19 +267,11 @@
             Cliente: <strong>{{ $cliente->nombre_contacto }}</strong>
           </div>
         </div>
-        <div class="col-md-4">
+        <div class="col-md-6">
           <div class="input-group input-group-sm">
             <span class="input-group-text"><i class="bi bi-search"></i></span>
             <input type="text" class="form-control" id="busquedaProducto" placeholder="Buscar por nombre o referencia...">
           </div>
-        </div>
-        <div class="col-md-2">
-          <select class="form-select form-select-sm" id="filtroCategoria" aria-label="Filtrar por categoría">
-            <option value="">Todas las categorías</option>
-            @foreach($categorias as $categoria)
-              <option value="{{ $categoria->id }}">{{ $categoria->nombre }}</option>
-            @endforeach
-          </select>
         </div>
         <div class="col-md-3 text-end d-flex justify-content-end gap-1">
           <button class="btn btn-outline-secondary btn-sm" id="btnToggleView" title="Cambiar vista">
@@ -404,7 +396,9 @@ $(function(){
   let carouselPage = 1;
   let totalCarouselPages = 1;
   let productosCarousel = [];
-  
+  let paginaActual = 1;        // página del servidor que se está mostrando
+  let ultimaRespuesta = null;  // para poder repintar la paginación al cambiar de vista
+
   let carrito = JSON.parse(localStorage.getItem('carrito_'+clienteId) || '[]')
                   .map(i=>({...i, precio: parseFloat(i.precio)||0}));
   let productosCargados = {};
@@ -537,27 +531,55 @@ $(function(){
   });
 
   function cargarProductos(page=1){
+    paginaActual = page;
     $.post('{{route("catalogo.productos")}}',{
       _token:'{{csrf_token()}}',
       page, busqueda:$('#busquedaProducto').val(),
-      categoria_id:$('#filtroCategoria').val(),
       cliente_id:clienteId, enlace_token:enlaceToken
     },resp=>{
       const prods = resp.productos.data;
       productosCarousel = prods;
-      
+      ultimaRespuesta = resp;
+      paginaActual = resp.productos.current_page || page;
+
       // Asegurarnos de que los productos cargados tengan la unidad_venta
       prods.forEach(p => {
         productosCargados[p.id] = p;
       });
-      
+
       if (viewType === 'grid') {
         renderGrid(prods, resp);
       } else {
         totalCarouselPages = Math.ceil(prods.length / itemsPerPage) || 1;
         renderCarousel();
       }
+    }).fail(xhr=>{
+      // Antes esto no existía: si la petición fallaba, el cliente veía el
+      // catálogo vacío y sin un solo mensaje que lo explicara.
+      mostrarErrorProductos(xhr);
     });
+  }
+
+  /** Deja el fallo a la vista en vez de una pantalla en blanco. */
+  function mostrarErrorProductos(xhr){
+    const mensaje = xhr.status === 419
+      ? 'La sesión expiró. Recarga la página para seguir.'
+      : (xhr.status === 0
+          ? 'Se perdió la conexión con el servidor.'
+          : 'No se pudieron cargar los productos.');
+    const detalle = xhr.status ? `error ${xhr.status}` : 'sin respuesta';
+
+    $('#productosContainer').html(`
+      <div class="col-12">
+        <div class="alert alert-warning d-flex flex-wrap align-items-center justify-content-between gap-2 mb-0">
+          <span><i class="bi bi-exclamation-triangle"></i> ${mensaje} <small class="text-muted">(${detalle})</small></span>
+          <button type="button" class="btn btn-sm btn-outline-dark" id="btnReintentarProductos">
+            <i class="bi bi-arrow-clockwise"></i> Reintentar
+          </button>
+        </div>
+      </div>`);
+    $('#paginacionContainer').empty();
+    $('.carousel-pagination').remove();
   }
 
   function renderGrid(prods, resp) {
@@ -599,6 +621,9 @@ $(function(){
     $('#productosContainer').html(html);
     $('#productosContainer').before(buildCarouselNavigation());
     $('#productosContainer').after(buildCarouselNavigation());
+    // El carrusel navega dentro de la página cargada; la paginación del
+    // servidor es la que permite llegar al resto del catálogo.
+    $('#paginacionContainer').html(buildPagination(ultimaRespuesta));
   }
 
   function buildCard(p, colClass = 'col-12 col-md-4 col-lg-3 col-xl-2') {
@@ -674,9 +699,40 @@ $(function(){
   }
 
   function buildPagination(resp) {
-    let pgHtml='';
+    const p = resp && resp.productos;
+    if (!p || !p.last_page || p.last_page <= 1) return '';
 
-    return pgHtml;
+    const actual = p.current_page, ultima = p.last_page;
+
+    // Ventana de páginas alrededor de la actual, con los extremos siempre
+    // visibles y puntos suspensivos en los saltos.
+    const paginas = [];
+    const agregar = n => { if (n >= 1 && n <= ultima && !paginas.includes(n)) paginas.push(n); };
+    agregar(1); agregar(2);
+    for (let n = actual - 2; n <= actual + 2; n++) agregar(n);
+    agregar(ultima - 1); agregar(ultima);
+    paginas.sort((a, b) => a - b);
+
+    let html = '<nav class="d-flex flex-wrap align-items-center justify-content-between gap-2">';
+    html += `<small class="text-muted">Mostrando ${p.from ?? 0}-${p.to ?? 0} de ${p.total ?? 0} productos</small>`;
+    html += '<ul class="pagination pagination-sm mb-0">';
+    html += `<li class="page-item ${actual <= 1 ? 'disabled' : ''}">
+               <a class="page-link" href="#" data-page="${actual - 1}" aria-label="Anterior">&laquo;</a></li>`;
+
+    let previa = 0;
+    paginas.forEach(n => {
+      if (previa && n - previa > 1) {
+        html += '<li class="page-item disabled"><span class="page-link">&hellip;</span></li>';
+      }
+      html += `<li class="page-item ${n === actual ? 'active' : ''}">
+                 <a class="page-link" href="#" data-page="${n}">${n}</a></li>`;
+      previa = n;
+    });
+
+    html += `<li class="page-item ${actual >= ultima ? 'disabled' : ''}">
+               <a class="page-link" href="#" data-page="${actual + 1}" aria-label="Siguiente">&raquo;</a></li>`;
+    html += '</ul></nav>';
+    return html;
   }
 
   function buildCarouselNavigation() {
@@ -960,7 +1016,23 @@ $(function(){
   $('#btnCarrito').click(()=>$('#cartSidebar').addClass('show'));
   $('#closeCart').click(()=>$('#cartSidebar').removeClass('show'));
   $('#busquedaProducto').on('keyup',debounce(()=>cargarProductos(1),500));
-  $('#filtroCategoria').change(()=>cargarProductos(1));
+
+  // Paginación del servidor (delegado: el HTML se repinta en cada carga).
+  $(document).on('click','#paginacionContainer .page-link[data-page]',function(e){
+    e.preventDefault();
+    const li = $(this).closest('.page-item');
+    if (li.hasClass('disabled') || li.hasClass('active')) return;
+    const n = parseInt($(this).data('page'), 10);
+    if (!n || n < 1) return;
+    carouselPage = 1;
+    cargarProductos(n);
+    const cont = $('#productosContainer').offset();
+    if (cont) $('html, body').animate({ scrollTop: Math.max(0, cont.top - 90) }, 200);
+  });
+
+  $(document).on('click','#btnReintentarProductos',function(){
+    cargarProductos(paginaActual);
+  });
 
   function mostrarNotificacion(msg,t='info'){
     const $t = $(`<div class="toast" role="alert" style="position:fixed;top:20px;right:20px;z-index:1060">

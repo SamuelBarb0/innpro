@@ -3,7 +3,6 @@
 namespace App\Imports;
 
 use App\Models\ActualizacionPrecio;
-use App\Models\Categoria;
 use App\Models\ListaPrecio;
 use App\Models\PrecioProducto;
 use App\Models\PrecioVariante;
@@ -35,8 +34,8 @@ use Maatwebsite\Excel\Concerns\WithMultipleSheets;
  *     Si mañana se agrega una "local5", basta con incluirla en BD; la plantilla
  *     automáticamente reconocerá la columna.
  *   - Si la referencia ya existe, se actualizan los campos que vengan llenos.
- *   - Si no existe, se crea con nombre/descripción del Excel (con fallback a referencia)
- *     y categoría "Sin categoría".
+ *   - Si no existe, se crea con nombre/descripción del Excel (con fallback a
+ *     referencia) y SIN categoría: Innpro no clasifica por categoría.
  *   - Si la misma referencia aparece varias veces con distinto "Color o motivo",
  *     se interpretan como variantes del mismo producto.
  */
@@ -214,7 +213,6 @@ class ProductosImportSheet implements ToCollection, WithHeadingRow
         $descripcion   = trim((string) ($r['descripcion'] ?? ''));
         $unidadVenta   = trim((string) ($r['unidadventa'] ?? '')) ?: 'UND';
         $unidadEmpaque = trim((string) ($r['unidadempaque'] ?? '')) ?: 'UND';
-        $nombreCategoria = trim((string) ($r['categoria'] ?? ''));
         $pesoPaca      = $this->numeroONull($r['pesopaca'] ?? null);
         $cubicajePaca  = $this->numeroONull($r['cubicajepaca'] ?? null);
         $unidadesPaca  = $this->numeroONull($r['unidadesporpaca'] ?? null);
@@ -228,10 +226,6 @@ class ProductosImportSheet implements ToCollection, WithHeadingRow
         }
 
         if (! $producto) {
-            // Categoría desde el Excel si viene; si no, default "Sin categoría".
-            // Se crea automáticamente si el nombre no existe aún.
-            $categoria = $this->resolverCategoria($nombreCategoria);
-
             // Fallback de nombre: usa nombre del Excel; si no viene, usa la descripción;
             // si tampoco hay descripción, usa la referencia como último recurso.
             $nombreFinal = $nombre !== ''
@@ -251,7 +245,12 @@ class ProductosImportSheet implements ToCollection, WithHeadingRow
                 'tiene_extension' => $tieneVariantes,
                 'tiene_variantes' => $tieneVariantes,
                 'controlar_stock' => true,
-                'categoria_id'    => $categoria->id,
+                // Innpro no clasifica por categoría: el producto nace sin ella y
+                // se asigna a mano desde Productos si algún día hace falta. Antes
+                // el importador creaba una categoría por cada nombre distinto del
+                // Excel y reasignaba las de los productos que ya existían, y eso
+                // dejaba una lista que nadie podía mantener.
+                'categoria_id'    => null,
                 'activo'          => true,
             ]);
             return $producto;
@@ -270,9 +269,6 @@ class ProductosImportSheet implements ToCollection, WithHeadingRow
         }
         if (! empty($r['unidadempaque'])) {
             $cambios['unidad_empaque'] = $unidadEmpaque;
-        }
-        if ($nombreCategoria !== '') {
-            $cambios['categoria_id'] = $this->resolverCategoria($nombreCategoria)->id;
         }
         if ($pesoPaca !== null) {
             $cambios['peso_paca'] = $pesoPaca;
@@ -295,26 +291,6 @@ class ProductosImportSheet implements ToCollection, WithHeadingRow
         }
 
         return $producto;
-    }
-
-    /**
-     * Resuelve la categoría por nombre. Si el nombre viene vacío usa "Sin categoría".
-     * Crea la categoría si no existe (búsqueda case-insensitive por nombre).
-     */
-    private function resolverCategoria(string $nombre): Categoria
-    {
-        $nombre = trim($nombre) !== '' ? trim($nombre) : 'Sin categoría';
-
-        $categoria = Categoria::whereRaw('LOWER(nombre) = ?', [mb_strtolower($nombre, 'UTF-8')])->first();
-        if ($categoria) {
-            return $categoria;
-        }
-
-        return Categoria::create([
-            'nombre' => $nombre,
-            'activo' => true,
-            'orden'  => 999,
-        ]);
     }
 
     /**

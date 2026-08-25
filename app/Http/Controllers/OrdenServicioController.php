@@ -200,7 +200,9 @@ class OrdenServicioController extends Controller
 
         if ($request->ajax()) {
             $query = $this->scopeVisible(
-                OrdenServicio::with(['cliente', 'tecnico'])->select('ordenes_servicio.*')
+                // `items` lo usa el accesor `total` (mano de obra + items). Sin
+                // precargarlo era una consulta por orden.
+                OrdenServicio::with(['cliente', 'tecnico', 'items'])->select('ordenes_servicio.*')
             );
 
             return DataTables::of($query)

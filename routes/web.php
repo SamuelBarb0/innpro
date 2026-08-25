@@ -86,6 +86,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/importar_usuarios', [UsuariosController::class, 'importar_usuarios'])->name('importar_usuarios');
     Route::get('/usuarios_form/{user?}', [UsuariosController::class, 'form'])->name('usuarios.form');
     Route::post('/usuarios/guardar', [UsuariosController::class, 'guardar'])->name('usuarios.guardar');
+    Route::post('/usuarios/lote', [UsuariosController::class, 'accionEnLote'])->name('usuarios.lote');
     Route::post('/usuarios/{user}/toggle-activo', [UsuariosController::class, 'toggleActivo'])->name('usuarios.toggle-activo');
     Route::delete('/usuarios/{user}', [UsuariosController::class, 'eliminar'])->name('usuarios.eliminar');
 
@@ -110,6 +111,7 @@ Route::get('ajax/ciudades', [CiudadController::class,'byDepartamento'])
         ->name('clientes.guardar');
 
     // Toggle activo / eliminar
+    Route::post('clientes/lote', [ClientesController::class, 'accionEnLote'])->name('clientes.lote');
     Route::post('clientes/{cliente}/toggle-activo', [ClientesController::class, 'toggleActivo'])
         ->name('clientes.toggle-activo');
     Route::delete('clientes/{cliente}', [ClientesController::class, 'eliminar'])
@@ -172,6 +174,7 @@ Route::prefix('productos')->middleware('auth')->group(function () {
     Route::get('/', [ProductosController::class, 'index'])->name('productos');
     Route::get('/form/{producto?}', [ProductosController::class, 'form'])->name('productos.form');
     Route::post('/guardar', [ProductosController::class, 'guardar'])->name('productos.guardar');
+    Route::post('/lote', [ProductosController::class, 'accionEnLote'])->name('productos.lote');
     Route::post('/{producto}/toggle-activo', [ProductosController::class, 'toggleActivo'])->name('productos.toggle-activo');
     Route::delete('/{producto}', [ProductosController::class, 'eliminar'])->name('productos.eliminar');
     Route::get('/importar', [ProductosController::class, 'mostrarImportar'])->name('productos.importar');
@@ -198,6 +201,7 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/enlaces/crear', [App\Http\Controllers\EnlacesController::class, 'crear'])->name('enlaces.crear');
     Route::post('/enlaces/guardar', [App\Http\Controllers\EnlacesController::class, 'guardar'])->name('enlaces.guardar');
     Route::get('/enlaces/{enlace}/detalle', [App\Http\Controllers\EnlacesController::class, 'detalle'])->name('enlaces.detalle');
+    Route::post('/enlaces/lote', [App\Http\Controllers\EnlacesController::class, 'accionEnLote'])->name('enlaces.lote');
     Route::post('/enlaces/{enlace}/cambiar-estado', [App\Http\Controllers\EnlacesController::class, 'cambiarEstado'])->name('enlaces.cambiar-estado');
 });
 

@@ -11,14 +11,26 @@ use Yajra\DataTables\Facades\DataTables;
 
 class ClientesController extends Controller
 {
+    use \App\Http\Controllers\Concerns\AccionesEnLote;
+
     public function index(Request $request)
     {
         if ($request->ajax()) {
-            $query = Cliente::with(['vendedor', 'listaPrecio'])
-                ->withCount('sucursales')
-                ->select('clientes.*');
+            // OJO con el orden: `select()` REEMPLAZA la lista de columnas, así que
+            // si va después de `withCount()` borra la subconsulta del conteo y
+            // `sucursales_count` llega nulo. Por eso el badge de sedes no se veía
+            // nunca, ni con clientes que sí tenían sedes.
+            $query = Cliente::select('clientes.*')
+                ->with(['vendedor', 'listaPrecio'])
+                ->withCount('sucursales');
+
+            if ($request->boolean('solo_ids')) {
+                return $this->idsDelFiltro($request, $query, 'clientes.id');
+            }
 
             return DataTables::of($query)
+                ->addColumn('seleccion', fn($c) =>
+                    '<input type="checkbox" class="fila-lote" value="'.$c->id.'" aria-label="Seleccionar cliente">')
                 ->addColumn('vendedor', fn($c) => $c->vendedor?->name)
                 ->addColumn('lista_precio', fn($c) => $c->listaPrecio?->nombre)
                 ->addColumn('estado', function($c) {
@@ -67,7 +79,7 @@ class ClientesController extends Controller
                     $html .= '</div>';
                     return $html;
                 })
-                ->rawColumns(['action', 'estado'])
+                ->rawColumns(['seleccion', 'action', 'estado'])
                 ->make(true);
         }
 
@@ -142,5 +154,28 @@ class ClientesController extends Controller
     {
         $cliente->delete();
         return redirect()->route('clientes')->with('success', 'Cliente eliminado.');
+    }
+
+    /**
+     * Activar, desactivar o eliminar varios clientes de una vez.
+     * El borrado es suave (SoftDeletes), así que se puede revertir.
+     */
+    public function accionEnLote(Request $request)
+    {
+        [$accion, $ids] = $this->datosDelLote($request, ['activar', 'desactivar', 'eliminar']);
+
+        if ($accion === 'eliminar') {
+            $aplicados = 0;
+            foreach (Cliente::whereIn('id', $ids)->get() as $cliente) {
+                $cliente->delete();
+                $aplicados++;
+            }
+
+            return $this->respuestaDelLote($accion, $aplicados);
+        }
+
+        $aplicados = Cliente::whereIn('id', $ids)->update(['activo' => $accion === 'activar']);
+
+        return $this->respuestaDelLote($accion, $aplicados);
     }
 }
