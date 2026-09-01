@@ -61,6 +61,16 @@ class SolicitudController extends Controller
                 });
             }
             // Admin ve todas las solicitudes (no se aplica filtro adicional)
+
+            // Filtro por tipo de cotización. `sin_tipo` son las que no pasaron
+            // por el alta rápida de prospectos (enlace, cliente ya existente, o
+            // anteriores a que existiera el campo).
+            $tipo = $request->input('tipo_cotizacion');
+            if ($tipo === 'sin_tipo') {
+                $query->whereNull('tipo_cotizacion');
+            } elseif (filled($tipo) && array_key_exists($tipo, SolicitudCotizacion::TIPOS)) {
+                $query->where('tipo_cotizacion', $tipo);
+            }
             
             return DataTables::of($query)
                 ->addColumn('cliente_nombre', function($s) {
@@ -71,6 +81,11 @@ class SolicitudController extends Controller
                 })
                 ->addColumn('fecha', function($s) {
                     return $s->created_at->format('d/m/Y H:i');
+                })
+                ->addColumn('tipo', function($s) {
+                    return $s->tipo_cotizacion
+                        ? '<span class="badge bg-info text-dark">'.e($s->tipoLabel()).'</span>'
+                        : '<span class="text-muted">Sin tipo</span>';
                 })
                 ->addColumn('total_items', function($s) {
                     return $s->total_items;
@@ -120,11 +135,13 @@ class SolicitudController extends Controller
                         $q->where('name', 'like', "%{$keyword}%");
                     });
                 })
-                ->rawColumns(['estado_badge', 'action'])
+                ->rawColumns(['tipo', 'estado_badge', 'action'])
                 ->make(true);
         }
         
-        return view('solicitudes.solicitudes_index');
+        return view('solicitudes.solicitudes_index', [
+            'tipos' => SolicitudCotizacion::TIPOS,
+        ]);
     }
     
     public function detalle(SolicitudCotizacion $solicitud)
@@ -156,6 +173,11 @@ class SolicitudController extends Controller
         $html .= '<table class="table table-sm">';
         $html .= '<tr><td><strong>Número:</strong></td><td><code>' . $solicitud->numero_solicitud . '</code></td></tr>';
         $html .= '<tr><td><strong>Fecha:</strong></td><td>' . $solicitud->created_at->format('d/m/Y H:i') . '</td></tr>';
+        $html .= '<tr><td><strong>Tipo:</strong></td><td>';
+        $html .= $solicitud->tipo_cotizacion
+            ? '<span class="badge bg-info text-dark">' . e($solicitud->tipoLabel()) . '</span>'
+            : '<span class="text-muted">Sin tipo</span>';
+        $html .= '</td></tr>';
         $html .= '<tr><td><strong>Estado:</strong></td><td>';
         if ($solicitud->estado === 'pendiente') {
             $html .= '<span class="badge bg-warning">Pendiente</span>';

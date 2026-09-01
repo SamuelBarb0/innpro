@@ -20,7 +20,19 @@
 
       <div class="bg-white shadow-sm rounded-lg overflow-hidden">
         <div class="p-6">
-          <h4 class="text-2xl font-semibold mb-4">Listado de Solicitudes</h4>
+          <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-4">
+            <h4 class="text-2xl font-semibold mb-0">Listado de Solicitudes</h4>
+            <div class="d-flex align-items-center gap-2">
+              <label for="filtroTipo" class="form-label mb-0 small text-muted">Tipo de cotización</label>
+              <select id="filtroTipo" class="form-select form-select-sm" style="width:auto;">
+                <option value="">Todos</option>
+                @foreach($tipos as $clave => $etiqueta)
+                  <option value="{{ $clave }}">{{ $etiqueta }}</option>
+                @endforeach
+                <option value="sin_tipo">Sin tipo</option>
+              </select>
+            </div>
+          </div>
 
           <table id="solicitudes-table" class="table-responsive w-full text-sm text-left">
             <thead class="text-xs uppercase bg-gray-100">
@@ -32,6 +44,7 @@
                 <th>Fecha</th>
                 <th>Items</th>
                 <th>Monto</th>
+                <th>Tipo</th>
                 <th>Estado</th>
               </tr>
             </thead>
@@ -50,7 +63,10 @@
       serverSide: true,
       responsive: true,
       scrollX: true,
-      ajax: "{{ route('solicitudes') }}",
+      ajax: {
+        url: "{{ route('solicitudes') }}",
+        data: d => { d.tipo_cotizacion = $('#filtroTipo').val(); }
+      },
       columns: [
         { data:'action', orderable:false, searchable:false },
         { data:'numero_solicitud', name:'numero_solicitud' },
@@ -59,6 +75,7 @@
         { data:'fecha', name:'created_at' },
         { data:'total_items', name:'total_items', searchable:false },
         { data:'monto_formateado', name:'monto_total' },
+        { data:'tipo', name:'tipo_cotizacion' },
         { data:'estado_badge', name:'estado' }
       ],
       dom: "<'flex justify-between mb-4'<'relative'B>f>t<'flex justify-between items-center px-2 my-2'i<'pagination-wrapper'p>>",
@@ -104,6 +121,10 @@
       lengthMenu: [[10,25,50,-1],[10,25,50,'Todos']],
       order: [[4, 'desc']] // Ordenar por fecha descendente
     });
+
+    // El filtro de tipo va en la peticion (ver `ajax.data`), asi que basta con
+    // recargar para que el servidor aplique el where.
+    $('#filtroTipo').on('change', () => table.ajax.reload());
 
     table.on('buttons-action', () => {
       setTimeout(() => {

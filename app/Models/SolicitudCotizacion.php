@@ -12,11 +12,24 @@ class SolicitudCotizacion extends Model
 
     protected $table = 'solicitudes_cotizacion';
 
+    /**
+     * Tipos de cotización. La clave es lo que se guarda; la etiqueta, lo que se
+     * muestra. Se define aquí y no suelto en las vistas para que no haya dos
+     * listas que puedan quedar desalineadas.
+     */
+    public const TIPOS = [
+        'proyecto'                  => 'Proyecto',
+        'mantenimiento_preventivo'  => 'Mantenimiento Preventivo',
+        'mantenimiento_correctivo'  => 'Mantenimiento Correctivo',
+        'asistencia'                => 'Asistencia',
+    ];
+
     protected $fillable = [
         'numero_solicitud',
         'cliente_id',
         'enlace_acceso_id',
         'estado',
+        'tipo_cotizacion',
         'monto_total',
         'notas_cliente',
         'observaciones_admin',
@@ -28,6 +41,12 @@ class SolicitudCotizacion extends Model
         'monto_total' => 'decimal:2',
         'aplicada_en' => 'datetime',
     ];
+
+    /** Etiqueta legible del tipo. Sin tipo = las que no pasaron por el alta de prospecto. */
+    public function tipoLabel(): string
+    {
+        return self::TIPOS[$this->tipo_cotizacion] ?? 'Sin tipo';
+    }
 
     public function cliente()
     {

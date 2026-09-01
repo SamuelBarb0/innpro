@@ -9,6 +9,7 @@ use App\Models\Producto;
 use App\Models\ListaPrecio;
 use App\Models\SolicitudCotizacion;
 use App\Models\ItemSolicitudCotizacion;
+use Illuminate\Validation\Rule;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
@@ -103,10 +104,12 @@ class CatalogoController extends Controller
             'email' => 'nullable|email|max:255',
             'ciudad' => 'nullable|string|max:255',
             'lista_precio_id' => 'nullable|exists:listas_precios,id',
+            'tipo_cotizacion' => ['nullable', Rule::in(array_keys(SolicitudCotizacion::TIPOS))],
         ], [
             'nombre_contacto.required' => 'El nombre del prospecto es obligatorio.',
             'email.email' => 'El correo no tiene un formato válido.',
             'lista_precio_id.exists' => 'La lista de precios seleccionada ya no existe.',
+            'tipo_cotizacion.in' => 'Ese tipo de cotización no es válido.',
         ]);
 
         // Si el vendedor eligió lista, con eso basta; el respaldo solo hace falta
@@ -122,7 +125,12 @@ class CatalogoController extends Controller
         // acabar de crearlo sería un paso de más.
         $enlace = null;
 
-        return view('catalogo.index', compact('cliente', 'enlace'));
+        // El tipo se pregunta al crear el prospecto pero pertenece a la
+        // cotización, que nace después al enviar el carrito: por eso viaja
+        // hasta la vista y de ahí a guardarSolicitud().
+        $tipoCotizacion = $datos['tipo_cotizacion'] ?? null;
+
+        return view('catalogo.index', compact('cliente', 'enlace', 'tipoCotizacion'));
     }
 
     /**
@@ -146,8 +154,9 @@ class CatalogoController extends Controller
         }
         
         $enlace = null; // No hay enlace en el flujo B
-        
-        return view('catalogo.index', compact('cliente', 'enlace'));
+        $tipoCotizacion = null; // solo se pregunta en el alta rápida de prospectos
+
+        return view('catalogo.index', compact('cliente', 'enlace', 'tipoCotizacion'));
     }
     
     /**
@@ -476,7 +485,8 @@ class CatalogoController extends Controller
             'items.*.producto_id' => 'required|exists:productos,id',
             'items.*.cantidad' => 'required|integer|min:1',
             'items.*.variante_id' => 'nullable|exists:variantes_productos,id',
-            'notas_cliente' => 'nullable|string|max:1000'
+            'notas_cliente' => 'nullable|string|max:1000',
+            'tipo_cotizacion' => ['nullable', Rule::in(array_keys(SolicitudCotizacion::TIPOS))],
         ]);
         
         DB::beginTransaction();
@@ -512,6 +522,7 @@ class CatalogoController extends Controller
                 'cliente_id' => $cliente->id,
                 'enlace_acceso_id' => $enlace ? $enlace->id : null,
                 'estado' => 'pendiente',
+                'tipo_cotizacion' => $request->input('tipo_cotizacion') ?: null,
                 'notas_cliente' => $request->notas_cliente
             ]);
             $solicitud->save();

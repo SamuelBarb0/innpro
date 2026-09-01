@@ -282,6 +282,11 @@
             <div class="text-muted small">
               Lista: <strong>{{ $cliente->listaPrecio?->nombre ?? '—' }}</strong>
             </div>
+            @if(!empty($tipoCotizacion))
+              <div class="text-muted small">
+                Tipo: <strong>{{ \App\Models\SolicitudCotizacion::TIPOS[$tipoCotizacion] ?? $tipoCotizacion }}</strong>
+              </div>
+            @endif
           </div>
           <div class="col-md-6">
             <div class="input-group input-group-sm">
@@ -403,6 +408,7 @@
   $(function(){
     const clienteId    = {{ $cliente->id }};
     const enlaceToken  = null; // No hay enlace en flujo B
+    const tipoCotizacion = @json($tipoCotizacion ?? null); // elegido al crear el prospecto
     const mostrarPrecios = true; // Siempre mostrar precios en flujo B
     const mostrarStock = true;   // Siempre mostrar stock en flujo B
     
@@ -1029,7 +1035,8 @@ function mostrarErrorProductos(xhr){
       const items = carrito.map(i=>({producto_id:i.producto_id,variante_id:i.variante_id,cantidad:i.cantidad}));
       $.post('{{route("catalogo.solicitud.guardar")}}',{
         _token:'{{csrf_token()}}',cliente_id:clienteId,
-        enlace_token:enlaceToken,items,notas_cliente:notas
+        enlace_token:enlaceToken,items,notas_cliente:notas,
+        tipo_cotizacion:tipoCotizacion
       },r=>{
         $('#loadingOverlay').hide();
         $('#modalConfirmarSolicitud').modal('hide');

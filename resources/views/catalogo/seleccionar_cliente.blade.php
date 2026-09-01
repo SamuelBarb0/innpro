@@ -150,6 +150,17 @@
           </div>
 
           <div class="mb-3">
+            <label class="form-label">Tipo de cotización</label>
+            <select name="tipo_cotizacion" class="form-select">
+              <option value="">— Sin especificar —</option>
+              @foreach(\App\Models\SolicitudCotizacion::TIPOS as $clave => $etiqueta)
+                <option value="{{ $clave }}" @selected(old('tipo_cotizacion') === $clave)>{{ $etiqueta }}</option>
+              @endforeach
+            </select>
+            <div class="form-text">Queda guardado en la cotización que salga de aquí.</div>
+          </div>
+
+          <div class="mb-3">
             <label class="form-label">Lista de precios</label>
             <select name="lista_precio_id" class="form-select">
               @foreach($listas as $lista)
