@@ -22,7 +22,9 @@ class OrdenServicioController extends Controller
 
     private function puedeGestionar(): bool
     {
-        return Auth::user()->hasAnyRole(['admin', 'tecnico', 'vendedor']);
+        // El vendedor salió del módulo: su alcance es Productos, Listas de
+        // precios y Cotizador. Debe coincidir con `role:admin|tecnico`.
+        return Auth::user()->hasAnyRole(['admin', 'tecnico']);
     }
 
     // Bitácora: registro/edición exclusivo de técnicos y admin (brief B4)

@@ -175,12 +175,17 @@ function verStock(productoId) {
         </div>
       </div>
       <div class="modal-footer">
+        {{-- Gestión de Stock es solo de administración: al vendedor estos dos
+             botones le devolverían un 403, así que no se le pintan. El modal
+             en sí (consulta de existencias) sí lo puede ver. --}}
+        @if(auth()->user()->hasRole('admin'))
         <a href="#" id="btnIrGestionStock" class="btn btn-primary">
           <i class="bi bi-box-seam"></i> Ir a Gestión de Stock (Filtrado)
         </a>
         <a href="{{ route('stock.index') }}" class="btn btn-outline-secondary">
           <i class="bi bi-box-seam"></i> Ver Todo el Stock
         </a>
+        @endif
         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
       </div>
     </div>

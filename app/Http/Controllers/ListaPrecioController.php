@@ -23,7 +23,9 @@ class ListaPrecioController extends Controller
 {
     private function autorizar(): void
     {
-        abort_unless(auth()->user()->hasRole('admin'), 403);
+        // Debe coincidir con el middleware `role:admin|vendedor` de las rutas:
+        // si aquí se queda solo en admin, el vendedor llega y se come un 403.
+        abort_unless(auth()->user()->hasAnyRole(['admin', 'vendedor']), 403);
     }
 
     public function index()

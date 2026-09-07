@@ -70,5 +70,14 @@ class Kernel extends HttpKernel
         'signed' => \App\Http\Middleware\ValidateSignature::class,
         'throttle' => \Illuminate\Routing\Middleware\ThrottleRequests::class,
         'verified' => \Illuminate\Auth\Middleware\EnsureEmailIsVerified::class,
+
+        // spatie/laravel-permission v6 ya NO registra estos alias por su cuenta
+        // (solo publica los macros Route::role()/Route::permission()). Sin
+        // ellos, `->middleware('role:admin')` revienta con "Target class
+        // [role] does not exist" y la autorización acaba dispersa por los
+        // controladores, que es como se quedaron módulos enteros sin proteger.
+        'role' => \Spatie\Permission\Middleware\RoleMiddleware::class,
+        'permission' => \Spatie\Permission\Middleware\PermissionMiddleware::class,
+        'role_or_permission' => \Spatie\Permission\Middleware\RoleOrPermissionMiddleware::class,
     ];
 }

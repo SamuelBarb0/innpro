@@ -52,10 +52,16 @@ Route::get('/sitemap.xml', [App\Http\Controllers\SitioController::class, 'sitema
 Route::get('/robots.txt', [App\Http\Controllers\SitioController::class, 'robots'])->name('sitio.robots');
 
 /*
- * Panel del sitio. Solo admin —la autorización va en el controlador, como en
- * el resto de módulos— para que Innpro publique sin depender del proveedor.
+ * Panel del sitio. Solo admin, para que Innpro publique sin depender del proveedor.
+ *
+ * NOTA GENERAL DE ESTE ARCHIVO: la autorización por rol vive AQUÍ, en las rutas.
+ * Antes se delegaba «al controlador» y la mitad de los controladores nunca la
+ * implementó, así que Usuarios, Clientes, Productos, Categorías y Stock
+ * quedaban abiertos a cualquier sesión autenticada. Los chequeos internos que
+ * siguen en los controladores (alcance por vendedor_id, etc.) se mantienen:
+ * afinan, no sustituyen.
  */
-Route::middleware('auth')->prefix('sitio')->name('sitio.admin.')->group(function () {
+Route::middleware(['auth', 'role:admin'])->prefix('sitio')->name('sitio.admin.')->group(function () {
     $c = App\Http\Controllers\SitioAdminController::class;
 
     Route::get('ajustes', [$c, 'ajustes'])->name('ajustes');
@@ -82,6 +88,17 @@ Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
+
+Route::get('ajax/ciudades', [CiudadController::class,'byDepartamento'])
+     ->name('ajax.ciudades');
+});
+
+/*
+ * Usuarios. Solo admin: `UsuariosController::guardar` hace syncRoles() con el
+ * rol que llega del formulario, así que sin esta puerta cualquier sesión
+ * autenticada podía editarse a sí misma y ponerse el rol admin.
+ */
+Route::middleware(['auth', 'role:admin'])->group(function () {
     Route::get('/usuarios', [UsuariosController::class, 'index'])->name('usuarios');
     Route::get('/importar_usuarios', [UsuariosController::class, 'importar_usuarios'])->name('importar_usuarios');
     Route::get('/usuarios_form/{user?}', [UsuariosController::class, 'form'])->name('usuarios.form');
@@ -90,13 +107,17 @@ Route::middleware('auth')->group(function () {
     Route::post('/usuarios/{user}/toggle-activo', [UsuariosController::class, 'toggleActivo'])->name('usuarios.toggle-activo');
     Route::delete('/usuarios/{user}', [UsuariosController::class, 'eliminar'])->name('usuarios.eliminar');
 
-    // Configuración de la empresa dueña (datos del encabezado del PDF). Solo admin (validado en el controlador).
+    // Configuración de la empresa dueña (datos del encabezado del PDF).
     Route::get('/empresa', [EmpresaController::class, 'edit'])->name('empresa.edit');
     Route::post('/empresa', [EmpresaController::class, 'update'])->name('empresa.update');
+});
 
-Route::get('ajax/ciudades', [CiudadController::class,'byDepartamento'])
-     ->name('ajax.ciudades');
-
+/*
+ * Clientes, sedes y categorías: gestión administrativa. El vendedor no entra
+ * aquí; los clientes que necesita para cotizar los elige (y los crea como
+ * prospecto) desde el propio Cotizador.
+ */
+Route::middleware(['auth', 'role:admin'])->group(function () {
 //Clientes
     // Listado & AJAX
     Route::get('clientes', [ClientesController::class, 'index'])
@@ -116,8 +137,11 @@ Route::get('ajax/ciudades', [CiudadController::class,'byDepartamento'])
         ->name('clientes.toggle-activo');
     Route::delete('clientes/{cliente}', [ClientesController::class, 'eliminar'])
         ->name('clientes.eliminar');
+});
 
-    // Listas de precios (solo admin; la autorización va en el controlador)
+// Listas de precios: admin y vendedor, con edición completa (incluida la
+// importación de precios desde Excel).
+Route::middleware(['auth', 'role:admin|vendedor'])->group(function () {
     Route::get('listas-precios', [App\Http\Controllers\ListaPrecioController::class, 'index'])
         ->name('listas-precios');
     Route::post('listas-precios/guardar', [App\Http\Controllers\ListaPrecioController::class, 'guardar'])
@@ -130,7 +154,9 @@ Route::get('ajax/ciudades', [CiudadController::class,'byDepartamento'])
         ->name('listas-precios.plantilla');
     Route::post('listas-precios/{lista}/importar', [App\Http\Controllers\ListaPrecioController::class, 'importar'])
         ->name('listas-precios.importar');
+});
 
+Route::middleware(['auth', 'role:admin'])->group(function () {
     // Sedes / proyectos por cliente
     Route::get('clientes/{cliente}/sucursales', [App\Http\Controllers\ClienteSucursalController::class, 'index'])
         ->name('clientes.sucursales');
@@ -169,8 +195,11 @@ Route::get('ajax/ciudades', [CiudadController::class,'byDepartamento'])
          ->name('categorias.toggle-activo');
     Route::delete('categorias/{categoria}', [CategoriasController::class, 'eliminar'])
          ->name('categorias.eliminar');
-// Rutas de Productos - versión simplificada
-Route::prefix('productos')->middleware('auth')->group(function () {
+});
+
+// Rutas de Productos - versión simplificada. Admin y vendedor, con edición
+// completa: crear, importar Excel y borrar.
+Route::prefix('productos')->middleware(['auth', 'role:admin|vendedor'])->group(function () {
     Route::get('/', [ProductosController::class, 'index'])->name('productos');
     Route::get('/form/{producto?}', [ProductosController::class, 'form'])->name('productos.form');
     Route::post('/guardar', [ProductosController::class, 'guardar'])->name('productos.guardar');
@@ -184,18 +213,18 @@ Route::prefix('productos')->middleware('auth')->group(function () {
     Route::get('/{producto}/imagenes-ajax', [ProductosController::class, 'imagenesAjax'])->name('productos.imagenes-ajax');
     Route::get('/{producto}/precios-ajax', [ProductosController::class, 'preciosAjax'])->name('productos.precios-ajax');
 });
-Route::get('actualizaciones/{id}/descargar', 
+Route::get('actualizaciones/{id}/descargar',
     [ActualizacionPreciosController::class, 'descargarArchivoActualizacion']
-)->name('actualizaciones.descargar');
+)->middleware(['auth', 'role:admin|vendedor'])->name('actualizaciones.descargar');
 
-
-});
 // Rutas del Catálogo Interactivo
 // Flujo A: Acceso público por token
 // Agregar estas rutas en routes/web.php
 
-// Módulo de Enlaces de Acceso (autenticado)
-Route::middleware(['auth'])->group(function () {
+// Módulo de Enlaces de Acceso. No tiene entrada en el menú —el enlace al
+// catálogo se genera desde el Cotizador—, pero el módulo es del vendedor:
+// EnlacesController limita cada vendedor a sus propios clientes y enlaces.
+Route::middleware(['auth', 'role:admin|vendedor'])->group(function () {
     // Enlaces temporales
     Route::get('/enlaces', [App\Http\Controllers\EnlacesController::class, 'index'])->name('enlaces');
     Route::get('/enlaces/crear', [App\Http\Controllers\EnlacesController::class, 'crear'])->name('enlaces.crear');
@@ -209,7 +238,7 @@ Route::middleware(['auth'])->group(function () {
 Route::get('/catalogo/{token}', [App\Http\Controllers\CatalogoController::class, 'mostrarPorToken'])->name('catalogo.token');
 
 // Flujo B: Acceso autenticado (vendedor/admin)
-Route::middleware(['auth'])->group(function () {
+Route::middleware(['auth', 'role:admin|vendedor'])->group(function () {
     Route::get('/catalogo', [CatalogoController::class, 'index'])->name('catalogo');
     Route::post('/catalogo/cliente', [CatalogoController::class, 'mostrarParaCliente'])->name('catalogo.cliente');
     Route::post('/catalogo/cliente-temporal', [CatalogoController::class, 'crearClienteTemporal'])->name('catalogo.cliente.temporal');
@@ -220,8 +249,9 @@ Route::post('/catalogo/productos', [CatalogoController::class, 'obtenerProductos
 Route::get('/catalogo/producto/{producto}', [CatalogoController::class, 'detalleProducto'])->name('catalogo.producto.detalle');
 Route::post('/catalogo/solicitud', [CatalogoController::class, 'guardarSolicitud'])->name('catalogo.solicitud.guardar');
 
-// Rutas de Gestión de Solicitudes
-Route::middleware(['auth'])->group(function () {
+// Rutas de Gestión de Solicitudes. Administrativas: el vendedor cotiza desde
+// el Cotizador, pero no administra la bandeja de solicitudes.
+Route::middleware(['auth', 'role:admin'])->group(function () {
     Route::get('/solicitudes', [SolicitudController::class, 'index'])->name('solicitudes');
     Route::get('/solicitudes/pendientes-count', [SolicitudController::class, 'pendientesCount'])->name('solicitudes.pendientes-count');
     Route::get('/solicitudes/{solicitud}/detalle', [SolicitudController::class, 'detalle'])->name('solicitudes.detalle');
@@ -229,8 +259,8 @@ Route::middleware(['auth'])->group(function () {
 });
 
 
-// Rutas de Stock
-Route::prefix('stock')->name('stock.')->middleware('auth')->group(function () {
+// Rutas de Stock. Fuera del menú a petición de Innpro, y solo admin.
+Route::prefix('stock')->name('stock.')->middleware(['auth', 'role:admin'])->group(function () {
     // Vistas principales
     Route::get('/', [App\Http\Controllers\StockController::class, 'index'])->name('index');
     Route::get('/dashboard', [App\Http\Controllers\StockController::class, 'dashboard'])->name('dashboard');
@@ -261,18 +291,18 @@ Route::prefix('stock')->name('stock.')->middleware('auth')->group(function () {
     Route::post('/inicializar-todos', [App\Http\Controllers\StockController::class, 'inicializarTodos'])->name('inicializar-todos');
 });
 
-// Rutas autenticadas: stock-ajax de productos y descargas de solicitudes
-Route::middleware('auth')->group(function () {
-    // AJAX para ver stock desde productos
-    Route::get('/productos/{producto}/stock-ajax', [App\Http\Controllers\ProductosController::class, 'stockAjax'])->name('productos.stock-ajax');
+// AJAX para ver stock desde la pantalla de Productos: acompaña a Productos,
+// no al módulo de Stock.
+Route::get('/productos/{producto}/stock-ajax', [App\Http\Controllers\ProductosController::class, 'stockAjax'])
+    ->middleware(['auth', 'role:admin|vendedor'])->name('productos.stock-ajax');
 
-    // Solicitudes (PDF / Excel)
+// Solicitudes (PDF / Excel)
+Route::middleware(['auth', 'role:admin'])->group(function () {
     Route::get('/solicitudes/{solicitud}/pdf', [SolicitudController::class, 'descargarPdf'])->name('solicitudes.pdf');
     Route::get('/solicitudes/exportar-excel', [SolicitudController::class, 'exportarExcel'])->name('solicitudes.exportar-excel');
 });
-Route::middleware(['auth'])->group(function () {
-    // ... otras rutas existentes ...
-    
+// Actualización masiva de precios: es una acción de la pantalla de Productos.
+Route::middleware(['auth', 'role:admin|vendedor'])->group(function () {
     // Actualización de precios
     Route::post('/productos/actualizar-precios-excel', [ProductosController::class, 'actualizarPreciosExcel'])->name('productos.actualizar-precios-excel');
     Route::get('/productos/historial-precios', [ActualizacionPreciosController::class, 'historial'])->name('productos.historial-precios');
@@ -287,7 +317,7 @@ Route::get('/seguimiento/{token}', [OrdenServicioController::class, 'seguimiento
 Route::post('/seguimiento/{token}/firmar', [OrdenServicioController::class, 'firmarPublico'])->name('servicio.seguimiento.firmar');
 
 // ===== Módulo de Servicio Técnico (Innpro) =====
-Route::middleware('auth')->prefix('servicio')->name('servicio.')->group(function () {
+Route::middleware(['auth', 'role:admin|tecnico'])->prefix('servicio')->name('servicio.')->group(function () {
     Route::get('/', [OrdenServicioController::class, 'index'])->name('index');
     Route::get('/form/{orden?}', [OrdenServicioController::class, 'form'])->name('form');
     Route::post('/guardar', [OrdenServicioController::class, 'guardar'])->name('guardar');

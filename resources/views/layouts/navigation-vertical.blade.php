@@ -3,14 +3,10 @@
     $solicitudesPendientesCount = 0;
     try {
         $userActual = auth()->user();
-        if ($userActual && $userActual->hasAnyRole(['admin', 'vendedor'])) {
-            $q = \App\Models\SolicitudCotizacion::pendientes();
-            if ($userActual->hasRole('vendedor') && !$userActual->hasRole('admin')) {
-                $q->whereHas('cliente', function ($c) use ($userActual) {
-                    $c->where('vendedor_id', $userActual->id);
-                });
-            }
-            $solicitudesPendientesCount = $q->count();
+        // Solo admin: es el único que tiene el enlace a Solicitudes, así que
+        // para el resto la consulta era trabajo tirado en cada pintado del menú.
+        if ($userActual && $userActual->hasRole('admin')) {
+            $solicitudesPendientesCount = \App\Models\SolicitudCotizacion::pendientes()->count();
         }
     } catch (\Throwable $e) {
         $solicitudesPendientesCount = 0;
@@ -35,7 +31,11 @@
             <span>Inicio</span>
         </a>
 
-        @if (auth()->user()->getRoleNames()->first() == 'admin')
+        {{-- Solo administración. Ojo: se usa hasRole() y no
+             getRoleNames()->first(), que dependía del orden de la tabla pivote
+             y con dos roles asignados mostraba u ocultaba el bloque según qué
+             fila saliera primero. --}}
+        @if (auth()->user()->hasRole('admin'))
             <a href="/usuarios"
                class="nav-link mb-2 d-flex align-items-center gap-2 {{ request()->is('usuarios*') ? 'active' : 'text-dark' }}">
                 <i class="bi bi-people"></i>
@@ -48,6 +48,10 @@
             </a>
             {{-- Categorías se ocultó a petición de Innpro: no clasifican por categoría.
                  La ruta sigue viva por si hiciera falta retomarla. --}}
+        @endif
+
+        {{-- Catálogo y precios: administración y vendedores, con edición completa. --}}
+        @if (auth()->user()->hasAnyRole(['admin', 'vendedor']))
             <a href="/productos"
                class="nav-link mb-2 d-flex align-items-center gap-2 {{ request()->is('productos*') ? 'active' : 'text-dark' }}">
                 <i class="bi bi-basket3"></i>
@@ -58,6 +62,9 @@
                 <i class="bi bi-tags"></i>
                 <span>Listas de precios</span>
             </a>
+        @endif
+
+        @if (auth()->user()->hasRole('admin'))
             {{-- Sitio web público. Va en un desplegable porque son cuatro
                  pantallas que solo se tocan juntas, y meterlas sueltas al menú
                  lo alargaría para algo que se usa de vez en cuando. --}}
@@ -91,12 +98,17 @@
         @endif
 
         {{-- Cotizador (para vendedor y admin) --}}
-        @if(auth()->user()->hasRole(['vendedor', 'admin']))
+        @if(auth()->user()->hasAnyRole(['vendedor', 'admin']))
             <a href="{{ route('catalogo') }}"
                class="nav-link mb-2 d-flex align-items-center gap-2 {{ request()->routeIs('catalogo*') ? 'active' : 'text-dark' }}">
                 <i class="bi bi-cart"></i>
                 <span>Cotizador</span>
             </a>
+        @endif
+
+        {{-- Solicitudes: gestión administrativa de lo que llega del cotizador.
+             El vendedor cotiza, pero no administra la bandeja. --}}
+        @if(auth()->user()->hasRole('admin'))
             <a href="{{ route('solicitudes') }}"
                class="nav-link mb-2 d-flex align-items-center gap-2 {{ request()->routeIs('solicitudes*') ? 'active' : 'text-dark' }}">
                 <i class="bi bi-clipboard-data"></i>
@@ -114,8 +126,8 @@
                  desde Clientes/Productos. Las rutas siguen disponibles. --}}
         @endif
 
-        {{-- Servicio Técnico (admin, técnico y vendedor) --}}
-        @if(auth()->user()->hasAnyRole(['admin', 'tecnico', 'vendedor']))
+        {{-- Servicio Técnico (admin y técnico) --}}
+        @if(auth()->user()->hasAnyRole(['admin', 'tecnico']))
             <a href="{{ route('servicio.index') }}"
                class="nav-link mb-2 d-flex align-items-center gap-2 {{ request()->routeIs('servicio.*') ? 'active' : 'text-dark' }}">
                 <i class="bi bi-tools"></i>

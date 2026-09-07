@@ -45,8 +45,13 @@ class DashboardController extends Controller
         $esTecnico  = $user && $user->hasRole('tecnico') && ! $esAdmin && ! $esVendedor;
 
         // El técnico solo ve operación; comercial queda para admin y vendedor.
-        $verComercial = ! $esTecnico;
-        $verServicio  = $esAdmin || $esVendedor || $esTecnico;
+        //
+        // Va en positivo a propósito: con `! $esTecnico`, cualquier rol nuevo
+        // (o un usuario sin rol) caía en el else y veía las cifras comerciales
+        // SIN filtrar, es decir el mismo tablero que el administrador.
+        $verComercial = $esAdmin || $esVendedor;
+        // Servicio Técnico ya no es del vendedor, así que tampoco su bloque.
+        $verServicio  = $esAdmin || $esTecnico;
 
         [$desde, $hasta] = $this->rango($request);
 
