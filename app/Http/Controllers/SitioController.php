@@ -36,13 +36,23 @@ class SitioController extends Controller
     }
 
     /**
+     * Privacidad y cookies. Plantilla propia: una página legal no lleva el
+     * botón de «Cotizar por WhatsApp» ni el enlazado a otros servicios, que en
+     * un texto de tratamiento de datos solo distraen.
+     */
+    public function legal(string $slug)
+    {
+        return $this->mostrar(SitioPagina::LEGAL, $slug, 'sitio.legal');
+    }
+
+    /**
      * Un método por tipo, en vez de uno solo con el tipo inyectado desde los
      * `defaults` de la ruta: ahí Laravel ataba el primer parámetro al primer
      * valor de la ruta —el slug— y la página nunca aparecía. Un 404 mudo por un
      * orden de argumentos es exactamente el fallo que no se quiere heredar en
      * las URLs que tienen que posicionar.
      */
-    private function mostrar(string $tipo, string $slug)
+    private function mostrar(string $tipo, string $slug, string $vista = 'sitio.pagina')
     {
         $pagina = SitioPagina::publicadas()
             ->deTipo($tipo)
@@ -50,7 +60,7 @@ class SitioController extends Controller
             ->where('slug', $slug)
             ->firstOrFail();
 
-        return view('sitio.pagina', [
+        return view($vista, [
             'pagina' => $pagina,
             'servicios' => Sitio::menuServicios(),
         ]);
@@ -71,7 +81,10 @@ class SitioController extends Controller
     {
         $paginas = SitioPagina::publicadas()
             ->where('seo_noindex', false)
-            ->orderByRaw("FIELD(tipo, 'landing', 'servicio', 'noticia')")
+            // 'legal' va DENTRO del FIELD y no fuera: lo que no aparece en la
+            // lista devuelve 0 y se ordena el primero, así que las páginas
+            // legales encabezaban el sitemap por delante de la portada.
+            ->orderByRaw("FIELD(tipo, 'landing', 'servicio', 'noticia', 'legal')")
             ->orderBy('orden')
             ->get();
 

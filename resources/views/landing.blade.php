@@ -68,7 +68,7 @@
       // El titular se anima palabra por palabra. Se parte aquí y no en la base
       // para que quien edite escriba una frase normal y no tenga que pensar en
       // etiquetas; la segunda mitad se resalta sola.
-      $palabras = preg_split('/\s+/', trim($hero?->titulo ?: $pagina->subtitulo), -1, PREG_SPLIT_NO_EMPTY);
+      $palabras = preg_split('/\s+/', \App\Support\Sitio::txt(trim($hero?->titulo ?: $pagina->subtitulo)), -1, PREG_SPLIT_NO_EMPTY);
       $corte = (int) ceil(count($palabras) / 2);
       $ctaUno = $hero?->grupo('cta_principal') ?: [];
       $ctaDos = $hero?->grupo('cta_secundario') ?: [];
@@ -86,7 +86,7 @@
       </h1>
 
       @if ($hero?->texto)
-        <p class="hero__sub">{{ $hero->texto }}</p>
+        <p class="hero__sub">{{ \App\Support\Sitio::txt($hero->texto) }}</p>
       @endif
 
       <div class="hero__cta">
@@ -101,7 +101,7 @@
       <div class="hero__stats">
         @foreach ($hero?->lista('estadisticas') ?? [] as $stat)
           <div class="stat">
-            <b data-count="{{ $stat['numero'] ?? 0 }}" @if (filled($stat['sufijo'] ?? null)) data-suf="{{ $stat['sufijo'] }}" @endif>0</b>
+            <b data-count="{{ \App\Support\Sitio::txt($stat['numero'] ?? '0') }}" @if (filled($stat['sufijo'] ?? null)) data-suf="{{ $stat['sufijo'] }}" @endif>0</b>
             <span>{{ $stat['etiqueta'] ?? '' }}</span>
           </div>
         @endforeach
@@ -252,13 +252,13 @@
 
       <div class="reveal">
         @if ($exp?->antetitulo)<div class="eyebrow">{{ $exp->antetitulo }}</div>@endif
-        <h2 class="h-sec">{{ $exp?->titulo }}</h2>
+        <h2 class="h-sec">{{ \App\Support\Sitio::txt($exp?->titulo) }}</h2>
       </div>
 
       <div class="reveal reveal--right" style="--d:140ms">
         {{-- Los saltos de línea del editor se vuelven párrafos: quien escribe
              no tiene por qué saber HTML para separar dos ideas. --}}
-        @foreach (preg_split('/\n\s*\n/', trim((string) $exp?->texto), -1, PREG_SPLIT_NO_EMPTY) as $i => $parrafo)
+        @foreach (preg_split('/\n\s*\n/', \App\Support\Sitio::txt(trim((string) $exp?->texto)), -1, PREG_SPLIT_NO_EMPTY) as $i => $parrafo)
           <p class="lead" @if ($i > 0) style="margin-top:1.2rem" @endif>{{ trim($parrafo) }}</p>
         @endforeach
 
@@ -340,6 +340,7 @@
 <footer class="foot">
   <div class="shell">
     <small>© {{ date('Y') }} {{ App\Support\Sitio::nombre() }} · {{ App\Support\Sitio::ciudad() }}, Colombia</small>
+    @include('sitio.partials.legales')
     <span class="soc">
       <a href="https://www.facebook.com/innproingenieria" target="_blank" rel="noopener" aria-label="Facebook"><svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M14 9h3V6h-3c-2.2 0-4 1.8-4 4v2H8v3h2v7h3v-7h3l1-3h-4v-2c0-.6.4-1 1-1z"/></svg></a>
       <a href="https://www.linkedin.com/company/innpro-ingenieria" target="_blank" rel="noopener" aria-label="LinkedIn"><svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M6.9 8H4v12h2.9V8zM5.4 3.5A1.7 1.7 0 103.7 5.2 1.7 1.7 0 005.4 3.5zM20 13.4c0-3.2-1.7-4.7-4-4.7a3.5 3.5 0 00-3.1 1.7V8H10v12h2.9v-6.3c0-1.7.3-3.3 2.4-3.3s2 1.9 2 3.4V20H20z"/></svg></a>
@@ -357,6 +358,7 @@
 </a>
 @endif
 
+@include('sitio.partials.cookies')
 @include('sitio.partials.scripts')
 </body>
 </html>

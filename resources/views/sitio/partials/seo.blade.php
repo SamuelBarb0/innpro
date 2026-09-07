@@ -54,10 +54,23 @@
 {{-- Analytics va al final y solo si hay ID: sin esto no hay forma de saber
      cuántas visitas llegan, de dónde, ni cuántas terminan en contacto. --}}
 @if ($ga4 = Sitio::analytics())
-    <script async src="https://www.googletagmanager.com/gtag/js?id={{ $ga4 }}"></script>
+    {{-- El consentimiento se declara ANTES de cargar gtag, no después: si el
+         script arranca sin la orden, deja la cookie puesta y ya da igual lo que
+         pulse el visitante en el aviso. El bloque va aquí arriba y sin `async`
+         por lo mismo — tiene que haberse ejecutado cuando llegue Analytics. --}}
     <script>
         window.dataLayer = window.dataLayer || [];
         function gtag(){dataLayer.push(arguments);}
+        gtag('consent', 'default', {
+            ad_storage: 'denied',
+            ad_user_data: 'denied',
+            ad_personalization: 'denied',
+            analytics_storage: 'denied',
+            wait_for_update: 500
+        });
+    </script>
+    <script async src="https://www.googletagmanager.com/gtag/js?id={{ $ga4 }}"></script>
+    <script>
         gtag('js', new Date());
         gtag('config', @json($ga4));
 
@@ -71,5 +84,15 @@
             else if (href.indexOf('tel:') === 0) gtag('event', 'contacto_llamada');
             else if (href.indexOf('mailto:') === 0) gtag('event', 'contacto_correo');
         });
+
+        // Envío de formulario. Se engancha en `submit` del documento y no a un
+        // formulario concreto porque hoy el sitio público no tiene ninguno: así
+        // el día que se publique uno, ya se mide sin tocar esto.
+        document.addEventListener('submit', function (e) {
+            var f = e.target;
+            if (f && f.tagName === 'FORM' && !f.hasAttribute('data-sin-medir')) {
+                gtag('event', 'contacto_formulario', { formulario: f.getAttribute('name') || f.id || 'sin_nombre' });
+            }
+        }, true);
     </script>
 @endif

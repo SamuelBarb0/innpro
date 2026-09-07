@@ -1033,6 +1033,12 @@ span.card__more{opacity:.45}
   transition:background .5s var(--ease)}
 .foot .shell{display:flex;justify-content:space-between;align-items:center;gap:1.4rem;flex-wrap:wrap}
 .foot small{color:var(--foot-ink);font-size:.8rem}
+/* Enlaces legales del pie. Van con el mismo tono apagado que el resto del
+   pie —no compiten con nada— pero subrayados al pasar, para que se lean como
+   enlaces y no como texto muerto. */
+.foot__legal{display:flex;flex-wrap:wrap;gap:.35rem 1.1rem;align-items:center}
+.foot__legal a{color:var(--foot-ink);font-size:.8rem;text-decoration:none;transition:color .3s}
+.foot__legal a:hover{color:var(--accent-ink);text-decoration:underline;text-underline-offset:.18em}
 .foot .soc{display:flex;gap:1rem}
 .foot .soc a{color:var(--foot-ink);transition:color .3s,transform .3s}
 .foot .soc a:hover{color:var(--accent-ink);transform:translateY(-2px)}

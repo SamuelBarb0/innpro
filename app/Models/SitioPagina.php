@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Support\Sitio;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Str;
@@ -19,10 +20,19 @@ class SitioPagina extends Model
 
     public const NOTICIA = 'noticia';
 
+    /**
+     * Páginas legales (privacidad, cookies). Tipo propio y no una noticia
+     * porque se sirven en la raíz —`/politica-de-privacidad`— y no bajo un
+     * prefijo: el cliente pidió expresamente una URL legible, y `/noticias/
+     * politica-de-privacidad` no lo es.
+     */
+    public const LEGAL = 'legal';
+
     public const TIPOS = [
         self::LANDING => 'Portada',
         self::SERVICIO => 'Página de servicio',
         self::NOTICIA => 'Noticia',
+        self::LEGAL => 'Página legal',
     ];
 
     protected $fillable = [
@@ -73,7 +83,11 @@ class SitioPagina extends Model
      */
     public function tituloSeo(): string
     {
-        $propio = trim((string) $this->seo_titulo);
+        // Los marcadores se resuelven ANTES de recortar: «{anios}» ocupa 7
+        // caracteres y «15» dos, así que medir sobre el texto sin resolver
+        // recortaría el título por donde no es —y lo que se pierde al final es
+        // justo la ciudad.
+        $propio = trim(Sitio::txt($this->seo_titulo));
 
         if ($propio !== '') {
             return Str::limit($propio, 60, '');
@@ -81,7 +95,7 @@ class SitioPagina extends Model
 
         $empresa = Parametros::valor('empresa_nombre', 'Innpro Ingeniería');
 
-        return Str::limit(trim($this->titulo).' | '.$empresa, 60, '');
+        return Str::limit(trim(Sitio::txt($this->titulo)).' | '.$empresa, 60, '');
     }
 
     /**
@@ -93,13 +107,13 @@ class SitioPagina extends Model
      */
     public function descripcionSeo(): string
     {
-        $propia = trim((string) $this->seo_descripcion);
+        $propia = trim(Sitio::txt($this->seo_descripcion));
 
         if ($propia !== '') {
             return Str::limit($propia, 155, '');
         }
 
-        $base = trim(strip_tags((string) ($this->resumen ?: $this->subtitulo ?: $this->titulo)));
+        $base = trim(strip_tags(Sitio::txt($this->resumen ?: $this->subtitulo ?: $this->titulo)));
 
         return Str::limit($base, 155, '');
     }
@@ -109,6 +123,10 @@ class SitioPagina extends Model
     {
         if ($this->tipo === self::LANDING) {
             return url('/');
+        }
+
+        if ($this->tipo === self::LEGAL) {
+            return url("/{$this->slug}");
         }
 
         $prefijo = $this->tipo === self::NOTICIA ? 'noticias' : 'servicios';
@@ -126,12 +144,19 @@ class SitioPagina extends Model
         return match ($this->tipo) {
             self::LANDING => '1.0',
             self::SERVICIO => '0.9',
+            // Las legales tienen que existir y ser accesibles, pero no compiten
+            // por ninguna búsqueda: van al final de la cola de rastreo.
+            self::LEGAL => '0.2',
             default => '0.6',
         };
     }
 
     public function frecuenciaSitemap(): string
     {
-        return $this->tipo === self::NOTICIA ? 'monthly' : 'weekly';
+        return match ($this->tipo) {
+            self::NOTICIA => 'monthly',
+            self::LEGAL => 'yearly',
+            default => 'weekly',
+        };
     }
 }

@@ -81,6 +81,7 @@
         </a>
       @endforeach
     </span>
+    @include('sitio.partials.legales')
   </div>
 </footer>
 
@@ -92,6 +93,7 @@
 
 {{-- El mismo comportamiento de la portada. Los bloques que aquí no tienen a
      quién aplicarse (lente, contadores, tarjetas) se saltan solos. --}}
+@include('sitio.partials.cookies')
 @include('sitio.partials.scripts')
 </body>
 </html>

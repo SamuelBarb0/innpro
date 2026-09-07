@@ -76,7 +76,13 @@ class ProfileTest extends TestCase
             ->assertRedirect('/');
 
         $this->assertGuest();
-        $this->assertNull($user->fresh());
+
+        // `User` usa borrado suave, así que la cuenta se marca, no se destruye.
+        // No vale `fresh()` para comprobarlo: consulta SIN los scopes globales
+        // —así está hecho en Laravel— y por eso devuelve el modelo aunque el
+        // borrado haya funcionado. Esta prueba venía de la plantilla de Breeze
+        // y se quedó obsoleta el día que el modelo pasó a borrado suave.
+        $this->assertSoftDeleted($user);
     }
 
     public function test_correct_password_must_be_provided_to_delete_account(): void

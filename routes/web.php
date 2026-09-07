@@ -48,6 +48,20 @@ Route::get('/noticias/{slug}', [App\Http\Controllers\SitioController::class, 'no
 
 // Se sirven desde la app, no como archivos, para que reflejen lo que el cliente
 // publique desde el panel sin tener que regenerarlos a mano.
+/*
+ * Páginas legales en la raíz: el cliente pidió una URL legible para la política
+ * de privacidad, y `/politica-de-privacidad` lo es.
+ *
+ * Los slugs van FIJOS en la restricción y no consultados a la base: esta ruta
+ * cuelga de la raíz y sin restricción se tragaría `/login`, `/dashboard` y
+ * cualquier otra que se declare después. Además `route:cache` congela el
+ * archivo, así que una lista sacada de la base quedaría obsoleta en cuanto
+ * alguien publicara una página nueva. Añadir una legal = añadirla aquí.
+ */
+Route::get('/{slug}', [App\Http\Controllers\SitioController::class, 'legal'])
+    ->where('slug', 'politica-de-privacidad|politica-de-cookies')
+    ->name('sitio.legal');
+
 Route::get('/sitemap.xml', [App\Http\Controllers\SitioController::class, 'sitemap'])->name('sitio.sitemap');
 Route::get('/robots.txt', [App\Http\Controllers\SitioController::class, 'robots'])->name('sitio.robots');
 

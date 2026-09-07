@@ -105,6 +105,59 @@ class Sitio
         ]));
     }
 
+    /**
+     * El anio en que Innpro empezo a operar. Es la UNICA fuente del dato.
+     *
+     * El cliente reclamo que los anios de experiencia no cuadran, y tenia
+     * razon: el WordPress dice «13 anos» en la portada y «mas de 9 anos» en
+     * Nuestra Empresa, y el sitio nuevo heredo el 13. La causa de fondo es que
+     * el numero estaba ESCRITO como texto en cuatro sitios distintos, asi que
+     * envejece solo y hay que acordarse de subirlo cada enero en todos.
+     *
+     * Guardando el anio de inicio en vez del total, el numero se calcula y no
+     * vuelve a quedarse viejo nunca.
+     */
+    public static function anioFundacion(): int
+    {
+        return (int) self::valor('sitio_anio_fundacion', '2011');
+    }
+
+    public static function aniosExperiencia(): int
+    {
+        return max(1, (int) date('Y') - self::anioFundacion());
+    }
+
+    /**
+     * Resuelve los marcadores de un texto del panel antes de pintarlo.
+     *
+     * Se aplica al PINTAR y no en un accesor del modelo a proposito: el panel
+     * edita esos mismos campos, y si el accesor devolviera el numero ya
+     * resuelto, el formulario mostraria «15» y al guardar se grabaria el 15
+     * fijo — o sea que el marcador se destruiria solo la primera vez que
+     * alguien tocara el texto, que es justo el problema que viene a resolver.
+     *
+     * Los del NAP existen por lo mismo: la politica de privacidad tiene que
+     * nombrar la razon social, el NIT, la direccion y el correo, y si se
+     * escriben dentro del texto legal se quedan viejos el dia que la empresa se
+     * mude — con el agravante de que ahi el dato desactualizado es el del
+     * responsable del tratamiento de datos.
+     *
+     * Marcadores: {anios}, {ciudad}, {empresa}, {nit}, {direccion}, {email},
+     * {telefono}.
+     */
+    public static function txt(?string $texto): string
+    {
+        return strtr((string) $texto, [
+            '{anios}' => (string) self::aniosExperiencia(),
+            '{ciudad}' => self::ciudad(),
+            '{empresa}' => self::nombre(),
+            '{nit}' => self::valor('sitio_nit', '(NIT por configurar en Sitio web → Ajustes)'),
+            '{direccion}' => self::direccion(),
+            '{email}' => self::email(),
+            '{telefono}' => self::celular() ?: self::telefono(),
+        ]);
+    }
+
     public static function analytics(): string
     {
         return self::valor('sitio_ga4');

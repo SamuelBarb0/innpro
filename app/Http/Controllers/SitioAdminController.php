@@ -25,6 +25,9 @@ class SitioAdminController extends Controller
     private const AJUSTES = [
         'Datos del negocio (NAP)' => [
             'sitio_nombre' => 'Nombre del negocio',
+            // Lo pide la politica de privacidad: la ley 1581 obliga a
+            // identificar al responsable del tratamiento de datos.
+            'sitio_nit' => 'NIT',
             'sitio_direccion' => 'Dirección',
             'sitio_ciudad' => 'Ciudad',
             'sitio_telefono' => 'Teléfono fijo',
@@ -32,6 +35,12 @@ class SitioAdminController extends Controller
             'sitio_email' => 'Correo comercial',
             'sitio_horario' => 'Horario de atención',
             'sitio_cobertura' => 'Zona de cobertura',
+            // Se guarda el ANIO DE INICIO y no el total de anios: el total
+            // envejece solo y hay que acordarse de subirlo cada enero, que es
+            // como el sitio viejo acabo diciendo «13 anos» en la portada y
+            // «mas de 9» en Nuestra Empresa. Escribiendo {anios} en cualquier
+            // texto del panel, sale el numero calculado desde este anio.
+            'sitio_anio_fundacion' => 'Año de inicio de operaciones',
         ],
         'Contacto y redes' => [
             'sitio_whatsapp' => 'WhatsApp (solo dígitos, con indicativo)',
