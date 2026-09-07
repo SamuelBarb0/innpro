@@ -48,20 +48,6 @@ Route::get('/noticias/{slug}', [App\Http\Controllers\SitioController::class, 'no
 
 // Se sirven desde la app, no como archivos, para que reflejen lo que el cliente
 // publique desde el panel sin tener que regenerarlos a mano.
-/*
- * Páginas legales en la raíz: el cliente pidió una URL legible para la política
- * de privacidad, y `/politica-de-privacidad` lo es.
- *
- * Los slugs van FIJOS en la restricción y no consultados a la base: esta ruta
- * cuelga de la raíz y sin restricción se tragaría `/login`, `/dashboard` y
- * cualquier otra que se declare después. Además `route:cache` congela el
- * archivo, así que una lista sacada de la base quedaría obsoleta en cuanto
- * alguien publicara una página nueva. Añadir una legal = añadirla aquí.
- */
-Route::get('/{slug}', [App\Http\Controllers\SitioController::class, 'legal'])
-    ->where('slug', 'politica-de-privacidad|politica-de-cookies')
-    ->name('sitio.legal');
-
 Route::get('/sitemap.xml', [App\Http\Controllers\SitioController::class, 'sitemap'])->name('sitio.sitemap');
 Route::get('/robots.txt', [App\Http\Controllers\SitioController::class, 'robots'])->name('sitio.robots');
 
@@ -359,3 +345,21 @@ Route::middleware(['auth', 'role:admin|tecnico'])->prefix('servicio')->name('ser
 });
 
 require __DIR__.'/auth.php';
+
+/*
+ * Páginas legales en la raíz: el cliente pidió una URL legible para la política
+ * de privacidad, y `/politica-de-privacidad` lo es.
+ *
+ * VA LA ÚLTIMA DE TODO EL ARCHIVO, y por eso también después del `require` de
+ * las rutas de autenticación. Laravel resuelve por orden de declaración, así
+ * que aquí abajo esta ruta solo recoge lo que ninguna otra reclamó: `/login`,
+ * `/dashboard` y compañía se resuelven mucho antes. Si estuviera arriba se las
+ * tragaría todas, y hay una prueba que lo vigila.
+ *
+ * El slug NO va escrito a mano: se busca en la base. Antes estaban fijos los
+ * dos que existían, con lo cual una página legal creada desde el panel se
+ * guardaba bien y luego daba 404 — editable a medias, que es peor que no serlo.
+ */
+Route::get('/{slug}', [App\Http\Controllers\SitioController::class, 'legal'])
+    ->where('slug', '[a-z0-9-]+')
+    ->name('sitio.legal');

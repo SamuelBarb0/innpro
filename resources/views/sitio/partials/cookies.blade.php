@@ -23,8 +23,8 @@
 <div class="ck" id="avisoCookies" hidden role="dialog" aria-live="polite"
      aria-label="Aviso de cookies">
   <div class="ck__txt">
-    <strong>Este sitio usa cookies.</strong>
-    Las necesarias para que funcione van siempre; las de medición, solo si usted lo acepta.
+    <strong>{{ \App\Support\Sitio::valor('sitio_cookies_titulo', 'Este sitio usa cookies.') }}</strong>
+    {{ \App\Support\Sitio::valor('sitio_cookies_texto', 'Las necesarias para que funcione van siempre; las de medición, solo si usted lo acepta.') }}
     @if ($politica)
       <a href="{{ url('/'.$politica) }}">Ver la política de cookies</a>.
     @endif

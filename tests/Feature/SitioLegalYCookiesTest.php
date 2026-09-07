@@ -5,8 +5,10 @@ namespace Tests\Feature;
 use App\Models\Parametros;
 use App\Models\SitioBloque;
 use App\Models\SitioPagina;
+use App\Models\User;
 use App\Support\Sitio;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Spatie\Permission\Models\Role;
 use Tests\TestCase;
 
 /**
@@ -253,6 +255,69 @@ class SitioLegalYCookiesTest extends TestCase
             $this->assertStringContainsString('"@type":"Service"', $html, "Sin datos estructurados en $slug");
             $this->assertMatchesRegularExpression('/<meta name="description" content=".{40,}"/', $html);
         }
+    }
+
+    /*
+    |---------------------------------------------------------------------------
+    | Todo editable desde el panel
+    |---------------------------------------------------------------------------
+    */
+
+    /**
+     * El motivo de abrir la ruta a la base: antes los dos slugs iban escritos a
+     * mano, así que una página legal creada desde el panel se guardaba bien y
+     * después daba 404. Editable a medias es peor que no serlo, porque el fallo
+     * aparece cuando el cliente ya publicó.
+     */
+    public function test_una_pagina_legal_nueva_tiene_url_sin_tocar_el_codigo()
+    {
+        $pagina = SitioPagina::create([
+            'tipo' => SitioPagina::LEGAL,
+            'slug' => 'terminos-y-condiciones',
+            'titulo' => 'Términos y condiciones',
+            'contenido' => '<p>Condiciones de uso de {empresa}.</p>',
+            'activo' => true,
+            'publicado_at' => now(),
+            'orden' => 3,
+        ]);
+
+        $this->get('/terminos-y-condiciones')
+            ->assertOk()
+            ->assertSee('Términos y condiciones')
+            ->assertSee('Condiciones de uso de '.Sitio::nombre());
+
+        // Y aparece en el pie junto a las otras, sin tocar la plantilla.
+        $this->get('/')->assertOk()->assertSee('/terminos-y-condiciones', false);
+
+        // Si se despublica, deja de responder.
+        $pagina->update(['activo' => false]);
+        $this->get('/terminos-y-condiciones')->assertNotFound();
+    }
+
+    public function test_el_texto_del_aviso_de_cookies_se_edita_desde_los_ajustes()
+    {
+        $this->ajuste('sitio_cookies_titulo', 'Usamos cookies.');
+        $this->ajuste('sitio_cookies_texto', 'Solo medimos si usted lo autoriza.');
+
+        $this->get('/')->assertOk()
+            ->assertSee('Usamos cookies.')
+            ->assertSee('Solo medimos si usted lo autoriza.');
+    }
+
+    public function test_las_legales_no_encabezan_el_listado_del_panel()
+    {
+        Role::findOrCreate('admin', 'web');
+        $admin = User::factory()->create(['activo' => true]);
+        $admin->syncRoles('admin');
+
+        $html = $this->actingAs($admin)->get('/sitio/paginas')->assertOk()->getContent();
+
+        // La portada manda: es lo primero que alguien busca al entrar.
+        $this->assertLessThan(
+            strpos($html, 'politica-de-privacidad'),
+            strpos($html, 'Portada'),
+            'Las páginas legales no deben salir por delante de la portada'
+        );
     }
 
     public function test_el_boton_flotante_de_whatsapp_sigue_en_su_sitio()

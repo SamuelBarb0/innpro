@@ -48,6 +48,14 @@ class SitioAdminController extends Controller
             'sitio_linkedin' => 'LinkedIn',
             'sitio_instagram' => 'Instagram',
         ],
+        'Aviso de cookies' => [
+            // El texto estaba escrito dentro de la plantilla, o sea que
+            // corregir una coma exigía un despliegue. Los botones no se editan
+            // a propósito: «Aceptar» y «Rechazar» son los términos que la gente
+            // reconoce, y dejarlos sueltos invita a suavizar el de rechazar.
+            'sitio_cookies_titulo' => 'Aviso de cookies · encabezado',
+            'sitio_cookies_texto' => 'Aviso de cookies · texto',
+        ],
         'Buscadores y medición' => [
             'sitio_ga4' => 'ID de Google Analytics 4',
             'sitio_search_console' => 'Verificación de Search Console',
@@ -119,7 +127,10 @@ class SitioAdminController extends Controller
         $this->autorizar();
 
         return view('sitio_admin.paginas', [
-            'paginas' => SitioPagina::orderByRaw("FIELD(tipo, 'landing', 'servicio', 'noticia')")
+            // 'legal' va DENTRO del FIELD: lo que falta en la lista devuelve 0
+            // y se ordena primero, así que las páginas legales encabezaban el
+            // listado por delante de la portada.
+            'paginas' => SitioPagina::orderByRaw("FIELD(tipo, 'landing', 'servicio', 'noticia', 'legal')")
                 ->orderBy('orden')
                 ->orderBy('titulo')
                 ->get(),
