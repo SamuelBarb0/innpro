@@ -1161,6 +1161,8 @@ span.card__more{opacity:.45}
 .pg__body p{margin:0 0 1rem}
 .pg__body ul{margin:0 0 1.4rem;padding-left:1.1rem}
 .pg__body li{margin:.45rem 0}
+.pg__body h3{font-family:var(--f-display);font-size:1.12rem;font-weight:600;margin:1.6rem 0 .6rem}
+.pg__body a{color:var(--accent-ink);font-weight:500;text-underline-offset:.2em}
 .pg__cta{margin-top:3.4rem;display:flex;flex-wrap:wrap;gap:.9rem}
 .pg__otros{margin-top:4.5rem;padding-top:2.4rem;border-top:1px solid var(--line-2)}
 .pg__otros h3{font-family:var(--f-display);font-size:1.15rem;margin:0 0 1.2rem;opacity:.9}

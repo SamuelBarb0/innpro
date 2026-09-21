@@ -32,6 +32,7 @@ class PortadaEsquema
         'camara' => 'Cámara — CCTV y videovigilancia',
         'acceso' => 'Huella — control de acceso',
         'incendio' => 'Llama — detección de incendios',
+        'soporte' => 'Diadema — soporte técnico',
     ];
 
     /**
@@ -79,6 +80,9 @@ class PortadaEsquema
                     'titulo' => ['etiqueta' => 'Título de la sección'],
                     'texto' => ['etiqueta' => 'Párrafo de entrada', 'tipo' => 'textarea', 'ayuda' => 'Opcional. Sale entre el título y las tarjetas. Déjalo vacío si no hace falta.'],
                 ],
+                'grupos' => [
+                    'cta' => ['nombre' => 'Botón', 'ayuda' => 'Sale debajo del párrafo de entrada, antes de las tarjetas. Déjalo vacío para que no aparezca.'],
+                ],
                 'listas' => [
                     'tarjetas' => [
                         'nombre' => 'Tarjetas de servicio',
@@ -104,18 +108,70 @@ class PortadaEsquema
                 ],
             ],
 
+            'acompanamiento' => [
+                'nombre' => 'Acompañamiento técnico',
+                'donde' => 'Las tres tarjetas de interventoría, mantenimiento y soporte, debajo de Servicios.',
+                'ayuda' => 'Los servicios que no tienen página propia. Cada tarjeta cierra con su llamado a la acción, que por defecto lleva a Contáctenos.',
+                'ancla' => 'acompanamiento',
+                'campos' => [
+                    'antetitulo' => ['etiqueta' => 'Línea pequeña de encima'],
+                    'titulo' => ['etiqueta' => 'Título de la sección'],
+                    'texto' => ['etiqueta' => 'Párrafo de entrada', 'tipo' => 'textarea', 'ayuda' => 'Opcional. Déjalo vacío si no hace falta.'],
+                ],
+                'listas' => [
+                    'tarjetas' => [
+                        'nombre' => 'Tarjetas',
+                        'ayuda' => 'Se muestran de tres en tres.',
+                        'singular' => 'tarjeta',
+                        'max' => 6,
+                        'campos' => [
+                            'numero' => ['etiqueta' => 'Etiqueta pequeña de arriba', 'col' => 6, 'ayuda' => 'Ej.: 01 / Interventoría'],
+                            'icono' => ['etiqueta' => 'Icono', 'col' => 6, 'tipo' => 'select', 'opciones' => self::ICONOS],
+                            'titulo' => ['etiqueta' => 'Título', 'col' => 12],
+                            'texto' => ['etiqueta' => 'Descripción', 'col' => 12, 'tipo' => 'textarea', 'filas' => 4],
+                            'cta' => ['etiqueta' => 'Texto del enlace', 'col' => 6, 'ayuda' => 'Corto, sale en mayúsculas. Ej.: Programar mantenimiento'],
+                            'url' => ['etiqueta' => 'A dónde lleva', 'col' => 6, 'ayuda' => '#contacto lleva a la sección de contacto de esta misma página.'],
+                        ],
+                    ],
+                ],
+            ],
+
             'empresa' => [
                 'nombre' => 'Nuestra empresa',
                 'donde' => 'El bloque de dos columnas con el logo dentro de un marco técnico.',
-                'ayuda' => 'La presentación de la compañía.',
+                'ayuda' => 'La presentación de la compañía. Deja una línea en blanco entre párrafos para separarlos.',
                 'ancla' => 'empresa',
                 'campos' => [
                     'antetitulo' => ['etiqueta' => 'Línea pequeña de encima'],
                     'titulo' => ['etiqueta' => 'Título'],
-                    'texto' => ['etiqueta' => 'Texto', 'tipo' => 'textarea', 'filas' => 5],
+                    'texto' => ['etiqueta' => 'Texto', 'tipo' => 'textarea', 'filas' => 7, 'ayuda' => 'Una línea en blanco entre párrafos.'],
                 ],
                 'grupos' => [
                     'cta' => ['nombre' => 'Botón', 'ayuda' => 'Déjalo vacío para que no aparezca.'],
+                ],
+            ],
+
+            'identidad' => [
+                'nombre' => 'Misión, visión y valores',
+                'donde' => 'Las tres tarjetas sin icono, debajo de Nuestra empresa.',
+                'ayuda' => 'Cada tarjeta lleva un párrafo, una lista o las dos cosas: los valores quedan mejor como lista, uno por línea.',
+                'ancla' => 'identidad',
+                'campos' => [
+                    'antetitulo' => ['etiqueta' => 'Línea pequeña de encima'],
+                    'titulo' => ['etiqueta' => 'Título'],
+                ],
+                'listas' => [
+                    'tarjetas' => [
+                        'nombre' => 'Tarjetas',
+                        'ayuda' => 'Se muestran de tres en tres.',
+                        'singular' => 'tarjeta',
+                        'max' => 6,
+                        'campos' => [
+                            'titulo' => ['etiqueta' => 'Título', 'col' => 12, 'ayuda' => 'Ej.: Misión'],
+                            'texto' => ['etiqueta' => 'Texto', 'col' => 12, 'tipo' => 'textarea', 'filas' => 3],
+                            'puntos' => ['etiqueta' => 'Lista', 'col' => 12, 'tipo' => 'lineas', 'filas' => 4, 'ayuda' => 'Una cosa por línea. Opcional.'],
+                        ],
+                    ],
                 ],
             ],
 

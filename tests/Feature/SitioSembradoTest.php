@@ -28,9 +28,9 @@ class SitioSembradoTest extends TestCase
         $this->assertNotEmpty($portada->seo_titulo);
         $this->assertNotEmpty($portada->seo_descripcion);
 
-        // Las seis secciones que hoy tiene la vista. Si alguien agrega una
-        // sección a la plantilla y olvida sembrarla, sale vacía en producción.
-        foreach (['hero', 'servicios', 'empresa', 'lineamientos', 'experiencia', 'contacto'] as $clave) {
+        // Las secciones que hoy tiene la vista. Si alguien agrega una sección
+        // a la plantilla y olvida sembrarla, sale vacía en producción.
+        foreach (['hero', 'servicios', 'acompanamiento', 'empresa', 'identidad', 'lineamientos', 'experiencia', 'contacto'] as $clave) {
             $this->assertNotNull($portada->bloque($clave), "Falta la sección «{$clave}».");
         }
     }

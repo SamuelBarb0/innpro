@@ -137,49 +137,19 @@
       {{-- Párrafo de entrada, opcional. Si el panel lo deja vacío no se pinta
            y las tarjetas suben, sin dejar un hueco raro. --}}
       @if ($svc?->texto)
-        <p class="lead" style="margin-top:1.4rem;max-width:64ch">{{ $svc->texto }}</p>
+        <p class="lead" style="margin-top:1.4rem;max-width:64ch">{{ \App\Support\Sitio::txt($svc->texto) }}</p>
+      @endif
+      @php $ctaSvc = $svc?->grupo('cta') ?: []; @endphp
+      @if (filled($ctaSvc['texto'] ?? null))
+        <div class="hero__cta" style="opacity:1;animation:none;margin-top:1.8rem">
+          <a href="{{ $ctaSvc['url'] ?? '#contacto' }}" class="btn btn--ghost"><span>{{ $ctaSvc['texto'] }}</span></a>
+        </div>
       @endif
     </div>
 
     <div class="svc">
       @foreach ($svc?->lista('tarjetas') ?? [] as $i => $tarjeta)
-        @php
-          // Enlazar la tarjeta a su página de servicio es media pelea del SEO:
-          // sin enlace interno desde la portada, Google llega tarde y con menos
-          // fuerza a las páginas que tienen que posicionar.
-          $destino = $tarjeta['url'] ?? '';
-        @endphp
-        <article class="card bracket reveal" style="--d:{{ 80 + $i * 120 }}ms">
-          {{-- El brillo que sigue al cursor necesita su propio elemento: los
-               pseudoelementos de la tarjeta se los quedan los corchetes. --}}
-          <span class="card__glow"></span>
-          @if (filled($tarjeta['destacado'] ?? null))
-            <span class="card__sello">{{ $tarjeta['destacado'] }}</span>
-          @endif
-          <div class="card__n">{{ $tarjeta['numero'] ?? '' }}</div>
-          <div class="card__ico">@include('sitio.partials.icono', ['nombre' => $tarjeta['icono'] ?? null, 'indice' => $i])</div>
-          <h3>{{ $tarjeta['titulo'] ?? '' }}</h3>
-          <p>{{ $tarjeta['texto'] ?? '' }}</p>
-
-          {{-- «Qué incluye». Es lo que convierte una tarjeta de eslogan en una
-               tarjeta que responde de verdad a qué compra el cliente. Se llena
-               desde el panel, una cosa por línea; sin nada escrito, la tarjeta
-               se queda exactamente como estaba. --}}
-          @php $puntos = array_filter((array) ($tarjeta['puntos'] ?? []), 'is_string'); @endphp
-          @if (! empty($puntos))
-            <ul class="card__puntos">
-              @foreach ($puntos as $punto)
-                <li>{{ $punto }}</li>
-              @endforeach
-            </ul>
-          @endif
-
-          @if (filled($destino))
-            <a class="card__more" href="{{ $destino }}">Ver más →</a>
-          @else
-            <span class="card__more">Ver más →</span>
-          @endif
-        </article>
+        @include('sitio.partials.tarjeta', ['tarjeta' => $tarjeta, 'i' => $i])
       @endforeach
     </div>
 
@@ -195,8 +165,33 @@
   </div>
 </section>
 
+<!-- ══════════════ ACOMPAÑAMIENTO TÉCNICO ══════════════ -->
+{{-- Interventoría, mantenimiento y soporte: lo que Innpro hace DESPUÉS de
+     instalar. No tienen página propia —el alcance contratado son las cuatro
+     páginas de servicio—, así que viven aquí, con su llamado a la acción. --}}
+@php $aco = $pagina->bloque('acompanamiento'); @endphp
+@if ($aco && $aco->activo)
+<section class="sect" id="acompanamiento">
+  <div class="shell">
+    <div class="reveal">
+      @if ($aco->antetitulo)<div class="eyebrow">{{ $aco->antetitulo }}</div>@endif
+      <h2 class="h-sec">{{ \App\Support\Sitio::txt($aco->titulo) }}</h2>
+      @if ($aco->texto)
+        <p class="lead" style="margin-top:1.4rem;max-width:64ch">{{ \App\Support\Sitio::txt($aco->texto) }}</p>
+      @endif
+    </div>
+
+    <div class="svc">
+      @foreach ($aco->lista('tarjetas') as $i => $tarjeta)
+        @include('sitio.partials.tarjeta', ['tarjeta' => $tarjeta, 'i' => $i])
+      @endforeach
+    </div>
+  </div>
+</section>
+@endif
+
 <!-- ══════════════ EMPRESA ══════════════ -->
-<section class="sect" id="empresa">
+<section class="sect sect--alt" id="empresa">
   <div class="shell about">
     <div class="about__art reveal reveal--left">
       <span class="pulse"></span><span class="pulse"></span>
@@ -211,7 +206,11 @@
     <div class="reveal reveal--right" style="--d:140ms">
       @if ($emp?->antetitulo)<div class="eyebrow">{{ $emp->antetitulo }}</div>@endif
       <h2 class="h-sec">{{ $emp?->titulo }}</h2>
-      <p class="lead" style="margin-top:1.6rem">{{ $emp?->texto }}</p>
+      {{-- Una línea en blanco en el panel separa párrafos, igual que en
+           «Nuestra experiencia». --}}
+      @foreach (preg_split('/\n\s*\n/', \App\Support\Sitio::txt(trim((string) $emp?->texto)), -1, PREG_SPLIT_NO_EMPTY) as $i => $parrafo)
+        <p class="lead" style="margin-top:{{ $i === 0 ? '1.6rem' : '1.1rem' }}">{{ trim($parrafo) }}</p>
+      @endforeach
       @if (filled($ctaEmp['texto'] ?? null))
         <div class="hero__cta" style="opacity:1;animation:none;margin-top:2.2rem">
           <a href="{{ $ctaEmp['url'] ?? '#contacto' }}" class="btn"><span>{{ $ctaEmp['texto'] }}</span></a>
@@ -220,6 +219,25 @@
     </div>
   </div>
 </section>
+
+<!-- ══════════════ MISIÓN, VISIÓN Y VALORES ══════════════ -->
+@php $ide = $pagina->bloque('identidad'); @endphp
+@if ($ide && $ide->activo)
+<section class="sect" id="identidad">
+  <div class="shell">
+    <div class="reveal">
+      @if ($ide->antetitulo)<div class="eyebrow">{{ $ide->antetitulo }}</div>@endif
+      <h2 class="h-sec">{{ $ide->titulo }}</h2>
+    </div>
+
+    <div class="svc">
+      @foreach ($ide->lista('tarjetas') as $i => $tarjeta)
+        @include('sitio.partials.tarjeta', ['tarjeta' => $tarjeta, 'i' => $i, 'conIcono' => false])
+      @endforeach
+    </div>
+  </div>
+</section>
+@endif
 
 <!-- ══════════════ LINEAMIENTOS ══════════════ -->
 <section class="sect sect--alt">
