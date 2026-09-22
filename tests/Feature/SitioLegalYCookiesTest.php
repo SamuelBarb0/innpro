@@ -3,7 +3,6 @@
 namespace Tests\Feature;
 
 use App\Models\Parametros;
-use App\Models\SitioBloque;
 use App\Models\SitioPagina;
 use App\Models\User;
 use App\Support\Sitio;
@@ -238,15 +237,18 @@ class SitioLegalYCookiesTest extends TestCase
     |---------------------------------------------------------------------------
     */
 
-    public function test_las_cuatro_landings_de_servicio_siguen_publicadas()
+    public function test_las_landings_de_servicio_siguen_publicadas()
     {
         // Son los puntos 5 a 8 del cliente: existen desde agosto, pero el
         // reclamo llegó igual porque el dominio apunta al WordPress viejo.
+        //
+        // Eran cuatro. La de alquiler de equipos para trabajo en alturas salió
+        // en el manual del 22-sep-2026, donde Innpro pide eliminar ese servicio
+        // por completo: su URL ahora redirige, y eso lo vigila SitioSembradoTest.
         $slugs = [
             'camaras-de-seguridad-cctv-bogota',
             'control-de-acceso-biometrico-facial-bogota',
             'deteccion-de-incendios-audio-evacuacion-bogota',
-            'alquiler-equipos-trabajo-en-alturas-bogota',
         ];
 
         foreach ($slugs as $slug) {

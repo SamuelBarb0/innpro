@@ -79,7 +79,9 @@
         <a href="{{ $base }}#servicios">Servicios</a>
       @endif
 
-      <a href="{{ $base }}#experiencia">Experiencia</a>
+      {{-- A la página de casos de éxito, que es lo que el visitante busca
+           cuando pincha «Experiencia»; el bloque de la portada es el resumen. --}}
+      <a href="{{ route('sitio.experiencia') }}">Experiencia</a>
       <a href="{{ $base }}#contacto">Contáctenos</a>
       <a href="{{ route('login') }}" class="btn"><span>Ingresar</span></a>
       @include('sitio.partials.tema', ['extra' => 'tema--nav'])

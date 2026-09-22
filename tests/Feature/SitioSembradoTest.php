@@ -35,11 +35,22 @@ class SitioSembradoTest extends TestCase
         }
     }
 
-    public function test_quedan_las_cuatro_paginas_de_servicio_de_la_propuesta(): void
+    /**
+     * Eran cuatro. Son TRES desde el manual de restructuración del 22-sep-2026:
+     * Innpro pidió eliminar por completo el alquiler de equipos para trabajo en
+     * alturas. Su página se despublicó —el texto sigue ahí por si lo reclaman— y
+     * su URL, que llevaba meses indexada, quedó redirigida en vez de rota.
+     */
+    public function test_quedan_las_paginas_de_servicio_de_la_propuesta(): void
     {
         $servicios = SitioPagina::publicadas()->deTipo(SitioPagina::SERVICIO)->get();
 
-        $this->assertCount(4, $servicios);
+        $this->assertCount(3, $servicios);
+        $this->assertFalse($servicios->contains('slug', 'alquiler-equipos-trabajo-en-alturas-bogota'));
+        $this->assertDatabaseHas('sitio_redirecciones', [
+            'origen' => 'servicios/alquiler-equipos-trabajo-en-alturas-bogota',
+            'activo' => true,
+        ]);
 
         // Cada una tiene que llevar título y descripción propios: son el frente
         // que compite por búsquedas de compra, y sin ellos Google inventa el

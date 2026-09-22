@@ -68,7 +68,9 @@ class SitioRedaccionClienteTest extends TestCase
 
     public function test_la_migracion_se_deshace_sin_dejar_secciones_huerfanas(): void
     {
-        $this->artisan('migrate:rollback', ['--step' => 1])->assertSuccessful();
+        // Dos pasos: encima de la redacción final está ya el manual de
+        // restructuración (22-sep-2026), y deshacer uno solo desharía ese.
+        $this->artisan('migrate:rollback', ['--step' => 2])->assertSuccessful();
 
         $portada = SitioPagina::deTipo(SitioPagina::LANDING)->with('bloques')->first();
         $this->assertNull($portada->bloque('acompanamiento'));

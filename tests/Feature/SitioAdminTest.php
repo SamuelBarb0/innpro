@@ -143,7 +143,10 @@ class SitioAdminTest extends TestCase
 
     public function test_despublicar_una_pagina_la_saca_del_sitio_y_del_sitemap(): void
     {
-        $pagina = SitioPagina::deTipo(SitioPagina::SERVICIO)->firstOrFail();
+        // Una PUBLICADA: desde que el alquiler de alturas está despublicado,
+        // coger la primera sin más podía tocar justo esa y el test acababa
+        // publicándola en vez de despublicarla.
+        $pagina = SitioPagina::publicadas()->deTipo(SitioPagina::SERVICIO)->firstOrFail();
 
         $this->actingAs($this->admin)
             ->post(route('sitio.admin.paginas.toggle-activo', $pagina))

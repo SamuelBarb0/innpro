@@ -46,6 +46,12 @@ Route::get('/noticias/{slug}', [App\Http\Controllers\SitioController::class, 'no
     ->where('slug', '[a-z0-9-]+')
     ->name('sitio.noticia');
 
+// El histórico de proyectos, filtrable por sector. Sale del mismo bloque de
+// «Casos de éxito» que la portada, así que se mantiene solo: lo que el cliente
+// añade en el panel aparece en las dos partes.
+Route::get('/experiencia', [App\Http\Controllers\SitioController::class, 'experiencia'])
+    ->name('sitio.experiencia');
+
 // Se sirven desde la app, no como archivos, para que reflejen lo que el cliente
 // publique desde el panel sin tener que regenerarlos a mano.
 Route::get('/sitemap.xml', [App\Http\Controllers\SitioController::class, 'sitemap'])->name('sitio.sitemap');

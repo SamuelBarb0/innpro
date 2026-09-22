@@ -30,6 +30,36 @@ class SitioController extends Controller
         return $this->mostrar(SitioPagina::SERVICIO, $slug);
     }
 
+    /**
+     * El histórico de proyectos, agrupado por sector.
+     *
+     * No es una página de `sitio_paginas`: los proyectos viven en el bloque
+     * «Casos de éxito» de la portada, y tenerlos en dos sitios distintos
+     * acabaría con una lista al día y otra no. Los sectores del filtro se
+     * deducen de los propios proyectos, así que crear un sector nuevo es
+     * escribirlo en un proyecto y nada más.
+     */
+    public function experiencia()
+    {
+        $portada = SitioPagina::publicadas()
+            ->deTipo(SitioPagina::LANDING)
+            ->with('bloques')
+            ->orderBy('orden')
+            ->firstOrFail();
+
+        $proyectos = collect($portada->bloque('casos')?->lista('proyectos') ?? [])
+            ->filter(fn ($p) => filled($p['cliente'] ?? null))
+            ->values();
+
+        return view('sitio.experiencia', [
+            'pagina' => $portada,
+            'bloque' => $portada->bloque('casos'),
+            'proyectos' => $proyectos,
+            'sectores' => $proyectos->pluck('sector')->filter()->unique()->values(),
+            'servicios' => Sitio::menuServicios(),
+        ]);
+    }
+
     public function noticia(string $slug)
     {
         return $this->mostrar(SitioPagina::NOTICIA, $slug);

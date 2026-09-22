@@ -1142,6 +1142,55 @@ span.card__more{opacity:.45}
     background:transparent;border:0;padding:.2rem 0 .2rem .9rem;min-width:0}
 }
 
+/* --- Marcas y aliados ---
+   Texto y no logos: los logotipos son marcas de terceros y aquí no hay permiso
+   de uso de ninguna. Cada categoría es una tarjeta sobria con sus fabricantes
+   separados por puntos, que además lee bien en móvil sin escalar imágenes. */
+.marcas{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:1.2rem;margin-top:3.4rem}
+.marcas__c{
+  padding:1.6rem 1.5rem;background:var(--card-bg);border:1px solid var(--card-brd);
+  transition:border-color .4s,box-shadow .4s;
+}
+.marcas__c:hover{border-color:var(--card-brd-hov);box-shadow:var(--shadow-1)}
+.marcas__c h3{
+  font-family:var(--f-display);font-size:.78rem;letter-spacing:.14em;text-transform:uppercase;
+  color:var(--accent-ink);margin:0 0 .7rem;
+}
+.marcas__c p{margin:0;color:var(--muted);font-weight:300;line-height:1.7;font-size:.92rem}
+
+/* --- Casos de éxito ---
+   La foto es opcional: sin ella queda el sector sobre un degradado técnico, y
+   la tarjeta sigue diciendo lo que importa (quién, en qué sector y qué se
+   implementó) en vez de enseñar un hueco. */
+.casos{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:1.4rem;margin-top:3.4rem}
+.casos--todos{margin-top:2.2rem}
+.caso{
+  position:relative;overflow:hidden;background:var(--card-bg);border:1px solid var(--card-brd);
+  display:flex;flex-direction:column;transition:border-color .4s,box-shadow .4s,transform .4s var(--ease);
+}
+.caso:hover{border-color:var(--card-brd-hov);box-shadow:var(--shadow-1);transform:translateY(-6px)}
+.caso[hidden]{display:none}
+.caso__foto{
+  position:relative;aspect-ratio:16/10;overflow:hidden;
+  background:linear-gradient(135deg,var(--tint-blue),var(--tint-2));
+  display:flex;align-items:center;justify-content:center;
+}
+.caso__foto img{width:100%;height:100%;object-fit:cover;display:block}
+.caso__marca{display:flex;align-items:center;justify-content:center;color:var(--accent-ink);opacity:.45}
+.caso__marca svg{width:38px;height:38px}
+.caso__b{padding:1.4rem 1.5rem 1.7rem}
+.caso__sector{
+  font-family:var(--f-display);font-size:.66rem;letter-spacing:.24em;text-transform:uppercase;
+  color:var(--accent-ink);margin-bottom:.5rem;
+}
+.caso__b h3{font-family:var(--f-display);font-size:1.02rem;margin:0 0 .5rem;line-height:1.3}
+.caso__b p{margin:0;color:var(--muted);font-weight:300;line-height:1.65;font-size:.9rem}
+
+/* Los filtros de la página de experiencia. */
+.filtros{display:flex;flex-wrap:wrap;gap:.6rem;margin-top:2.4rem}
+.filtros .chip{font:inherit;font-size:.78rem;background:none}
+.filtros .is-on{border-color:var(--accent);color:var(--accent-ink);background:var(--tint-2)}
+
 /* --- Enlaces a las páginas de servicio --- */
 .svc-links{display:flex;flex-wrap:wrap;gap:.6rem;margin-top:2.4rem;justify-content:center}
 .chip--link{text-decoration:none;transition:.2s ease;cursor:pointer}

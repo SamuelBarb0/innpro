@@ -35,6 +35,9 @@ class SitioAdminController extends Controller
             'sitio_email' => 'Correo comercial',
             'sitio_horario' => 'Horario de atención',
             'sitio_cobertura' => 'Zona de cobertura',
+            // Sale en el pie, en la columna de «Política institucional». Estaba
+            // escrita dentro de la plantilla, donde el cliente no podia tocarla.
+            'sitio_politica' => 'Política institucional',
             // Se guarda el ANIO DE INICIO y no el total de anios: el total
             // envejece solo y hay que acordarse de subirlo cada enero, que es
             // como el sitio viejo acabo diciendo «13 anos» en la portada y

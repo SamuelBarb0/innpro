@@ -217,6 +217,68 @@ class PortadaEsquema
                             'texto' => ['etiqueta' => 'Nombre', 'col' => 12],
                         ],
                     ],
+                    'sectores' => [
+                        'nombre' => 'Sectores de la cinta',
+                        'ayuda' => 'La cinta que se desplaza sola al final de la sección. Estaba escrita en el código y ya no: lo que pongas aquí es lo que se ve.',
+                        'singular' => 'sector',
+                        'max' => 20,
+                        'campos' => [
+                            'texto' => ['etiqueta' => 'Sector', 'col' => 12],
+                        ],
+                    ],
+                ],
+            ],
+
+            'marcas' => [
+                'nombre' => 'Marcas y aliados tecnológicos',
+                'donde' => 'La rejilla de categorías con los fabricantes, debajo de los lineamientos.',
+                'ayuda' => 'Con qué marcas trabaja la empresa, agrupadas por especialidad. Cada categoría es una tarjeta y dentro van los fabricantes, uno por línea.',
+                'ancla' => 'marcas',
+                'campos' => [
+                    'antetitulo' => ['etiqueta' => 'Línea pequeña de encima'],
+                    'titulo' => ['etiqueta' => 'Título'],
+                    'texto' => ['etiqueta' => 'Párrafo de entrada', 'tipo' => 'textarea', 'ayuda' => 'Opcional.'],
+                ],
+                'listas' => [
+                    'categorias' => [
+                        'nombre' => 'Categorías',
+                        'ayuda' => 'Cada una sale como una tarjeta con su lista de marcas.',
+                        'singular' => 'categoría',
+                        'max' => 12,
+                        'campos' => [
+                            'titulo' => ['etiqueta' => 'Categoría', 'col' => 12, 'ayuda' => 'Ej.: Videovigilancia (CCTV) y analítica'],
+                            'puntos' => ['etiqueta' => 'Marcas', 'col' => 12, 'tipo' => 'lineas', 'filas' => 4, 'ayuda' => 'Una marca por línea.'],
+                        ],
+                    ],
+                ],
+            ],
+
+            'casos' => [
+                'nombre' => 'Casos de éxito',
+                'donde' => 'Las tarjetas de proyectos, encima de Nuestra experiencia.',
+                'ayuda' => 'Los proyectos representativos. En la portada salen los primeros cuatro; en la página «Experiencia» salen todos y se pueden filtrar por sector. La foto es opcional: sin ella la tarjeta se ve igual, con el sector de fondo.',
+                'ancla' => 'casos',
+                'campos' => [
+                    'antetitulo' => ['etiqueta' => 'Línea pequeña de encima'],
+                    'titulo' => ['etiqueta' => 'Título'],
+                    'texto' => ['etiqueta' => 'Párrafo de entrada', 'tipo' => 'textarea', 'ayuda' => 'Opcional.'],
+                ],
+                'grupos' => [
+                    'cta' => ['nombre' => 'Botón', 'ayuda' => 'El que lleva al listado completo. Déjalo vacío para que no aparezca.'],
+                ],
+                'listas' => [
+                    'proyectos' => [
+                        'nombre' => 'Proyectos',
+                        'ayuda' => 'El orden manda: los cuatro primeros son los que se ven en la portada.',
+                        'singular' => 'proyecto',
+                        'max' => 40,
+                        'campos' => [
+                            'cliente' => ['etiqueta' => 'Cliente o proyecto', 'col' => 6, 'ayuda' => 'Ej.: Ministerio del Deporte'],
+                            'sector' => ['etiqueta' => 'Sector', 'col' => 6, 'ayuda' => 'Es por lo que se filtra en la página «Experiencia». Escríbelo igual en todos los del mismo sector.'],
+                            'solucion' => ['etiqueta' => 'Solución implementada', 'col' => 12, 'ayuda' => 'Ej.: CCTV + control de acceso'],
+                            'imagen' => ['etiqueta' => 'Foto', 'col' => 12, 'ayuda' => 'Opcional. La dirección de una foto real del montaje. Mientras no haya, la tarjeta sale con el sector de fondo.'],
+                        ],
+                    ],
                 ],
             ],
 

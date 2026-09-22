@@ -262,6 +262,69 @@
   </div>
 </section>
 
+<!-- ══════════════ MARCAS Y ALIADOS ══════════════ -->
+{{-- Con qué fabricantes trabaja Innpro, por especialidad. Va en texto y no en
+     logos a propósito: los logotipos son marcas registradas de terceros y aquí
+     no hay permiso de uso de ninguna. Cuando el cliente consiga los archivos y
+     el permiso, cada categoría admite su imagen sin tocar esta plantilla. --}}
+@php $mar = $pagina->bloque('marcas'); @endphp
+@if ($mar && $mar->activo && ($categorias = $mar->lista('categorias') ?? []))
+<section class="sect" id="marcas">
+  <div class="shell">
+    <div class="reveal">
+      @if ($mar->antetitulo)<div class="eyebrow">{{ $mar->antetitulo }}</div>@endif
+      <h2 class="h-sec">{{ $mar->titulo }}</h2>
+      @if ($mar->texto)
+        <p class="lead" style="margin-top:1.4rem;max-width:64ch">{{ \App\Support\Sitio::txt($mar->texto) }}</p>
+      @endif
+    </div>
+
+    <div class="marcas">
+      @foreach ($categorias as $i => $categoria)
+        <div class="marcas__c reveal" style="--d:{{ 60 + $i * 70 }}ms">
+          <h3>{{ $categoria['titulo'] ?? '' }}</h3>
+          <p>{{ collect(array_filter((array) ($categoria['puntos'] ?? []), 'is_string'))->map(fn ($m) => trim($m))->filter()->implode(' · ') }}</p>
+        </div>
+      @endforeach
+    </div>
+  </div>
+</section>
+@endif
+
+<!-- ══════════════ CASOS DE ÉXITO ══════════════ -->
+{{-- Los proyectos emblemáticos. En la portada van los cuatro primeros; el
+     resto vive en /experiencia, que los deja filtrar por sector. --}}
+@php
+  $cas = $pagina->bloque('casos');
+  $proyectos = collect($cas?->lista('proyectos') ?? [])->filter(fn ($p) => filled($p['cliente'] ?? null));
+@endphp
+@if ($cas && $cas->activo && $proyectos->isNotEmpty())
+<section class="sect sect--alt" id="casos">
+  <div class="shell">
+    <div class="reveal">
+      @if ($cas->antetitulo)<div class="eyebrow">{{ $cas->antetitulo }}</div>@endif
+      <h2 class="h-sec">{{ $cas->titulo }}</h2>
+      @if ($cas->texto)
+        <p class="lead" style="margin-top:1.4rem;max-width:64ch">{{ \App\Support\Sitio::txt($cas->texto) }}</p>
+      @endif
+    </div>
+
+    <div class="casos">
+      @foreach ($proyectos->take(4) as $i => $caso)
+        @include('sitio.partials.caso', ['caso' => $caso, 'i' => $i])
+      @endforeach
+    </div>
+
+    @php $ctaCasos = $cas->grupo('cta') ?: []; @endphp
+    @if (filled($ctaCasos['texto'] ?? null))
+      <div class="hero__cta reveal" style="opacity:1;animation:none;margin-top:2.6rem;--d:320ms">
+        <a href="{{ $ctaCasos['url'] ?: route('sitio.experiencia') }}" class="btn btn--ghost"><span>{{ $ctaCasos['texto'] }}</span></a>
+      </div>
+    @endif
+  </div>
+</section>
+@endif
+
 <!-- ══════════════ EXPERIENCIA ══════════════ -->
 <section class="sect" id="experiencia">
   <div class="shell">
@@ -288,12 +351,18 @@
       </div>
     </div>
 
-    <div class="marquee">
-      <div class="marquee__t">
-        <span>Industrial</span><span>Residencial</span><span>Comercial</span><span>Seguridad electrónica</span><span>Ingeniería electrónica</span>
-        <span>Industrial</span><span>Residencial</span><span>Comercial</span><span>Seguridad electrónica</span><span>Ingeniería electrónica</span>
+    {{-- Los sectores salen del panel, no del código: son lo que el cliente
+         cambia cuando entra en un mercado nuevo. La lista se repite dos veces
+         porque la cinta es un bucle y necesita la copia para no dejar hueco. --}}
+    @php $sectores = collect($exp?->lista('sectores') ?? [])->pluck('texto')->filter()->values(); @endphp
+    @if ($sectores->isNotEmpty())
+      <div class="marquee">
+        <div class="marquee__t">
+          @foreach ($sectores as $sector)<span>{{ $sector }}</span>@endforeach
+          @foreach ($sectores as $sector)<span>{{ $sector }}</span>@endforeach
+        </div>
       </div>
-    </div>
+    @endif
   </div>
 </section>
 
@@ -334,15 +403,21 @@
       </div>
       <div class="ccol reveal" style="--d:180ms">
         <h4>Dirección</h4>
-        <p>{{ Sitio::direccion() }}</p>
+        {{-- La dirección enlaza a Google Maps. Se arma con la dirección y la
+             ciudad de «Datos del negocio», así que sigue siendo un solo sitio
+             donde cambiarla y coincide con la ficha de Google. --}}
+        @php $direccion = trim(Sitio::direccion().', '.Sitio::ciudad().', Colombia', ', '); @endphp
+        @if (Sitio::direccion())
+          <a href="https://www.google.com/maps/search/?api=1&query={{ urlencode($direccion) }}" target="_blank" rel="noopener">{{ Sitio::direccion() }}</a>
+        @endif
         <p>{{ Sitio::ciudad() }}, D.C.</p>
         <p>Colombia</p>
         @if ($horario = Sitio::valor('sitio_horario'))<p>{{ $horario }}</p>@endif
+        @if ($cobertura = Sitio::valor('sitio_cobertura'))<p>{{ Sitio::txt($cobertura) }}</p>@endif
       </div>
       <div class="ccol reveal" style="--d:280ms">
         <h4>Política institucional</h4>
-        <p>Siempre comprometidos en ofrecer un servicio de alta calidad, oportuno y eficaz,
-           que supere las expectativas de nuestros clientes por medio de un equipo humano idóneo.</p>
+        <p>{{ Sitio::txt(Sitio::valor('sitio_politica') ?: 'Siempre comprometidos en ofrecer un servicio de alta calidad, oportuno y eficaz, que supere las expectativas de nuestros clientes por medio de un equipo humano idóneo.') }}</p>
       </div>
     </div>
 
