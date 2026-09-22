@@ -29,7 +29,7 @@ class PortadaEsquema
         'llave' => 'Llave — mantenimiento e instalación',
         'escudo' => 'Escudo — seguridad y protección',
         'alturas' => 'Alturas — trabajo en altura',
-        'camara' => 'Cámara — CCTV y videovigilancia',
+        'camara' => 'Cámara — Cctv y videovigilancia',
         'acceso' => 'Huella — control de acceso',
         'incendio' => 'Llama — detección de incendios',
         'soporte' => 'Diadema — soporte técnico',
@@ -246,7 +246,7 @@ class PortadaEsquema
                         'singular' => 'categoría',
                         'max' => 12,
                         'campos' => [
-                            'titulo' => ['etiqueta' => 'Categoría', 'col' => 12, 'ayuda' => 'Ej.: Videovigilancia (CCTV) y analítica'],
+                            'titulo' => ['etiqueta' => 'Categoría', 'col' => 12, 'ayuda' => 'Ej.: Videovigilancia (Cctv) y analítica'],
                             'puntos' => ['etiqueta' => 'Marcas', 'col' => 12, 'tipo' => 'lineas', 'filas' => 4, 'ayuda' => 'Una marca por línea.'],
                         ],
                     ],
@@ -275,7 +275,7 @@ class PortadaEsquema
                         'campos' => [
                             'cliente' => ['etiqueta' => 'Cliente o proyecto', 'col' => 6, 'ayuda' => 'Ej.: Ministerio del Deporte'],
                             'sector' => ['etiqueta' => 'Sector', 'col' => 6, 'ayuda' => 'Es por lo que se filtra en la página «Experiencia». Escríbelo igual en todos los del mismo sector.'],
-                            'solucion' => ['etiqueta' => 'Solución implementada', 'col' => 12, 'ayuda' => 'Ej.: CCTV + control de acceso'],
+                            'solucion' => ['etiqueta' => 'Solución implementada', 'col' => 12, 'ayuda' => 'Ej.: Cctv + control de acceso'],
                             'imagen' => ['etiqueta' => 'Foto', 'col' => 12, 'ayuda' => 'Opcional. La dirección de una foto real del montaje. Mientras no haya, la tarjeta sale con el sector de fondo.'],
                         ],
                     ],

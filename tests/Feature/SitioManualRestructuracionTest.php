@@ -56,7 +56,7 @@ class SitioManualRestructuracionTest extends TestCase
         $this->get('/')
             ->assertOk()
             ->assertSee('Marcas y aliados tecnológicos')
-            ->assertSee('Videovigilancia (CCTV) y analítica')
+            ->assertSee('Videovigilancia (Cctv) y analítica')
             ->assertSee('Panduit')
             ->assertSee('Axis Communications')
             ->assertSee('Tripp Lite');
@@ -98,6 +98,24 @@ class SitioManualRestructuracionTest extends TestCase
             ->assertSee('Infraestructura y transporte')
             // Lo que decía la cinta cuando estaba escrita en la plantilla.
             ->assertDontSee('Ingeniería electrónica</span>', false);
+    }
+
+    /**
+     * Innpro escribe el acrónimo «Cctv». Es criterio suyo y manda sobre el
+     * texto sembrado; los slugs siguen en minúscula y no se tocan, que una URL
+     * posicionada no se cambia por un detalle de estilo.
+     */
+    public function test_el_acronimo_se_escribe_cctv(): void
+    {
+        foreach (['/', '/servicios/camaras-de-seguridad-cctv-bogota'] as $url) {
+            $html = $this->get($url)->assertOk()->getContent();
+
+            // Fuera de los slugs y de las URL, donde va en minúscula.
+            $sinEnlaces = preg_replace('~(href|src|content)="[^"]*"~i', '', $html);
+
+            $this->assertStringNotContainsString('CCTV', $sinEnlaces, "Sigue escrito «CCTV» en {$url}.");
+            $this->assertStringContainsString('Cctv', $sinEnlaces);
+        }
     }
 
     public function test_el_pie_trae_la_politica_la_cobertura_y_el_mapa(): void

@@ -62,7 +62,7 @@ class SitioPublicoTest extends TestCase
             'titulo' => 'Seguridad electrónica en Bogotá',
             'subtitulo' => '13 años prestando servicios profesionales',
             'seo_titulo' => 'Seguridad electrónica en Bogotá | Innpro',
-            'seo_descripcion' => 'Instalación y mantenimiento de CCTV en Bogotá.',
+            'seo_descripcion' => 'Instalación y mantenimiento de Cctv en Bogotá.',
             'activo' => true,
             'publicado_at' => now(),
         ]);
@@ -83,7 +83,7 @@ class SitioPublicoTest extends TestCase
         return SitioPagina::create(array_merge([
             'tipo' => SitioPagina::SERVICIO,
             'slug' => 'camaras-de-seguridad-cctv-bogota',
-            'titulo' => 'Cámaras de seguridad y CCTV en Bogotá',
+            'titulo' => 'Cámaras de seguridad y Cctv en Bogotá',
             'resumen' => 'Instalamos y mantenemos circuitos cerrados de televisión.',
             'contenido' => '<h2>Qué incluye</h2><p>Estudio de seguridad.</p>',
             'activo' => true,
@@ -98,7 +98,7 @@ class SitioPublicoTest extends TestCase
         $this->get('/')
             ->assertOk()
             ->assertSee('<title>Seguridad electrónica en Bogotá | Innpro</title>', false)
-            ->assertSee('name="description" content="Instalación y mantenimiento de CCTV en Bogotá."', false)
+            ->assertSee('name="description" content="Instalación y mantenimiento de Cctv en Bogotá."', false)
             ->assertSee('rel="canonical"', false);
     }
 
@@ -135,7 +135,7 @@ class SitioPublicoTest extends TestCase
 
         $this->get('/servicios/camaras-de-seguridad-cctv-bogota')
             ->assertOk()
-            ->assertSee('Cámaras de seguridad y CCTV en Bogotá', false)
+            ->assertSee('Cámaras de seguridad y Cctv en Bogotá', false)
             ->assertSee('Qué incluye', false);
     }
 

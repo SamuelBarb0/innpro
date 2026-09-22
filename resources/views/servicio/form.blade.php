@@ -15,7 +15,7 @@
                 <label class="form-label">Título del trabajo <span class="text-danger">*</span></label>
                 <input name="titulo" type="text" class="form-control"
                        value="{{ old('titulo', $orden->titulo) }}"
-                       placeholder="Ej. Instalación CCTV — Sede norte">
+                       placeholder="Ej. Instalación Cctv — Sede norte">
                 @error('titulo') <small class="text-danger">{{ $message }}</small> @enderror
               </div>
 

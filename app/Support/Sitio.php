@@ -196,7 +196,7 @@ class Sitio
             'name' => self::nombre(),
             'url' => url('/'),
             'image' => asset('images/logo.png'),
-            'description' => 'Consultoría e integración en seguridad electrónica: CCTV, control de acceso, detección de incendios y control perimetral en '.self::ciudad().'.',
+            'description' => 'Consultoría e integración en seguridad electrónica: Cctv, control de acceso, detección de incendios y control perimetral en '.self::ciudad().'.',
         ];
 
         if (self::direccion() !== '') {

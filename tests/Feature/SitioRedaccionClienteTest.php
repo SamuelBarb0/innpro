@@ -44,7 +44,7 @@ class SitioRedaccionClienteTest extends TestCase
             ->assertOk()
             ->assertSee('Analítica de video con inteligencia artificial')
             ->assertSee('según las capacidades de la solución implementada')
-            ->assertSee('Cotice su sistema de CCTV en Bogotá.');
+            ->assertSee('Cotice su sistema de Cctv en Bogotá.');
 
         $this->get('/servicios/control-de-acceso-biometrico-facial-bogota')
             ->assertOk()
@@ -68,9 +68,12 @@ class SitioRedaccionClienteTest extends TestCase
 
     public function test_la_migracion_se_deshace_sin_dejar_secciones_huerfanas(): void
     {
-        // Dos pasos: encima de la redacción final está ya el manual de
-        // restructuración (22-sep-2026), y deshacer uno solo desharía ese.
-        $this->artisan('migrate:rollback', ['--step' => 2])->assertSuccessful();
+        // Por ruta y no por «un paso atrás»: encima de esta migración ya hay
+        // otras (el manual de restructuración, la grafía de Cctv) y contar
+        // pasos obliga a corregir este test cada vez que se añade una.
+        $this->artisan('migrate:rollback', [
+            '--path' => 'database/migrations/2026_09_21_120000_aplicar_redaccion_final_del_cliente.php',
+        ])->assertSuccessful();
 
         $portada = SitioPagina::deTipo(SitioPagina::LANDING)->with('bloques')->first();
         $this->assertNull($portada->bloque('acompanamiento'));
