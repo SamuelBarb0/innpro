@@ -175,7 +175,9 @@
   <div class="shell">
     <div class="reveal">
       @if ($aco->antetitulo)<div class="eyebrow">{{ $aco->antetitulo }}</div>@endif
-      <h2 class="h-sec">{{ \App\Support\Sitio::txt($aco->titulo) }}</h2>
+      @if (filled($aco->titulo))
+        <h2 class="h-sec">{{ \App\Support\Sitio::txt($aco->titulo) }}</h2>
+      @endif
       @if ($aco->texto)
         <p class="lead" style="margin-top:1.4rem;max-width:64ch">{{ \App\Support\Sitio::txt($aco->texto) }}</p>
       @endif
@@ -263,10 +265,11 @@
 </section>
 
 <!-- ══════════════ MARCAS Y ALIADOS ══════════════ -->
-{{-- Con qué fabricantes trabaja Innpro, por especialidad. Va en texto y no en
-     logos a propósito: los logotipos son marcas registradas de terceros y aquí
-     no hay permiso de uso de ninguna. Cuando el cliente consiga los archivos y
-     el permiso, cada categoría admite su imagen sin tocar esta plantilla. --}}
+{{-- Con qué fabricantes trabaja Innpro, por especialidad. Los logos los mandó
+     Innpro en su «Manual para logos» (29-sep-2026) y viven en
+     public/images/marcas con el slug del nombre. La lista de marcas sigue
+     siendo texto editable en el panel: cada nombre busca su archivo, y el que
+     no lo tiene sale escrito en vez de dejar un hueco. --}}
 @php $mar = $pagina->bloque('marcas'); @endphp
 @if ($mar && $mar->activo && ($categorias = $mar->lista('categorias') ?? []))
 <section class="sect" id="marcas">
@@ -281,9 +284,21 @@
 
     <div class="marcas">
       @foreach ($categorias as $i => $categoria)
-        <div class="marcas__c reveal" style="--d:{{ 60 + $i * 70 }}ms">
+        @php $marcas = collect(array_filter((array) ($categoria['puntos'] ?? []), 'is_string'))->map(fn ($m) => trim($m))->filter(); @endphp
+        <div class="marcas__c reveal {{ $marcas->count() > 8 ? 'marcas__c--ancha' : '' }}" style="--d:{{ 60 + $i * 70 }}ms">
           <h3>{{ $categoria['titulo'] ?? '' }}</h3>
-          <p>{{ collect(array_filter((array) ($categoria['puntos'] ?? []), 'is_string'))->map(fn ($m) => trim($m))->filter()->implode(' · ') }}</p>
+          <ul class="marcas__logos">
+            @foreach ($marcas as $marca)
+              @php $logo = 'images/marcas/'.\Illuminate\Support\Str::slug($marca).'.webp'; @endphp
+              <li class="marcas__logo">
+                @if (is_file(public_path($logo)))
+                  <img src="{{ asset($logo) }}" alt="{{ $marca }}" title="{{ $marca }}" loading="lazy" decoding="async">
+                @else
+                  <span>{{ $marca }}</span>
+                @endif
+              </li>
+            @endforeach
+          </ul>
         </div>
       @endforeach
     </div>

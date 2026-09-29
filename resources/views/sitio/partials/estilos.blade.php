@@ -1143,10 +1143,15 @@ span.card__more{opacity:.45}
 }
 
 /* --- Marcas y aliados ---
-   Texto y no logos: los logotipos son marcas de terceros y aquí no hay permiso
-   de uso de ninguna. Cada categoría es una tarjeta sobria con sus fabricantes
-   separados por puntos, que además lee bien en móvil sin escalar imágenes. */
-.marcas{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:1.2rem;margin-top:3.4rem}
+   Cada categoría es una tarjeta con los logos de sus fabricantes. Los logos
+   van sobre una placa clara en los dos temas: vienen hechos para fondo blanco
+   (Axis, Ajax o Risco son negros) y sobre el azul del sitio desaparecerían.
+   Pasarlos a monocromo los igualaría, pero es alterar la marca de un tercero. */
+.marcas{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));grid-auto-flow:row dense;
+  align-items:start;gap:1.2rem;margin-top:3.4rem}
+/* Infraestructura trae 14 marcas y las demás 3-6: a una columna estiraba su
+   fila y dejaba las vecinas medio vacías. Las largas ocupan dos. */
+@media (min-width:760px){.marcas__c--ancha{grid-column:span 2}}
 .marcas__c{
   padding:1.6rem 1.5rem;background:var(--card-bg);border:1px solid var(--card-brd);
   transition:border-color .4s,box-shadow .4s;
@@ -1156,7 +1161,16 @@ span.card__more{opacity:.45}
   font-family:var(--f-display);font-size:.78rem;letter-spacing:.14em;text-transform:uppercase;
   color:var(--accent-ink);margin:0 0 .7rem;
 }
-.marcas__c p{margin:0;color:var(--muted);font-weight:300;line-height:1.7;font-size:.92rem}
+.marcas__logos{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(auto-fill,minmax(112px,1fr));gap:.55rem}
+.marcas__logo{
+  display:grid;place-items:center;height:62px;padding:.55rem .7rem;
+  background:#fff;border-radius:4px;border:1px solid rgba(2,11,60,.08);
+}
+/* Alto fijo y no 100%: dentro de una celda de grid el porcentaje no limita, y
+   los logos más altos que anchos (Ubiquiti) se salían de la placa. */
+.marcas__logo img{display:block;max-width:100%;max-height:44px;width:auto;height:auto;object-fit:contain}
+/* Una marca sin logo: su nombre, en la misma placa para no romper la rejilla. */
+.marcas__logo span{color:#1b2350;font-size:.8rem;font-weight:500;text-align:center;line-height:1.25}
 
 /* --- Casos de éxito ---
    La foto es opcional: sin ella queda el sector sobre un degradado técnico, y

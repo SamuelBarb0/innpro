@@ -102,7 +102,7 @@ class PortadaEsquema
                                 'filas' => 4,
                                 'ayuda' => 'Una cosa por línea. Salen como una lista con visto dentro de la tarjeta. Déjalo vacío y la tarjeta se queda como estaba.',
                             ],
-                            'url' => ['etiqueta' => 'Enlace de «Ver más»', 'col' => 12, 'ayuda' => 'Pega aquí la dirección de la página de servicio. Si lo dejas vacío, el «Ver más» aparece apagado y sin enlace.'],
+                            'url' => ['etiqueta' => 'Enlace de «Ver más»', 'col' => 12, 'ayuda' => 'Pega aquí la dirección de la página de servicio. Si lo dejas vacío, la tarjeta sale sin «Ver más».'],
                         ],
                     ],
                 ],
@@ -115,7 +115,7 @@ class PortadaEsquema
                 'ancla' => 'acompanamiento',
                 'campos' => [
                     'antetitulo' => ['etiqueta' => 'Línea pequeña de encima'],
-                    'titulo' => ['etiqueta' => 'Título de la sección'],
+                    'titulo' => ['etiqueta' => 'Título de la sección', 'ayuda' => 'Opcional. Vacío, la sección arranca con la línea pequeña y las tarjetas.'],
                     'texto' => ['etiqueta' => 'Párrafo de entrada', 'tipo' => 'textarea', 'ayuda' => 'Opcional. Déjalo vacío si no hace falta.'],
                 ],
                 'listas' => [
@@ -247,7 +247,7 @@ class PortadaEsquema
                         'max' => 12,
                         'campos' => [
                             'titulo' => ['etiqueta' => 'Categoría', 'col' => 12, 'ayuda' => 'Ej.: Videovigilancia (Cctv) y analítica'],
-                            'puntos' => ['etiqueta' => 'Marcas', 'col' => 12, 'tipo' => 'lineas', 'filas' => 4, 'ayuda' => 'Una marca por línea.'],
+                            'puntos' => ['etiqueta' => 'Marcas', 'col' => 12, 'tipo' => 'lineas', 'filas' => 4, 'ayuda' => 'Una marca por línea. Las que tienen logo cargado salen con su logo; una marca sin logo sale con su nombre escrito. Escribe el nombre tal cual (p. ej. «Hikvision»), que es lo que la empareja con su logo.'],
                         ],
                     ],
                 ],

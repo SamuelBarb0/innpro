@@ -27,13 +27,13 @@ class SitioRedaccionClienteTest extends TestCase
     {
         $this->get('/')
             ->assertOk()
-            ->assertSee('Interventoría, mantenimiento y soporte en Bogotá')
+            ->assertSee('Acompañamiento técnico')
             ->assertSee('Programar mantenimiento')
             ->assertSee('Misión, visión y valores')
             ->assertSee('formalización de contratos de servicios activos')
             ->assertSee('Confidencialidad empresarial')
             ->assertSee('Hable con nuestro equipo')
-            ->assertSee('Solicite un estudio de seguridad');
+            ->assertSee('¿Requiere asesoría?');
     }
 
     public function test_bms_perimetral_y_analitica_van_dentro_de_las_paginas_existentes(): void

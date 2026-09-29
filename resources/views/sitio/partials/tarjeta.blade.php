@@ -48,11 +48,10 @@
     </ul>
   @endif
 
-  {{-- Sin enlace ni texto propio, una tarjeta que no es de servicio no lleva
-       el «Ver más» apagado: ahí no hay nada más que ver. --}}
+  {{-- Sin enlace no hay «Ver más». Antes salía apagado en las de servicio, y
+       Innpro pidió quitarlo (29-sep-2026): un «Ver más» que no lleva a
+       ninguna parte parece un enlace roto. --}}
   @if (filled($destino))
     <a class="card__more" href="{{ $destino }}">{{ $textoCta }} →</a>
-  @elseif ($conIcono)
-    <span class="card__more">{{ $textoCta }} →</span>
   @endif
 </article>
