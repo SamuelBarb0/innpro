@@ -1108,6 +1108,8 @@ span.card__more{opacity:.45}
   }
   .h-sec .ltr{opacity:1;transform:none}
   .reveal .chip{opacity:1;transform:none}
+  .reveal .marcas__logo{opacity:1;transform:none;animation:none}
+  .marcas__logo::after{display:none}
   .orb,.circuit{display:none}
   .card{transform:none}
   /* Quien pide menos movimiento no quiere una intro en video ni un fondo que
@@ -1164,11 +1166,37 @@ span.card__more{opacity:.45}
 .marcas__logos{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(auto-fill,minmax(112px,1fr));gap:.55rem}
 .marcas__logo{
   display:grid;place-items:center;height:62px;padding:.55rem .7rem;
+  position:relative;overflow:hidden;
   background:#fff;border-radius:4px;border:1px solid rgba(2,11,60,.08);
+  transition:opacity .55s var(--ease),transform .55s var(--ease),box-shadow .35s,border-color .35s;
 }
 /* Alto fijo y no 100%: dentro de una celda de grid el porcentaje no limita, y
    los logos más altos que anchos (Ubiquiti) se salían de la placa. */
-.marcas__logo img{display:block;max-width:100%;max-height:44px;width:auto;height:auto;object-fit:contain}
+.marcas__logo img{display:block;max-width:100%;max-height:44px;width:auto;height:auto;object-fit:contain;
+  transition:transform .45s var(--ease)}
+/* Entrada: las placas caen en cascada cuando la tarjeta se revela. Va con
+   animación y no con transition-delay como los chips: el retraso de la
+   cascada se quedaría pegado al hover y la placa tardaría en bajar. Con
+   `backwards` y sin `forwards`, al terminar suelta el transform y el hover
+   manda. El índice (--c) lo pone la plantilla. */
+@keyframes placaMarca{from{opacity:0;transform:translateY(14px) scale(.94)}to{opacity:1;transform:none}}
+.reveal .marcas__logo{opacity:0}
+.reveal.in .marcas__logo{opacity:1;animation:placaMarca .6s var(--ease) backwards;
+  animation-delay:calc(var(--c,0) * 55ms + 220ms)}
+/* Al pasar el mouse: la placa sube, el borde se enciende con el acento y un
+   reflejo la cruza. El reflejo es un pseudoelemento que solo se mueve con
+   transform, así que no repinta. */
+.marcas__logo::after{
+  content:"";position:absolute;inset:0;pointer-events:none;
+  background:linear-gradient(105deg,transparent 35%,rgba(93,206,186,.3) 50%,transparent 65%);
+  transform:translateX(-110%);
+}
+.reveal.in .marcas__logo:hover{
+  transform:translateY(-4px);
+  border-color:var(--accent);box-shadow:0 10px 24px -12px rgba(2,11,60,.45),0 0 0 1px var(--accent);
+}
+.marcas__logo:hover img{transform:scale(1.07)}
+.marcas__logo:hover::after{transform:translateX(110%);transition:transform .8s var(--ease)}
 /* Una marca sin logo: su nombre, en la misma placa para no romper la rejilla. */
 .marcas__logo span{color:#1b2350;font-size:.8rem;font-weight:500;text-align:center;line-height:1.25}
 

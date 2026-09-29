@@ -290,7 +290,7 @@
           <ul class="marcas__logos">
             @foreach ($marcas as $marca)
               @php $logo = 'images/marcas/'.\Illuminate\Support\Str::slug($marca).'.webp'; @endphp
-              <li class="marcas__logo">
+              <li class="marcas__logo" style="--c:{{ $loop->index }}">
                 @if (is_file(public_path($logo)))
                   <img src="{{ asset($logo) }}" alt="{{ $marca }}" title="{{ $marca }}" loading="lazy" decoding="async">
                 @else

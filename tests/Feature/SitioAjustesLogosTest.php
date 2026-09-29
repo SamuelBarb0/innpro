@@ -45,7 +45,7 @@ class SitioAjustesLogosTest extends TestCase
 
         // Las 40 del manual tienen archivo: ninguna cae al nombre escrito.
         $this->assertSame(40, substr_count($html, 'src="'.asset('images/marcas/')));
-        $this->assertStringNotContainsString('<li class="marcas__logo">'."\n".'                  <span>', $html);
+        $this->assertDoesNotMatchRegularExpression('/<li class="marcas__logo"[^>]*>\s*<span>/', $html);
 
         // Lo que el manual sacó de la lista.
         $this->assertStringNotContainsString('Etiquetado e identificación industrial', $html);
