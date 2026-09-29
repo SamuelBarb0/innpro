@@ -419,5 +419,43 @@
       chip.style.setProperty('--c', i);
     });
   });
+
+  /* ==============================================================
+     DESTELLO EN LOS LOGOS DE MARCAS
+     Cada poco, un logo al azar hace un mini-zoom con un reflejo que lo
+     cruza, para que la rejilla no se quede quieta. Uno a la vez, solo
+     mientras la sección está en pantalla y la pestaña visible, y nunca
+     sobre el logo que el usuario tiene bajo el cursor ni antes de que
+     termine la entrada en cascada.
+     ============================================================== */
+  var marcas = document.getElementById('marcas');
+  if (marcas && !reduce && 'IntersectionObserver' in window) {
+    var placas = [].slice.call(marcas.querySelectorAll('.marcas__logo'));
+    var enVista = false, reloj = null, ultima = null;
+
+    var destellar = function(){
+      var libres = placas.filter(function(pl){
+        var r = pl.getBoundingClientRect();
+        return pl !== ultima && !pl.matches(':hover') && pl.closest('.reveal.in')
+          && r.bottom > 0 && r.top < window.innerHeight;
+      });
+      if (libres.length) {
+        var pl = libres[Math.floor(Math.random() * libres.length)];
+        ultima = pl;
+        pl.classList.add('destello');
+        setTimeout(function(){ pl.classList.remove('destello'); }, 1200);
+      }
+      // Ritmo irregular a propósito: con un intervalo fijo se nota el metrónomo.
+      reloj = setTimeout(destellar, 1400 + Math.random() * 1300);
+    };
+    var arrancar = function(){ if (!reloj && enVista && !document.hidden) reloj = setTimeout(destellar, 1800); };
+    var parar = function(){ clearTimeout(reloj); reloj = null; };
+
+    new IntersectionObserver(function(entradas){
+      enVista = entradas[0].isIntersecting;
+      enVista ? arrancar() : parar();
+    }, {threshold: .15}).observe(marcas);
+    document.addEventListener('visibilitychange', function(){ document.hidden ? parar() : arrancar(); });
+  }
 })();
 </script>

@@ -1213,6 +1213,16 @@ span.card__more{opacity:.45}
 }
 .marcas__logo:hover img{transform:scale(1.07)}
 .marcas__logo:hover::after{transform:translateX(110%);transition:transform .8s var(--ease)}
+/* Destello: el JS le pone .destello a un logo al azar cada poco. Mini-zoom
+   con el borde encendido y el mismo reflejo del hover. El selector repite
+   .reveal.in para ganarle a la animación de entrada. */
+@keyframes destelloPlaca{
+  0%,100%{transform:none;box-shadow:none}
+  45%{transform:translateY(-2px) scale(1.06);box-shadow:0 8px 20px -12px rgba(2,11,60,.4),0 0 0 1px var(--accent)}
+}
+@keyframes destelloReflejo{from{transform:translateX(-110%)}to{transform:translateX(110%)}}
+.reveal.in .marcas__logo.destello{animation:destelloPlaca 1.1s var(--ease);z-index:1}
+.marcas__logo.destello::after{animation:destelloReflejo 1s var(--ease) .1s}
 /* Una marca sin logo: su nombre, en la misma placa para no romper la rejilla. */
 .marcas__logo span{color:#1b2350;font-size:.8rem;font-weight:500;text-align:center;line-height:1.25}
 
