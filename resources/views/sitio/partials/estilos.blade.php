@@ -217,7 +217,11 @@
 }
 
 *,*::before,*::after{box-sizing:border-box}
-html{scroll-behavior:smooth}
+/* `clip` en html y no solo `hidden` en body: con hidden en body el móvil
+   igual se desplazaba 30px de lado por lo que entra desde la derecha
+   (.reveal--right, el video y los anillos del lente). clip no crea un
+   contenedor de scroll, así que no rompe el position:sticky de la cabecera. */
+html{scroll-behavior:smooth;overflow-x:clip}
 body{
   margin:0;
   font-family:var(--f-body);
@@ -626,13 +630,25 @@ body::after{
   opacity:0;animation:fadeUp .9s var(--ease) 1.15s forwards}
 @keyframes fadeUp{from{opacity:0;transform:translateY(24px)}to{opacity:1;transform:none}}
 
-/* Las tres cifras van en UNA sola fila: si envuelven, la tercera se cae
-   por debajo del pliegue en pantallas de 900px de alto. */
+/* Las cifras van en UNA sola fila en escritorio: si envuelven, la segunda
+   fila se cae por debajo del pliegue en pantallas de 900px de alto. Por
+   debajo de 1200px ya no caben (con cinco, la fila se salía y la página
+   entera se desplazaba de lado), así que ahí sí envuelven. */
 .hero__stats{
   display:flex;gap:clamp(1.2rem,3vw,2.4rem);margin-top:2.6rem;flex-wrap:nowrap;
   opacity:0;animation:fadeUp .9s var(--ease) 1.35s forwards;
 }
-.stat{position:relative;padding-left:.9rem}
+/* Rejilla y no flex-wrap: con wrap cada cifra se estiraba lo que mide su
+   etiqueta y en el celular salían de a una por fila (cinco filas). */
+@media (max-width:1199px){
+  .hero__stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));row-gap:1.5rem}
+}
+@media (max-width:420px){
+  .hero__stats{grid-template-columns:repeat(2,minmax(0,1fr));column-gap:1.2rem}
+}
+/* Mismo ancho para todas: sin esto flex encoge más la de etiqueta larga y
+   «Macro-líneas de negocio» se partía en cuatro renglones. */
+.stat{position:relative;padding-left:.9rem;flex:1 1 0;min-width:0}
 .stat::before{
   content:"";position:absolute;left:0;top:.15em;bottom:.9em;width:2px;
   background:linear-gradient(var(--accent),transparent);

@@ -58,9 +58,9 @@ class PortadaEsquema
                 'listas' => [
                     'estadisticas' => [
                         'nombre' => 'Cifras',
-                        'ayuda' => 'Los números que suben solos al cargar. Van en una sola fila: con más de tres se aprietan y en pantallas bajas se salen de la vista.',
+                        'ayuda' => 'Los números que suben solos al cargar. Van en una sola fila en computador; en el celular se acomodan en dos o tres columnas.',
                         'singular' => 'cifra',
-                        'max' => 4,
+                        'max' => 5,
                         'campos' => [
                             'numero' => ['etiqueta' => 'Número', 'col' => 2, 'ayuda' => 'Solo el número, sin símbolos.'],
                             'sufijo' => ['etiqueta' => 'Símbolo detrás', 'col' => 2, 'ayuda' => 'Ej.: + o %'],

@@ -27,7 +27,7 @@ class SitioManualRestructuracionTest extends TestCase
             ->assertDontSee('Servicio y venta de productos de seguridad electrónica');
     }
 
-    public function test_los_contadores_son_cuatro_y_traen_los_indicadores_nuevos(): void
+    public function test_los_contadores_son_los_cinco_del_manual(): void
     {
         $portada = $this->get('/')->assertOk();
 
@@ -37,9 +37,10 @@ class SitioManualRestructuracionTest extends TestCase
             ->assertDontSee('Líneas de servicio')
             ->assertDontSee('Capacidades técnicas');
 
-        // Cuatro, que es lo que cabe en una fila. El documento pide «los 4
-        // módulos» en el texto y lista cinco indicadores en la tabla.
-        $this->assertSame(4, substr_count($portada->getContent(), 'data-count='));
+        // Cinco: los de la tabla del manual. El 22-sep se dejaron cuatro porque
+        // el texto decía «los 4 módulos», e Innpro echó en falta el quinto.
+        $portada->assertSee('Cumplimiento normativo');
+        $this->assertSame(5, substr_count($portada->getContent(), 'data-count='));
     }
 
     public function test_los_lineamientos_son_los_del_manual(): void
