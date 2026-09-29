@@ -1172,7 +1172,11 @@ span.card__more{opacity:.45}
 @media (min-width:760px){.marcas__c--ancha{grid-column:span 2}}
 /* Cabecera con la vitrina a la derecha del título. En pantallas estrechas
    la vitrina baja debajo del texto. */
-.marcas__cab{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:2rem 3.5rem;align-items:end}
+/* La columna de la vitrina va con ancho FIJO y no `auto`: con auto se mide
+   por su contenido, y cuando el pie traía una categoría larga la columna se
+   ensanchaba, apretaba el texto y el título pasaba a dos renglones en cada
+   vuelta de la vitrina. */
+.marcas__cab{display:grid;grid-template-columns:minmax(0,1fr) 400px;gap:2rem 3.5rem;align-items:end}
 @media (max-width:900px){.marcas__cab{grid-template-columns:1fr}}
 
 /* --- La vitrina ---
@@ -1180,7 +1184,7 @@ span.card__more{opacity:.45}
    dos <img> apiladas, una visible y la otra esperando la siguiente, para
    que el cambio nunca pase por un hueco en blanco. La barra de abajo marca
    el tiempo que falta para el siguiente. */
-.vitrina{margin:0;width:min(400px,100%)}
+.vitrina{margin:0;width:100%;min-width:0}
 .vitrina__placa{
   position:relative;height:180px;border-radius:6px;overflow:hidden;background:#fff;
   border:1px solid var(--card-brd);
@@ -1211,8 +1215,14 @@ span.card__more{opacity:.45}
   background:var(--accent);transform:scaleX(0);transform-origin:left}
 .vitrina__barra.corre{animation:vitrinaBarra var(--vitrina-t,2800ms) linear forwards}
 @keyframes vitrinaBarra{to{transform:scaleX(1)}}
-.vitrina__pie{display:flex;justify-content:space-between;align-items:baseline;gap:1rem;margin-top:.9rem;
-  transition:opacity .35s}
+/* Alto FIJO: el pie cambia de texto en cada vuelta y «DSC» ocupa un
+   renglón y «Paradox Security Systems» dos. Con alto automático la vitrina
+   crecía y encogía, y como la cabecera alinea el título con su base
+   (align-items:end), el título saltaba hasta 56px en cada cambio. Dos
+   renglones como máximo por lado, que es el caso más largo. */
+.vitrina__pie{display:flex;justify-content:space-between;align-items:flex-start;gap:1rem;margin-top:.9rem;
+  height:2.75rem;overflow:hidden;transition:opacity .35s}
+.vitrina__cat,.vitrina__nombre{display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden}
 .vitrina__pie.cambia{opacity:0}
 .vitrina__cat{font-family:var(--f-display);font-size:.68rem;letter-spacing:.14em;text-transform:uppercase;
   color:var(--accent-ink)}
