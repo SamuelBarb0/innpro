@@ -421,41 +421,80 @@
   });
 
   /* ==============================================================
-     DESTELLO EN LOS LOGOS DE MARCAS
-     Cada poco, un logo al azar hace un mini-zoom con un reflejo que lo
-     cruza, para que la rejilla no se quede quieta. Uno a la vez, solo
-     mientras la sección está en pantalla y la pestaña visible, y nunca
-     sobre el logo que el usuario tiene bajo el cursor ni antes de que
-     termine la entrada en cascada.
+     VITRINA DE MARCAS
+     Un logo en grande que rota por todas las marcas (en orden al azar)
+     y, en cada cambio, la placa pequeña de esa marca en la rejilla hace
+     el destello: la vitrina dice «esta» y la rejilla dice «aquí está».
+     La ronda se arma leyendo la propia rejilla, así que una marca nueva
+     en el panel entra sola. Solo corre con la sección en pantalla y la
+     pestaña visible, se pausa con el cursor encima y no arranca con
+     «reducir movimiento».
      ============================================================== */
   var marcas = document.getElementById('marcas');
-  if (marcas && !reduce && 'IntersectionObserver' in window) {
-    var placas = [].slice.call(marcas.querySelectorAll('.marcas__logo'));
-    var enVista = false, reloj = null, ultima = null;
+  var vitrina = marcas && marcas.querySelector('.vitrina');
+  if (vitrina && !reduce && 'IntersectionObserver' in window) {
+    var TIEMPO = 2800;
+    var imgs = vitrina.querySelectorAll('.vitrina__img');
+    var pie = vitrina.querySelector('.vitrina__pie');
+    var cat = vitrina.querySelector('.vitrina__cat');
+    var nombre = vitrina.querySelector('.vitrina__nombre');
+    var barra = vitrina.querySelector('.vitrina__barra');
+    vitrina.style.setProperty('--vitrina-t', TIEMPO + 'ms');
 
-    var destellar = function(){
-      var libres = placas.filter(function(pl){
-        var r = pl.getBoundingClientRect();
-        return pl !== ultima && !pl.matches(':hover') && pl.closest('.reveal.in')
-          && r.bottom > 0 && r.top < window.innerHeight;
-      });
-      if (libres.length) {
-        var pl = libres[Math.floor(Math.random() * libres.length)];
-        ultima = pl;
-        pl.classList.add('destello');
-        setTimeout(function(){ pl.classList.remove('destello'); }, 1200);
-      }
-      // Ritmo irregular a propósito: con un intervalo fijo se nota el metrónomo.
-      reloj = setTimeout(destellar, 1400 + Math.random() * 1300);
+    var ronda = [].slice.call(marcas.querySelectorAll('.marcas__logo img')).map(function(img){
+      var tarjeta = img.closest('.marcas__c');
+      return {src: img.currentSrc || img.src, nombre: img.alt,
+              cat: tarjeta ? tarjeta.querySelector('h3').textContent.trim() : '',
+              placa: img.closest('.marcas__logo')};
+    });
+    // Barajar (Fisher-Yates), dejando de primera la que ya se ve.
+    var primera = ronda.shift();
+    for (var k = ronda.length - 1; k > 0; k--) {
+      var r = Math.floor(Math.random() * (k + 1)), t = ronda[k]; ronda[k] = ronda[r]; ronda[r] = t;
+    }
+    ronda.unshift(primera);
+
+    var pos = 0, reloj = null, enVista = false, encima = false, visible = 0;
+
+    var destellar = function(placa){
+      var b = placa.getBoundingClientRect();
+      if (placa.matches(':hover') || !placa.closest('.reveal.in') || b.bottom < 0 || b.top > window.innerHeight) return;
+      placa.classList.add('destello');
+      setTimeout(function(){ placa.classList.remove('destello'); }, 1200);
     };
-    var arrancar = function(){ if (!reloj && enVista && !document.hidden) reloj = setTimeout(destellar, 1800); };
-    var parar = function(){ clearTimeout(reloj); reloj = null; };
+    var correrBarra = function(){
+      barra.classList.remove('corre'); void barra.offsetWidth; barra.classList.add('corre');
+    };
+
+    var siguiente = function(){
+      pos = (pos + 1) % ronda.length;
+      var m = ronda[pos], sale = imgs[visible], entra = imgs[1 - visible];
+      var pre = new Image(); pre.src = m.src;
+      // Esperar a que el logo esté decodificado: sin esto el fundido cruza
+      // hacia una imagen que todavía no está y se ve un parpadeo en blanco.
+      (pre.decode ? pre.decode() : Promise.resolve()).catch(function(){}).then(function(){
+        entra.src = m.src;
+        sale.classList.remove('es-actual'); sale.classList.add('se-va');
+        entra.classList.remove('se-va'); entra.classList.add('es-actual');
+        visible = 1 - visible;
+        pie.classList.add('cambia');
+        setTimeout(function(){ cat.textContent = m.cat; nombre.textContent = m.nombre; pie.classList.remove('cambia'); }, 350);
+        destellar(m.placa);
+        correrBarra();
+        programar();
+      });
+    };
+    var programar = function(){ clearTimeout(reloj); reloj = setTimeout(siguiente, TIEMPO); };
+    var arrancar = function(){ if (enVista && !encima && !document.hidden) { correrBarra(); programar(); } };
+    var parar = function(){ clearTimeout(reloj); reloj = null; barra.classList.remove('corre'); };
 
     new IntersectionObserver(function(entradas){
       enVista = entradas[0].isIntersecting;
       enVista ? arrancar() : parar();
     }, {threshold: .15}).observe(marcas);
     document.addEventListener('visibilitychange', function(){ document.hidden ? parar() : arrancar(); });
+    vitrina.addEventListener('mouseenter', function(){ encima = true; parar(); });
+    vitrina.addEventListener('mouseleave', function(){ encima = false; arrancar(); });
   }
 })();
 </script>

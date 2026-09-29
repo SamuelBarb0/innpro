@@ -274,11 +274,42 @@
 @if ($mar && $mar->activo && ($categorias = $mar->lista('categorias') ?? []))
 <section class="sect" id="marcas">
   <div class="shell">
-    <div class="reveal">
-      @if ($mar->antetitulo)<div class="eyebrow">{{ $mar->antetitulo }}</div>@endif
-      <h2 class="h-sec">{{ $mar->titulo }}</h2>
-      @if ($mar->texto)
-        <p class="lead" style="margin-top:1.4rem;max-width:64ch">{{ \App\Support\Sitio::txt($mar->texto) }}</p>
+    {{-- La vitrina: un logo en grande que va rotando por todas las marcas.
+         Aquí solo se pinta el primero; el JS arma la ronda leyendo la propia
+         rejilla de abajo, así que no hay una segunda lista que mantener. --}}
+    @php
+      $vitrina = null;
+      foreach ($categorias as $cat) {
+          foreach ((array) ($cat['puntos'] ?? []) as $m) {
+              $archivo = 'images/marcas/'.\Illuminate\Support\Str::slug(trim((string) $m)).'.webp';
+              if (is_string($m) && is_file(public_path($archivo))) {
+                  $vitrina = ['marca' => trim($m), 'logo' => $archivo, 'categoria' => $cat['titulo'] ?? ''];
+                  break 2;
+              }
+          }
+      }
+    @endphp
+    <div class="marcas__cab">
+      <div class="reveal">
+        @if ($mar->antetitulo)<div class="eyebrow">{{ $mar->antetitulo }}</div>@endif
+        <h2 class="h-sec">{{ $mar->titulo }}</h2>
+        @if ($mar->texto)
+          <p class="lead" style="margin-top:1.4rem;max-width:64ch">{{ \App\Support\Sitio::txt($mar->texto) }}</p>
+        @endif
+      </div>
+
+      @if ($vitrina)
+        <figure class="vitrina reveal reveal--right" style="--d:160ms" aria-hidden="true">
+          <div class="vitrina__placa">
+            <img class="vitrina__img es-actual" src="{{ asset($vitrina['logo']) }}" alt="">
+            <img class="vitrina__img" alt="">
+            <span class="vitrina__barra"></span>
+          </div>
+          <figcaption class="vitrina__pie">
+            <span class="vitrina__cat">{{ $vitrina['categoria'] }}</span>
+            <span class="vitrina__nombre">{{ $vitrina['marca'] }}</span>
+          </figcaption>
+        </figure>
       @endif
     </div>
 

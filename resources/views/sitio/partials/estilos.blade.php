@@ -1170,6 +1170,55 @@ span.card__more{opacity:.45}
 /* Infraestructura trae 14 marcas y las demás 3-6: a una columna estiraba su
    fila y dejaba las vecinas medio vacías. Las largas ocupan dos. */
 @media (min-width:760px){.marcas__c--ancha{grid-column:span 2}}
+/* Cabecera con la vitrina a la derecha del título. En pantallas estrechas
+   la vitrina baja debajo del texto. */
+.marcas__cab{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:2rem 3.5rem;align-items:end}
+@media (max-width:900px){.marcas__cab{grid-template-columns:1fr}}
+
+/* --- La vitrina ---
+   Un logo en grande que rota por todas las marcas con un fundido cruzado:
+   dos <img> apiladas, una visible y la otra esperando la siguiente, para
+   que el cambio nunca pase por un hueco en blanco. La barra de abajo marca
+   el tiempo que falta para el siguiente. */
+.vitrina{margin:0;width:min(400px,100%)}
+.vitrina__placa{
+  position:relative;height:180px;border-radius:6px;overflow:hidden;background:#fff;
+  border:1px solid var(--card-brd);
+  box-shadow:0 22px 50px -28px rgba(2,11,60,.55),0 0 0 1px rgba(93,206,186,.18);
+}
+/* Esquinas de visor, como las del resto del sitio */
+.vitrina__placa::before{
+  content:"";position:absolute;inset:10px;pointer-events:none;z-index:2;
+  background:
+    linear-gradient(var(--accent),var(--accent)) top left/14px 2px,
+    linear-gradient(var(--accent),var(--accent)) top left/2px 14px,
+    linear-gradient(var(--accent),var(--accent)) top right/14px 2px,
+    linear-gradient(var(--accent),var(--accent)) top right/2px 14px,
+    linear-gradient(var(--accent),var(--accent)) bottom left/14px 2px,
+    linear-gradient(var(--accent),var(--accent)) bottom left/2px 14px,
+    linear-gradient(var(--accent),var(--accent)) bottom right/14px 2px,
+    linear-gradient(var(--accent),var(--accent)) bottom right/2px 14px;
+  background-repeat:no-repeat;opacity:.7;
+}
+.vitrina__img{
+  position:absolute;left:50%;top:50%;max-width:74%;max-height:58%;width:auto;height:auto;
+  object-fit:contain;opacity:0;transform:translate(-50%,-50%) scale(.9);filter:blur(4px);
+  transition:opacity .7s var(--ease),transform .9s var(--ease),filter .7s var(--ease);
+}
+.vitrina__img.es-actual{opacity:1;transform:translate(-50%,-50%);filter:none}
+.vitrina__img.se-va{opacity:0;transform:translate(-50%,-50%) scale(1.08);filter:blur(4px)}
+.vitrina__barra{position:absolute;left:0;bottom:0;height:3px;width:100%;
+  background:var(--accent);transform:scaleX(0);transform-origin:left}
+.vitrina__barra.corre{animation:vitrinaBarra var(--vitrina-t,2800ms) linear forwards}
+@keyframes vitrinaBarra{to{transform:scaleX(1)}}
+.vitrina__pie{display:flex;justify-content:space-between;align-items:baseline;gap:1rem;margin-top:.9rem;
+  transition:opacity .35s}
+.vitrina__pie.cambia{opacity:0}
+.vitrina__cat{font-family:var(--f-display);font-size:.68rem;letter-spacing:.14em;text-transform:uppercase;
+  color:var(--accent-ink)}
+.vitrina__nombre{font-family:var(--f-display);font-weight:600;font-size:1rem;color:var(--ink);text-align:right}
+@media (max-width:900px){.vitrina{width:100%}.vitrina__placa{height:150px}}
+
 .marcas__c{
   padding:1.6rem 1.5rem;background:var(--card-bg);border:1px solid var(--card-brd);
   transition:border-color .4s,box-shadow .4s;
@@ -1213,7 +1262,8 @@ span.card__more{opacity:.45}
 }
 .marcas__logo:hover img{transform:scale(1.07)}
 .marcas__logo:hover::after{transform:translateX(110%);transition:transform .8s var(--ease)}
-/* Destello: el JS le pone .destello a un logo al azar cada poco. Mini-zoom
+/* Destello: el JS se lo pone a la placa de la marca que acaba de entrar
+   en la vitrina. Mini-zoom
    con el borde encendido y el mismo reflejo del hover. El selector repite
    .reveal.in para ganarle a la animación de entrada. */
 @keyframes destelloPlaca{

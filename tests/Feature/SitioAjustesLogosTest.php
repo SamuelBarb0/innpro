@@ -44,7 +44,9 @@ class SitioAjustesLogosTest extends TestCase
         }
 
         // Las 40 del manual tienen archivo: ninguna cae al nombre escrito.
-        $this->assertSame(40, substr_count($html, 'src="'.asset('images/marcas/')));
+        // (+1: la vitrina de arriba pinta la primera marca.)
+        $this->assertSame(40, substr_count($html, 'loading="lazy" decoding="async"'));
+        $this->assertSame(41, substr_count($html, 'src="'.asset('images/marcas/')));
         $this->assertDoesNotMatchRegularExpression('/<li class="marcas__logo"[^>]*>\s*<span>/', $html);
 
         // Lo que el manual sacó de la lista.
@@ -72,5 +74,23 @@ class SitioAjustesLogosTest extends TestCase
 
         $this->assertSame('Título propio de Innpro', SitioBloque::where('clave', 'casos')->value('titulo'));
         $this->assertSame('', SitioBloque::where('clave', 'acompanamiento')->value('titulo'));
+    }
+
+    public function test_la_vitrina_arranca_con_la_primera_marca_y_su_categoria(): void
+    {
+        $html = $this->get('/')->assertOk()->getContent();
+
+        $this->assertMatchesRegularExpression('/<figure class="vitrina[^"]*"/', $html);
+        $this->assertStringContainsString('src="'.asset('images/marcas/axis-communications.webp').'" alt=""', $html);
+        $this->assertMatchesRegularExpression('/vitrina__cat">Videovigilancia \(Cctv\) y analítica</', $html);
+        $this->assertMatchesRegularExpression('/vitrina__nombre">Axis Communications</', $html);
+    }
+
+    public function test_sin_logos_no_hay_vitrina(): void
+    {
+        $bloque = SitioBloque::where('clave', 'marcas')->firstOrFail();
+        $bloque->update(['datos' => ['categorias' => [['titulo' => 'Otra', 'puntos' => ['Marca Sin Logo']]]]]);
+
+        $this->get('/')->assertOk()->assertDontSee('class="vitrina', false)->assertSee('Marca Sin Logo');
     }
 }
