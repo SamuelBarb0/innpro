@@ -108,7 +108,7 @@ class SitioManualRestructuracionTest extends TestCase
      */
     public function test_el_acronimo_se_escribe_cctv(): void
     {
-        foreach (['/', '/servicios/camaras-de-seguridad-cctv-bogota'] as $url) {
+        foreach (['/', '/servicios/camaras-de-seguridad-cctv'] as $url) {
             $html = $this->get($url)->assertOk()->getContent();
 
             // Fuera de los slugs y de las URL, donde va en minúscula.

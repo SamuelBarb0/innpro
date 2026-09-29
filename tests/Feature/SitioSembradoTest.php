@@ -69,15 +69,42 @@ class SitioSembradoTest extends TestCase
      * clave y la ciudad, la página nace peleando en desventaja — y cambiarlo
      * después cuesta, porque una URL ya posicionada no se toca gratis.
      */
-    public function test_los_slugs_llevan_la_palabra_clave_y_la_ciudad(): void
+    /**
+     * Antes las URLs llevaban «-bogota». Innpro pidió (29-sep-2026) cobertura
+     * regional y nacional, así que el servicio ya no se ata a la capital ni en
+     * la URL, y las viejas redirigen con 301 para no perder lo indexado.
+     */
+    public function test_los_slugs_no_atan_el_servicio_a_una_ciudad(): void
     {
         $slugs = SitioPagina::deTipo(SitioPagina::SERVICIO)->pluck('slug');
 
         foreach ($slugs as $slug) {
             $this->assertMatchesRegularExpression('/^[a-z0-9-]+$/', $slug);
+            $this->assertStringNotContainsString('bogota', $slug);
         }
 
-        $this->assertTrue($slugs->contains(fn ($s) => str_contains($s, 'bogota')));
+        $this->get('/servicios/camaras-de-seguridad-cctv-bogota')
+            ->assertStatus(301)
+            ->assertRedirect(url('/servicios/camaras-de-seguridad-cctv'));
+    }
+
+    public function test_el_sitio_no_se_anuncia_como_proveedor_de_bogota(): void
+    {
+        foreach (['/', '/servicios/camaras-de-seguridad-cctv', '/servicios/control-de-acceso-biometrico-facial'] as $url) {
+            $html = $this->get($url)->assertOk()->getContent();
+
+            // «Sede principal en Bogotá» es la ubicación de la sede, no la
+            // cobertura, y se queda a propósito: la frase sigue diciendo que
+            // atienden a nivel regional y nacional.
+            $sinSede = str_replace('Sede principal en Bogotá', '', $html);
+
+            $this->assertStringNotContainsString('en Bogotá', $sinSede, "Queda «en Bogotá» en {$url}");
+            $this->assertStringNotContainsString('"@type":"City"', $html, "El servicio sigue declarado para una ciudad en {$url}");
+        }
+
+        // La sede SÍ sigue en Bogotá: la dirección es un dato y tiene que
+        // coincidir con el perfil de Google Business.
+        $this->get('/')->assertSee('Bogotá');
     }
 
     public function test_quedan_las_redirecciones_de_las_urls_viejas(): void

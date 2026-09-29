@@ -246,9 +246,9 @@ class SitioLegalYCookiesTest extends TestCase
         // en el manual del 22-sep-2026, donde Innpro pide eliminar ese servicio
         // por completo: su URL ahora redirige, y eso lo vigila SitioSembradoTest.
         $slugs = [
-            'camaras-de-seguridad-cctv-bogota',
-            'control-de-acceso-biometrico-facial-bogota',
-            'deteccion-de-incendios-audio-evacuacion-bogota',
+            'camaras-de-seguridad-cctv',
+            'control-de-acceso-biometrico-facial',
+            'deteccion-de-incendios-audio-evacuacion',
         ];
 
         foreach ($slugs as $slug) {

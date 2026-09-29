@@ -196,7 +196,9 @@ class Sitio
             'name' => self::nombre(),
             'url' => url('/'),
             'image' => asset('images/logo.png'),
-            'description' => 'Consultoría e integración en seguridad electrónica: Cctv, control de acceso, detección de incendios y control perimetral en '.self::ciudad().'.',
+            // En Colombia y no en la ciudad de la sede: Innpro pidió presentarse con
+            // cobertura regional y nacional, no como proveedor de la capital.
+            'description' => 'Consultoría e integración en seguridad electrónica: Cctv, control de acceso, detección de incendios y control perimetral en Colombia.',
         ];
 
         if (self::direccion() !== '') {
@@ -247,7 +249,9 @@ class Sitio
             'name' => $pagina->titulo,
             'description' => $pagina->descripcionSeo(),
             'url' => $pagina->url(),
-            'areaServed' => ['@type' => 'City', 'name' => self::ciudad()],
+            // País y no ciudad: con `City` Google entiende que el servicio es solo
+            // para Bogotá, justo lo que Innpro pidió dejar de decir.
+            'areaServed' => ['@type' => 'Country', 'name' => 'Colombia'],
             'provider' => [
                 '@type' => 'LocalBusiness',
                 'name' => self::nombre(),

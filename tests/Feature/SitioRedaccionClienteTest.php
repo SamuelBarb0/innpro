@@ -40,13 +40,13 @@ class SitioRedaccionClienteTest extends TestCase
     {
         $this->assertCount(4, SitioPagina::deTipo(SitioPagina::SERVICIO)->get());
 
-        $this->get('/servicios/camaras-de-seguridad-cctv-bogota')
+        $this->get('/servicios/camaras-de-seguridad-cctv')
             ->assertOk()
             ->assertSee('Analítica de video con inteligencia artificial')
             ->assertSee('según las capacidades de la solución implementada')
-            ->assertSee('Cotice su sistema de Cctv en Bogotá.');
+            ->assertSee('Cotice su sistema de Cctv.');
 
-        $this->get('/servicios/control-de-acceso-biometrico-facial-bogota')
+        $this->get('/servicios/control-de-acceso-biometrico-facial')
             ->assertOk()
             ->assertSee('Control de acceso vehicular')
             ->assertSee('Registro y trazabilidad digital de los accesos')
@@ -57,7 +57,7 @@ class SitioRedaccionClienteTest extends TestCase
 
     public function test_no_quedan_afirmaciones_absolutas(): void
     {
-        foreach (['/', '/servicios/camaras-de-seguridad-cctv-bogota', '/servicios/control-de-acceso-biometrico-facial-bogota'] as $url) {
+        foreach (['/', '/servicios/camaras-de-seguridad-cctv', '/servicios/control-de-acceso-biometrico-facial'] as $url) {
             $html = mb_strtolower($this->get($url)->getContent());
 
             foreach (self::PROHIBIDAS as $frase) {
