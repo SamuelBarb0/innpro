@@ -1165,7 +1165,7 @@ span.card__more{opacity:.45}
    van sobre una placa clara en los dos temas: vienen hechos para fondo blanco
    (Axis, Ajax o Risco son negros) y sobre el azul del sitio desaparecerían.
    Pasarlos a monocromo los igualaría, pero es alterar la marca de un tercero. */
-.marcas{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));grid-auto-flow:row dense;
+.marcas{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));grid-auto-flow:row dense;
   align-items:start;gap:1.2rem;margin-top:3.4rem}
 /* Infraestructura trae 14 marcas y las demás 3-6: a una columna estiraba su
    fila y dejaba las vecinas medio vacías. Las largas ocupan dos. */
@@ -1228,16 +1228,16 @@ span.card__more{opacity:.45}
   font-family:var(--f-display);font-size:.78rem;letter-spacing:.14em;text-transform:uppercase;
   color:var(--accent-ink);margin:0 0 .7rem;
 }
-.marcas__logos{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(auto-fill,minmax(112px,1fr));gap:.55rem}
+.marcas__logos{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:.6rem}
 .marcas__logo{
-  display:grid;place-items:center;height:62px;padding:.55rem .7rem;
+  display:grid;place-items:center;height:78px;padding:.5rem .6rem;
   position:relative;overflow:hidden;
   background:#fff;border-radius:4px;border:1px solid rgba(2,11,60,.08);
   transition:opacity .55s var(--ease),transform .55s var(--ease),box-shadow .35s,border-color .35s;
 }
 /* Alto fijo y no 100%: dentro de una celda de grid el porcentaje no limita, y
    los logos más altos que anchos (Ubiquiti) se salían de la placa. */
-.marcas__logo img{display:block;max-width:100%;max-height:44px;width:auto;height:auto;object-fit:contain;
+.marcas__logo img{display:block;max-width:100%;max-height:56px;width:auto;height:auto;object-fit:contain;
   transition:transform .45s var(--ease)}
 /* Entrada: las placas caen en cascada cuando la tarjeta se revela. Va con
    animación y no con transition-delay como los chips: el retraso de la
@@ -1248,6 +1248,10 @@ span.card__more{opacity:.45}
 .reveal .marcas__logo{opacity:0}
 .reveal.in .marcas__logo{opacity:1;animation:placaMarca .6s var(--ease) backwards;
   animation-delay:calc(var(--c,0) * 55ms + 220ms)}
+/* Terminada la entrada, la placa se marca .entro y suelta la animación. Sin
+   esto, al quitarle .destello volvía a aplicarse placaMarca, que arranca en
+   opacidad 0: el logo se apagaba y reaparecía después de cada destello. */
+.reveal.in .marcas__logo.entro{animation:none}
 /* Al pasar el mouse: la placa sube, el borde se enciende con el acento y un
    reflejo la cruza. El reflejo es un pseudoelemento que solo se mueve con
    transform, así que no repinta. */

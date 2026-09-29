@@ -432,6 +432,10 @@
      ============================================================== */
   var marcas = document.getElementById('marcas');
   var vitrina = marcas && marcas.querySelector('.vitrina');
+  // Cada placa avisa cuando termina su entrada (ver .entro en los estilos).
+  if (marcas) marcas.addEventListener('animationend', function(e){
+    if (e.animationName === 'placaMarca') e.target.classList.add('entro');
+  });
   if (vitrina && !reduce && 'IntersectionObserver' in window) {
     var TIEMPO = 2800;
     var imgs = vitrina.querySelectorAll('.vitrina__img');
@@ -458,7 +462,7 @@
 
     var destellar = function(placa){
       var b = placa.getBoundingClientRect();
-      if (placa.matches(':hover') || !placa.closest('.reveal.in') || b.bottom < 0 || b.top > window.innerHeight) return;
+      if (placa.matches(':hover') || !placa.classList.contains('entro') || b.bottom < 0 || b.top > window.innerHeight) return;
       placa.classList.add('destello');
       setTimeout(function(){ placa.classList.remove('destello'); }, 1200);
     };
