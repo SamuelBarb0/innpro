@@ -10,6 +10,8 @@ use App\Support\PortadaEsquema;
 use App\Support\Sitio;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\File;
 use Illuminate\Validation\Rule;
 
 /**
@@ -242,12 +244,26 @@ class SitioAdminController extends Controller
             'titulo' => ['nullable', 'string', 'max:255'],
             'subtitulo' => ['nullable', 'string', 'max:255'],
             'texto' => ['nullable', 'string', 'max:4000'],
+        ] + $this->reglasDeFotos($bloque), [
+            '*.image' => 'La foto tiene que ser una imagen JPG, PNG o WebP.',
+            '*.mimes' => 'La foto tiene que ser una imagen JPG, PNG o WebP.',
+            '*.max' => 'La foto pesa más de 5 MB. Redúcela antes de subirla.',
+            '*.uploaded' => 'La foto no se pudo subir; probablemente pesa demasiado.',
         ]);
+
+        $fotosAntes = $this->fotosSubidas($bloque->datos ?? []);
 
         $datos['activo'] = $request->boolean('activo');
         $datos['datos'] = $this->componerDatos($request, $bloque);
 
         $bloque->fill($datos)->save();
+
+        // Las fotos que se reemplazaron o quitaron ya no las pinta nadie. Solo
+        // se borran las que subió este panel: una dirección externa no es
+        // nuestra.
+        foreach (array_diff($fotosAntes, $this->fotosSubidas($datos['datos'])) as $vieja) {
+            File::delete(public_path(ltrim($vieja, '/')));
+        }
 
         return back()->with('success', 'Sección «'.PortadaEsquema::de($bloque->clave)['nombre'].'» actualizada.');
     }
@@ -283,7 +299,7 @@ class SitioAdminController extends Controller
         foreach ($esquema['listas'] ?? [] as $clave => $lista) {
             $filas = [];
 
-            foreach ((array) ($enviado[$clave] ?? []) as $fila) {
+            foreach ((array) ($enviado[$clave] ?? []) as $i => $fila) {
                 if (! is_array($fila)) {
                     continue;
                 }
@@ -291,6 +307,14 @@ class SitioAdminController extends Controller
                 $limpia = [];
                 foreach ($lista['campos'] as $campo => $def) {
                     $valor = $fila[$campo] ?? '';
+
+                    if (($def['tipo'] ?? 'text') === 'imagen') {
+                        // Un archivo nuevo manda sobre la dirección escrita.
+                        $archivo = $request->file("datos.$clave.$i.{$campo}__archivo");
+                        $limpia[$campo] = $archivo ? $this->guardarFoto($archivo) : trim((string) $valor);
+
+                        continue;
+                    }
 
                     if (($def['tipo'] ?? 'text') === 'lineas') {
                         // Un textarea de «una cosa por línea» se guarda como
@@ -323,6 +347,57 @@ class SitioAdminController extends Controller
         }
 
         return $datos;
+    }
+
+    /** Dónde caen las fotos que se suben desde el panel (bajo public/, ignorado por git). */
+    private const CARPETA_FOTOS = 'uploads/sitio';
+
+    /** Reglas para los archivos de los campos `imagen` de las listas del bloque. */
+    private function reglasDeFotos(SitioBloque $bloque): array
+    {
+        $reglas = [];
+
+        foreach (PortadaEsquema::de($bloque->clave)['listas'] ?? [] as $clave => $lista) {
+            foreach ($lista['campos'] as $campo => $def) {
+                if (($def['tipo'] ?? 'text') === 'imagen') {
+                    $reglas["datos.$clave.*.{$campo}__archivo"] = ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:5120'];
+                }
+            }
+        }
+
+        return $reglas;
+    }
+
+    /**
+     * Guarda la foto con un nombre propio y devuelve la dirección que se pinta.
+     *
+     * El nombre original no se usa: trae espacios, tildes y a veces el mismo
+     * «IMG_0001.jpg» de otra foto. La dirección va sin dominio para que valga
+     * igual en local que en producción.
+     */
+    private function guardarFoto(UploadedFile $archivo): string
+    {
+        $carpeta = public_path(self::CARPETA_FOTOS);
+        File::ensureDirectoryExists($carpeta, 0755);
+
+        $nombre = now()->format('Ymd-His').'-'.bin2hex(random_bytes(4)).'.'.$archivo->guessExtension();
+        $archivo->move($carpeta, $nombre);
+
+        return '/'.self::CARPETA_FOTOS.'/'.$nombre;
+    }
+
+    /** Las direcciones de fotos subidas por el panel que hay en un `datos`. */
+    private function fotosSubidas(array $datos): array
+    {
+        $fotos = [];
+
+        array_walk_recursive($datos, function ($valor) use (&$fotos) {
+            if (is_string($valor) && str_starts_with($valor, '/'.self::CARPETA_FOTOS.'/')) {
+                $fotos[] = $valor;
+            }
+        });
+
+        return $fotos;
     }
 
     // ──────────────────────── Redirecciones ────────────────────────

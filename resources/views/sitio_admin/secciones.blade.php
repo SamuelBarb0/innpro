@@ -72,7 +72,8 @@
             </div>
           @endif
 
-          <form method="POST" action="{{ route('sitio.admin.secciones.guardar', $bloque) }}" data-editor>
+          <form method="POST" action="{{ route('sitio.admin.secciones.guardar', $bloque) }}" data-editor
+                enctype="multipart/form-data">
             @csrf
 
             {{-- ── Textos del bloque ── --}}

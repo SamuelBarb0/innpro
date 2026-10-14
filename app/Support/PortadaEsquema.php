@@ -256,7 +256,7 @@ class PortadaEsquema
             'casos' => [
                 'nombre' => 'Casos de éxito',
                 'donde' => 'Las tarjetas de proyectos, encima de Nuestra experiencia.',
-                'ayuda' => 'Los proyectos representativos. En la portada salen los primeros cuatro; en la página «Experiencia» salen todos y se pueden filtrar por sector. La foto es opcional: sin ella la tarjeta se ve igual, con el sector de fondo.',
+                'ayuda' => 'Los proyectos representativos. En la portada salen los primeros cuatro; en la página «Experiencia» salen todos y se pueden filtrar por sector. La foto es opcional y se sube desde aquí: sin ella la tarjeta se ve igual, con el sector de fondo.',
                 'ancla' => 'casos',
                 'campos' => [
                     'antetitulo' => ['etiqueta' => 'Línea pequeña de encima'],
@@ -276,7 +276,7 @@ class PortadaEsquema
                             'cliente' => ['etiqueta' => 'Cliente o proyecto', 'col' => 6, 'ayuda' => 'Ej.: Ministerio del Deporte'],
                             'sector' => ['etiqueta' => 'Sector', 'col' => 6, 'ayuda' => 'Es por lo que se filtra en la página «Experiencia». Escríbelo igual en todos los del mismo sector.'],
                             'solucion' => ['etiqueta' => 'Solución implementada', 'col' => 12, 'ayuda' => 'Ej.: Cctv + control de acceso'],
-                            'imagen' => ['etiqueta' => 'Foto', 'col' => 12, 'ayuda' => 'Opcional. La dirección de una foto real del montaje. Mientras no haya, la tarjeta sale con el sector de fondo.'],
+                            'imagen' => ['etiqueta' => 'Foto', 'tipo' => 'imagen', 'col' => 12, 'ayuda' => 'Opcional. Una foto real del montaje (JPG, PNG o WebP, hasta 5 MB). Mientras no haya, la tarjeta sale con el sector de fondo.'],
                         ],
                     ],
                 ],
