@@ -389,11 +389,11 @@ class SolicitudController extends Controller
                 }
             }
             
-            // Marcar como aplicada
+            // La observación que se guarda (y luego se imprime en la cotización)
+            // debe contener SOLO el comentario comercial del vendedor. Los
+            // movimientos de stock NO se anexan aquí: quedan en el historial de
+            // movimientos (MovimientoStock), que es su lugar.
             $observaciones = $request->observaciones;
-            if ($procesarStock && !empty($stockProcesado)) {
-                $observaciones .= "\n\nMovimientos de stock procesados:\n" . implode("\n", $stockProcesado);
-            }
             
             $solicitud->marcarComoAplicada($user->id, $observaciones);
             

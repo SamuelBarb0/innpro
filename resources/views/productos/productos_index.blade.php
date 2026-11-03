@@ -31,7 +31,6 @@
                 <th>Referencia</th>
                 <th>Nombre</th>
                 <th>Unidad Venta</th>
-                <th>Unidad Empaque</th>
                 <th>¿Maneja Extensión?</th>
                 <th>Variantes</th>
                 <th>Estado</th>
@@ -61,7 +60,6 @@
         { data:'referencia',   name:'referencia' },
         { data:'nombre',       name:'nombre' },
         { data:'unidad_venta', name:'unidad_venta' },
-        { data:'unidad_empaque', name:'unidad_empaque' },
         { data:'tiene_extension', name:'tiene_extension' },
         { data:'variantes',    name:'tiene_variantes' },
         { data:'estado',       name:'activo' },
@@ -74,11 +72,6 @@
         {
           text:'Nuevo', className:'btn btn-outline-primary',
           action: () => window.location.href = "{{ route('productos.form') }}"
-        },
-        {
-          text:'<i class="bi bi-currency-dollar"></i> Actualizar Precios',
-          className:'btn btn-outline-warning',
-          action: () => window.location.href = "{{ route('productos.historial-precios') }}"
         },
         {
           text:'<i class="bi bi-upload"></i> Importar',

@@ -3,7 +3,14 @@
   <x-slot name="header">
     Cotizador
     @if($cliente)
-      <span class="badge bg-info ms-2">Cotizando para: {{ $cliente->nombre_contacto }}</span>
+      <span class="badge bg-info ms-2">
+        Cotizando para:
+        @if($cliente->nombre_empresa)
+          {{ $cliente->nombre_empresa }} <span class="text-dark-50">({{ $cliente->nombre_contacto }})</span>
+        @else
+          {{ $cliente->nombre_contacto }}
+        @endif
+      </span>
     @endif
   </x-slot>
 
@@ -279,6 +286,20 @@
             <a href="{{ route('catalogo') }}" class="text-decoration-none small">
               <i class="bi bi-arrow-left"></i> Cambiar cliente
             </a>
+            <div class="fw-semibold text-truncate" title="{{ $cliente->nombre_empresa ?: $cliente->nombre_contacto }}">
+              <i class="bi bi-building"></i>
+              {{ $cliente->nombre_empresa ?: $cliente->nombre_contacto }}
+            </div>
+            @if($cliente->nombre_empresa)
+              <div class="text-muted small text-truncate">
+                <i class="bi bi-person"></i> {{ $cliente->nombre_contacto }}
+              </div>
+            @endif
+            @if($cliente->ciudad)
+              <div class="text-muted small text-truncate">
+                <i class="bi bi-geo-alt"></i> {{ $cliente->ciudad }}
+              </div>
+            @endif
             <div class="text-muted small">
               Lista: <strong>{{ $cliente->listaPrecio?->nombre ?? '—' }}</strong>
             </div>
@@ -333,12 +354,12 @@
   {{-- Sidebar del Carrito --}}
 <div id="cartSidebar">
   <div class="p-4 border-bottom d-flex justify-content-between align-items-center flex-shrink-0">
-    <h5 class="mb-0">Carrito de Compras</h5>
+    <h5 class="mb-0">Selección de Producto</h5>
     <button class="btn-close" id="closeCart"></button>
   </div>
   <div class="flex-grow-1 overflow-auto p-4">
     <div id="cartItems">
-      <p class="text-muted text-center">El carrito está vacío</p>
+      <p class="text-muted text-center">No hay productos seleccionados</p>
     </div>
   </div>
   <div class="p-4 border-top flex-shrink-0">
@@ -428,7 +449,7 @@
     function actualizarCarrito(){
       let total=0, itemsHtml='';
       if(!carrito.length){
-        itemsHtml = '<p class="text-muted text-center">El carrito está vacío</p>';
+        itemsHtml = '<p class="text-muted text-center">No hay productos seleccionados</p>';
         $('#btnFinalizarSolicitud').prop('disabled',true);
       } else {
         carrito.forEach((item,i)=>{

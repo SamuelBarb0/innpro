@@ -150,7 +150,9 @@ class ProductosController extends Controller
             'nombre' => ['required','string','max:255'],
             'descripcion' => ['nullable','string'],
             'unidad_venta' => ['required','string','max:100'],
-            'unidad_empaque' => ['required','string','max:100'],
+            // Campos de logística retirados del formulario (#7). Siguen siendo
+            // opcionales por si entran por importación; ya no se exigen aquí.
+            'unidad_empaque' => ['nullable','string','max:100'],
             'peso_paca' => ['nullable','numeric','min:0'],
             'cubicaje_paca' => ['nullable','numeric','min:0'],
             'unidades_por_paca' => ['nullable','numeric','min:0'],
@@ -201,11 +203,18 @@ class ProductosController extends Controller
             $data['permitir_venta_sin_stock'] = $request->input('permitir_venta_sin_stock', 0) == 1;  // NUEVO
             $data['activo'] = $producto->exists ? $request->boolean('activo') : true;
 
+            // La unidad de empaque se retiró del formulario (#7). En productos
+            // nuevos se asigna 'UND' por defecto; en edición no se toca el valor
+            // que ya tuviera (no viene en $data si el campo no se envió).
+            if (! $producto->exists && empty($data['unidad_empaque'])) {
+                $data['unidad_empaque'] = 'UND';
+            }
+
             // La categoría es opcional desde la migración 2026_08_25_100000. Antes
             // esto inventaba una categoría "Sin categoría" porque la columna era
             // NOT NULL; ahora un producto puede quedarse sin ninguna, que es lo
             // normal en Innpro.
-            $data['categoria_id'] = $data['categoria_id'] ?: null;
+            $data['categoria_id'] = ($data['categoria_id'] ?? null) ?: null;
 
             $esNuevo = !$producto->exists;  // NUEVO
             $producto->fill($data)->save();
@@ -410,7 +419,9 @@ public function actualizarPreciosExcel(Request $request)
 {
     // 1. Validación
     $request->validate([
-        'archivo' => 'required|mimes:xlsx,xls,csv|max:10240'
+        // Se incluye `txt` porque muchos CSV reales se detectan con MIME
+        // `text/plain` y Laravel los rechazaría con solo `csv`.
+        'archivo' => 'required|mimes:xlsx,xls,csv,txt|max:10240'
     ], [
         'archivo.required' => 'Debe seleccionar un archivo',
         'archivo.mimes'    => 'El archivo debe ser Excel (.xlsx, .xls) o CSV',
@@ -628,7 +639,9 @@ public function actualizarPreciosExcel(Request $request)
     public function importarExcel(Request $request)
     {
         $request->validate([
-            'archivo' => 'required|mimes:xlsx,xls,csv|max:10240'
+            // Se incluye `txt` porque muchos CSV reales se detectan con MIME
+            // `text/plain` y Laravel los rechazaría con solo `csv`.
+            'archivo' => 'required|mimes:xlsx,xls,csv,txt|max:10240'
         ], [
             'archivo.required' => 'Debe seleccionar un archivo',
             'archivo.mimes'    => 'El archivo debe ser Excel (.xlsx, .xls) o CSV',
@@ -639,12 +652,20 @@ public function actualizarPreciosExcel(Request $request)
         $nombreOriginal = $archivo->getClientOriginalName();
         $extension = strtolower($archivo->getClientOriginalExtension());
 
+        // Un .csv/.txt se procesa como CSV; cualquier otra extensión, como Excel.
+        $esCsv = in_array($extension, ['csv', 'txt'], true);
         $readerType = match ($extension) {
             'xlsx'  => \Maatwebsite\Excel\Excel::XLSX,
             'xls'   => \Maatwebsite\Excel\Excel::XLS,
-            'csv'   => \Maatwebsite\Excel\Excel::CSV,
+            'csv', 'txt' => \Maatwebsite\Excel\Excel::CSV,
             default => null,
         };
+
+        // El separador del CSV se auto-detecta (coma o punto y coma) para que el
+        // archivo no se rechace solo por el separador con que lo guardó Excel.
+        $delimitador = $esCsv
+            ? $this->detectarDelimitadorCsv($archivo->getRealPath())
+            : ';';
 
         $actualizacion = ActualizacionPrecio::create([
             'usuario_id'               => auth()->id(),
@@ -659,7 +680,7 @@ public function actualizarPreciosExcel(Request $request)
         ]);
 
         try {
-            Excel::import(new ProductosImport($actualizacion), $archivo, null, $readerType);
+            Excel::import(new ProductosImport($actualizacion, $delimitador), $archivo, null, $readerType);
 
             $actualizacion->refresh();
             $ok = $actualizacion->actualizaciones_exitosas;
@@ -672,7 +693,7 @@ public function actualizarPreciosExcel(Request $request)
                              ->with('errores_import', $actualizacion->errores)
                              ->with('actualizacion_id', $actualizacion->id);
             }
-            return back()->with('error', 'No se pudo procesar ninguna fila. Revisa los errores.')
+            return back()->with('error', 'No se pudo procesar ninguna fila. Verifica que la primera fila tenga el encabezado "referencia" y que cada fila traiga su código de referencia.')
                          ->with('errores_import', $actualizacion->errores)
                          ->with('actualizacion_id', $actualizacion->id);
         } catch (\Throwable $e) {
@@ -695,6 +716,47 @@ public function actualizarPreciosExcel(Request $request)
             return back()->with('error', 'Error procesando el archivo: ' . $e->getMessage())
                          ->with('actualizacion_id', $actualizacion->id);
         }
+    }
+
+    /**
+     * Detecta el separador de un CSV mirando su primera línea con datos.
+     * Compara punto y coma, coma y tabulación, y devuelve el más frecuente.
+     * Default: punto y coma (el que usa Excel en configuración regional ES/CO).
+     */
+    private function detectarDelimitadorCsv(?string $ruta): string
+    {
+        if (! $ruta || ! is_readable($ruta)) {
+            return ';';
+        }
+
+        $linea = '';
+        $handle = @fopen($ruta, 'r');
+        if ($handle) {
+            // Buscamos la primera línea no vacía (saltamos BOM y líneas en blanco).
+            while (($l = fgets($handle)) !== false) {
+                $l = trim(preg_replace('/^\xEF\xBB\xBF/', '', $l));
+                if ($l !== '') {
+                    $linea = $l;
+                    break;
+                }
+            }
+            fclose($handle);
+        }
+
+        if ($linea === '') {
+            return ';';
+        }
+
+        $conteos = [
+            ';'  => substr_count($linea, ';'),
+            ','  => substr_count($linea, ','),
+            "\t" => substr_count($linea, "\t"),
+        ];
+        arsort($conteos);
+        $mejor = array_key_first($conteos);
+
+        // Si no se encontró ningún separador, nos quedamos con punto y coma.
+        return $conteos[$mejor] > 0 ? $mejor : ';';
     }
 
     public function toggleActivo(Producto $producto)

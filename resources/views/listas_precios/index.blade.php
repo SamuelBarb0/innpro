@@ -23,7 +23,12 @@
 
     <div class="card shadow mb-4">
       <div class="card-body">
-        <h5 class="mb-1">Listas disponibles</h5>
+        <div class="d-flex justify-content-between align-items-start flex-wrap gap-2">
+          <h5 class="mb-1">Listas disponibles</h5>
+          <a href="{{ route('productos.historial-precios') }}" class="btn btn-outline-warning btn-sm">
+            <i class="bi bi-currency-dollar"></i> Actualizar precios (masivo)
+          </a>
+        </div>
         <p class="text-muted small">
           Cada cliente cotiza con la lista que tenga asignada. Para darle precios propios a un
           cliente, crea una lista para él, cárgale los precios y asígnasela desde Clientes.
@@ -75,6 +80,21 @@
                           <i class="bi {{ $l->activo ? 'bi-toggle-on' : 'bi-toggle-off' }}"></i>
                         </button>
                       </form>
+                      @if($l->clientes_count > 0)
+                        <button type="button" class="btn btn-outline-danger btn-sm" disabled
+                                title="No se puede eliminar: {{ $l->clientes_count }} cliente(s) la usan">
+                          <i class="bi bi-trash"></i>
+                        </button>
+                      @else
+                        <form method="POST" action="{{ route('listas-precios.eliminar', $l->id) }}"
+                              onsubmit="return confirm('¿Eliminar la lista “{{ $l->nombre }}” y todos sus precios? Esta acción no se puede deshacer.');">
+                          @csrf
+                          @method('DELETE')
+                          <button type="submit" class="btn btn-outline-danger btn-sm" title="Eliminar lista">
+                            <i class="bi bi-trash"></i>
+                          </button>
+                        </form>
+                      @endif
                     </div>
                   </td>
                 </tr>

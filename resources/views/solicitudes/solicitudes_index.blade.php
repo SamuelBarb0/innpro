@@ -44,7 +44,12 @@
                 <th>Fecha</th>
                 <th>Items</th>
                 <th>Monto</th>
-                <th>Tipo</th>
+                <th>
+                  Tipo
+                  <i class="bi bi-info-circle text-muted"
+                     title="Tipo de cotización: Proyecto, Mantenimiento Preventivo, Mantenimiento Correctivo o Asistencia. Se elige al crear el prospecto; 'Sin tipo' son las que entraron por enlace o antes de existir el campo."
+                     style="cursor:help;"></i>
+                </th>
                 <th>Estado</th>
               </tr>
             </thead>

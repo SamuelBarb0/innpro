@@ -180,7 +180,7 @@
     </div>
 
     <div class="watermark">
-        {{ $solicitud->estado === 'aplicada' ? 'CONFIRMADA' : 'PENDIENTE' }}
+        {{ $solicitud->estado === 'aplicada' ? 'CONFIRMADA' : 'EN ESTUDIO' }}
     </div>
 
     {{-- Cliente + Solicitud en una sola fila de dos columnas --}}
@@ -204,12 +204,11 @@
                     <tr><td class="lbl">Estado:</td>
                         <td>
                             <span class="badge {{ $solicitud->estado === 'aplicada' ? 'badge-success' : 'badge-warning' }}">
-                                {{ $solicitud->estado === 'aplicada' ? 'CONFIRMADA' : 'PENDIENTE' }}
+                                {{ $solicitud->estado === 'aplicada' ? 'CONFIRMADA' : 'EN ESTUDIO' }}
                             </span>
                         </td>
                     </tr>
                     <tr><td class="lbl">Vendedor:</td><td>{{ $solicitud->cliente?->vendedor?->name ?? '—' }}</td></tr>
-                    <tr><td class="lbl">Lista precio:</td><td>{{ $solicitud->cliente?->listaPrecio?->nombre ?? '—' }}</td></tr>
                     @if($solicitud->estado === 'aplicada')
                     <tr><td class="lbl">Confirmada:</td><td>{{ $solicitud->aplicada_en->format('d/m/Y H:i') }}</td></tr>
                     <tr><td class="lbl">Procesó:</td><td>{{ $solicitud->aplicadaPor?->name ?? '—' }}</td></tr>
@@ -230,23 +229,10 @@
                 <th width="60" class="text-right">Precio Unit.</th>
                 <th width="32" class="text-center">Und</th>
                 <th width="68" class="text-right">Subtotal</th>
-                <th width="36" class="text-center">Und<br>Emp</th>
-                <th width="38" class="text-center">Cbm</th>
-                <th width="38" class="text-center">Peso</th>
             </tr>
         </thead>
         <tbody>
-            <?php $totPacas = 0; $totPeso = 0; $totVol = 0; ?>
             @foreach($solicitud->items as $item)
-            <?php
-                $prod       = $item->producto;
-                $pacasLinea = $prod?->pacasParaCantidad($item->cantidad);
-                $pesoLinea  = $prod?->pesoTotalParaCantidad($item->cantidad);
-                $volLinea   = $prod?->volumenTotalParaCantidad($item->cantidad);
-                $totPacas  += $pacasLinea ?? 0;
-                $totPeso   += $pesoLinea ?? 0;
-                $totVol    += $volLinea ?? 0;
-            ?>
             <tr>
                 <td class="text-center">
                     @if($item->producto && $item->producto->imagenPrincipal)
@@ -270,20 +256,13 @@
                 <td class="text-right">${{ number_format($item->precio_unitario, 2) }}</td>
                 <td class="text-center">{{ $item->producto?->unidad_venta ?: '' }}</td>
                 <td class="text-right">${{ number_format($item->precio_total, 2) }}</td>
-                <td class="text-center">{{ $item->producto?->unidad_empaque ?: '' }}</td>
-                <td class="text-center">{{ $volLinea !== null ? number_format($volLinea, 4) : '' }}</td>
-                <td class="text-center">{{ $pesoLinea !== null ? number_format($pesoLinea, 3) : '' }}</td>
             </tr>
             @endforeach
             <tr class="total-row">
-                <td colspan="3" style="text-align:left;">Items: {{ $solicitud->items->count() }} &nbsp;·&nbsp; Pacas: {{ number_format($totPacas, 2) }}</td>
+                <td colspan="3" style="text-align:left;">Items: {{ $solicitud->items->count() }}</td>
                 <td class="text-center">{{ $solicitud->total_items }}</td>
                 <td></td>
-                <td></td>
                 <td class="text-right">${{ number_format($solicitud->monto_total, 2) }}</td>
-                <td></td>
-                <td class="text-center">{{ $totVol > 0 ? number_format($totVol, 4) : '' }}</td>
-                <td class="text-center">{{ $totPeso > 0 ? number_format($totPeso, 3) : '' }}</td>
             </tr>
         </tbody>
     </table>
@@ -295,10 +274,16 @@
     </div>
     @endif
 
-    @if($solicitud->observaciones_admin)
+    <?php
+        // Solo deben imprimirse los comentarios comerciales, nunca los movimientos
+        // de stock ni los equipos contemplados. Para registros antiguos que todavía
+        // traen ese bloque anexado, lo cortamos a partir de su encabezado.
+        $obsComercial = trim(preg_split('/\n*\s*Movimientos de stock/i', (string) $solicitud->observaciones_admin)[0] ?? '');
+    ?>
+    @if($obsComercial !== '')
     <div class="notes-box">
         <div class="nb-title">Observaciones del vendedor:</div>
-        {{ $solicitud->observaciones_admin }}
+        {{ $obsComercial }}
     </div>
     @endif
 </body>

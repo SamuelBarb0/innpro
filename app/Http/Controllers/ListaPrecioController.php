@@ -94,6 +94,34 @@ class ListaPrecioController extends Controller
             ->with('success', $lista->activo ? 'Lista activada.' : 'Lista desactivada.');
     }
 
+    /**
+     * Elimina una lista de precios (pedido del documento de modificaciones).
+     *
+     * No se permite borrar una lista que algún cliente esté usando: dejarlo
+     * sin lista le rompe el cotizador, igual que en el desactivar. Al borrar se
+     * arrastran también los precios (de producto y de variante) de esa lista.
+     */
+    public function eliminar(ListaPrecio $lista)
+    {
+        $this->autorizar();
+
+        $clientes = $lista->clientes()->count();
+        if ($clientes > 0) {
+            return redirect()->route('listas-precios')
+                ->with('error', 'No se puede eliminar: hay '.$clientes
+                    .' cliente(s) usando esta lista. Cámbiales la lista primero.');
+        }
+
+        \Illuminate\Support\Facades\DB::transaction(function () use ($lista) {
+            \App\Models\PrecioVariante::where('lista_precio_id', $lista->id)->delete();
+            PrecioProducto::where('lista_precio_id', $lista->id)->delete();
+            $lista->delete();
+        });
+
+        return redirect()->route('listas-precios')
+            ->with('success', 'Lista de precios eliminada.');
+    }
+
     /** Precios de una lista + cargue por Excel. */
     public function precios(ListaPrecio $lista)
     {

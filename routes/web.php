@@ -154,6 +154,8 @@ Route::middleware(['auth', 'role:admin|vendedor'])->group(function () {
         ->name('listas-precios.guardar');
     Route::post('listas-precios/{lista}/toggle', [App\Http\Controllers\ListaPrecioController::class, 'toggleActivo'])
         ->name('listas-precios.toggle');
+    Route::delete('listas-precios/{lista}', [App\Http\Controllers\ListaPrecioController::class, 'eliminar'])
+        ->name('listas-precios.eliminar');
     Route::get('listas-precios/{lista}/precios', [App\Http\Controllers\ListaPrecioController::class, 'precios'])
         ->name('listas-precios.precios');
     Route::get('listas-precios/{lista}/plantilla', [App\Http\Controllers\ListaPrecioController::class, 'plantilla'])

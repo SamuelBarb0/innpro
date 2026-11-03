@@ -43,9 +43,13 @@ class ProductosImport implements WithMultipleSheets, WithCustomCsvSettings
 {
     protected ActualizacionPrecio $actualizacion;
 
-    public function __construct(ActualizacionPrecio $actualizacion)
+    /** Separador del CSV. Se auto-detecta en el controlador (`;` o `,`). */
+    protected string $delimitador;
+
+    public function __construct(ActualizacionPrecio $actualizacion, string $delimitador = ';')
     {
         $this->actualizacion = $actualizacion;
+        $this->delimitador   = $delimitador !== '' ? $delimitador : ';';
     }
 
     public function sheets(): array
@@ -59,7 +63,7 @@ class ProductosImport implements WithMultipleSheets, WithCustomCsvSettings
     public function getCsvSettings(): array
     {
         return [
-            'delimiter'        => ';',
+            'delimiter'        => $this->delimitador,
             'enclosure'        => '"',
             'escape_character' => '\\',
             'contiguous'       => false,
