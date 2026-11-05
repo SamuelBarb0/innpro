@@ -478,6 +478,23 @@ class CatalogoController extends Controller
     /**
      * Guardar solicitud de cotización
      */
+    /**
+     * Firma normalizada de los ítems de una cotización (producto:variante:cantidad,
+     * ordenada), para detectar cotizaciones idénticas y evitar duplicados.
+     *
+     * @param  array<int,array{producto_id?:mixed,variante_id?:mixed,cantidad?:mixed}>  $items
+     */
+    private function firmaItems(array $items): string
+    {
+        $norm = array_map(function ($i) {
+            return (int) ($i['producto_id'] ?? 0) . ':'
+                 . (int) ($i['variante_id'] ?? 0) . ':'
+                 . (int) ($i['cantidad'] ?? 0);
+        }, $items);
+        sort($norm);
+        return implode('|', $norm);
+    }
+
     public function guardarSolicitud(Request $request)
     {
         $request->validate([
@@ -516,7 +533,39 @@ class CatalogoController extends Controller
             else {
                 throw new \Exception('No se pudo identificar el cliente.');
             }
-            
+
+            // Anti-duplicado: el doble/triple clic en "Enviar" (o un reintento de
+            // red, o dos pestañas abiertas) llegaba a crear varias cotizaciones
+            // idénticas y a mandar un correo por cada una. Si para este mismo
+            // cliente ya se creó una cotización con EXACTAMENTE los mismos
+            // productos y cantidades en los últimos 30 segundos, devolvemos esa
+            // en vez de crear otra y no se vuelve a notificar por correo.
+            $firmaNueva = $this->firmaItems($request->items);
+            $reciente = SolicitudCotizacion::where('cliente_id', $cliente->id)
+                ->where('created_at', '>=', now()->subSeconds(30))
+                ->latest('id')
+                ->with('items')
+                ->get()
+                ->first(function ($s) use ($firmaNueva) {
+                    $items = $s->items->map(fn ($i) => [
+                        'producto_id' => $i->producto_id,
+                        'variante_id' => $i->variante_producto_id,
+                        'cantidad'    => $i->cantidad,
+                    ])->all();
+                    return $this->firmaItems($items) === $firmaNueva;
+                });
+
+            if ($reciente) {
+                DB::rollBack();
+                return response()->json([
+                    'success' => true,
+                    'mensaje' => 'Solicitud de cotización creada exitosamente.',
+                    'numero_solicitud' => $reciente->numero_solicitud,
+                    'codigo_corto' => $reciente->codigo_corto,
+                    'duplicada_evitada' => true,
+                ]);
+            }
+
             // Crear solicitud
             $solicitud = new SolicitudCotizacion([
                 'cliente_id' => $cliente->id,

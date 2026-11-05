@@ -1050,7 +1050,16 @@ function mostrarErrorProductos(xhr){
       $('#modalConfirmarSolicitud').modal('show');
     });
     
+    let enviandoSolicitud = false; // candado anti doble-clic
     $('#btnConfirmarSolicitud').click(()=>{
+      // Si ya hay un envío en curso, ignoramos los clics siguientes. Esto evita
+      // que un doble/triple clic cree varias cotizaciones y mande varios correos.
+      if(enviandoSolicitud) return;
+      if(!carrito.length) return;
+      enviandoSolicitud = true;
+      const $btn = $('#btnConfirmarSolicitud');
+      $btn.prop('disabled', true).html('<i class="bi bi-hourglass-split"></i> Enviando...');
+
       const notas = $('#notasSolicitud').val();
       $('#loadingOverlay').show();
       const items = carrito.map(i=>({producto_id:i.producto_id,variante_id:i.variante_id,cantidad:i.cantidad}));
@@ -1074,6 +1083,10 @@ function mostrarErrorProductos(xhr){
       }).fail(xhr=>{
         $('#loadingOverlay').hide();
         mostrarNotificacion(xhr.responseJSON?.mensaje||'Error al procesar','danger');
+      }).always(()=>{
+        // Liberamos el candado y restauramos el botón pase lo que pase.
+        enviandoSolicitud = false;
+        $btn.prop('disabled', false).html('<i class="bi bi-send"></i> Enviar Solicitud');
       });
     });
 
