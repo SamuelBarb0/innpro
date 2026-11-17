@@ -45,15 +45,20 @@ class PlantillaProductosHoja implements FromArray, WithHeadings, WithStyles, Wit
 
     public function headings(): array
     {
+        // Se dejan solo las columnas que el cliente usa: la referencia
+        // (obligatoria), nombre/descripción/unidad de venta (opcionales) y una
+        // columna por cada lista de precios. Las columnas de logística
+        // (unidad de empaque, peso/cubicaje/unidades por paca, código de barras)
+        // y color_o_motivo se retiraron a pedido del cliente.
         return array_merge(
-            ['referencia', 'nombre', 'descripcion', 'unidad_venta', 'unidad_empaque', 'peso_paca', 'cubicaje_paca', 'unidades_por_paca', 'codigo_barras', 'color_o_motivo'],
+            ['referencia', 'nombre', 'descripcion', 'unidad_venta'],
             $this->codigosListas
         );
     }
 
     public function array(): array
     {
-        // Filas de ejemplo: producto simple + producto con variantes (mismo ref, distintos colores)
+        // Filas de ejemplo (productos simples).
         $precios = function (float $base) {
             $row = [];
             foreach ($this->codigosListas as $i => $_) {
@@ -63,10 +68,8 @@ class PlantillaProductosHoja implements FromArray, WithHeadings, WithStyles, Wit
         };
 
         return [
-            array_merge(['EJEMPLO-001', 'Cámara de prueba',   'Cámara con visión nocturna 1080p', 'UND', 'UND',  12.5, 0.045, 12, '7701234567890', ''],      $precios(1.00)),
-            array_merge(['EJEMPLO-002', 'Caja con variantes', 'Caja en distintos colores',        'UND', 'CAJA', 8.0,  0.030, 24, '7709876543210', 'Rojo'],  $precios(2.50)),
-            array_merge(['EJEMPLO-002', '',                    '',                                 '',    '',     '',   '',    '', '',              'Azul'],  $precios(2.50)),
-            array_merge(['EJEMPLO-002', '',                    '',                                 '',    '',     '',   '',    '', '',              'Verde'], $precios(2.80)),
+            array_merge(['EJEMPLO-001', 'Cámara de prueba', 'Cámara con visión nocturna 1080p', 'UND'], $precios(1.00)),
+            array_merge(['EJEMPLO-002', 'Caja metálica',    'Caja de paso 12x12',               'UND'], $precios(2.50)),
         ];
     }
 
@@ -82,15 +85,9 @@ class PlantillaProductosHoja implements FromArray, WithHeadings, WithStyles, Wit
             'B' => 26, // nombre
             'C' => 36, // descripcion
             'D' => 14, // unidad_venta
-            'E' => 14, // unidad_empaque
-            'F' => 14, // peso_paca
-            'G' => 14, // cubicaje_paca
-            'H' => 16, // unidades_por_paca
-            'I' => 18, // codigo_barras
-            'J' => 18, // color_o_motivo
         ];
-        // Ancho 14 para cada columna de precio (a partir de L)
-        $letras = ['K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U'];
+        // Ancho 14 para cada columna de precio (a partir de E)
+        $letras = ['E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O'];
         foreach ($this->codigosListas as $i => $_) {
             if (isset($letras[$i])) $widths[$letras[$i]] = 14;
         }
@@ -99,7 +96,7 @@ class PlantillaProductosHoja implements FromArray, WithHeadings, WithStyles, Wit
 
     public function styles(Worksheet $sheet)
     {
-        $totalCols = 11 + count($this->codigosListas);
+        $totalCols = 4 + count($this->codigosListas);
         $ultimaCol = $this->letraColumna($totalCols);
 
         // Encabezado general
@@ -180,12 +177,6 @@ class PlantillaProductosInstrucciones implements FromArray, WithHeadings, WithSt
             ['nombre',         'No', 'Nombre corto del producto. Si la referencia es nueva y esta columna viene vacía, se usa la descripción o, en último caso, la referencia.'],
             ['descripcion',    'No', 'Descripción larga del producto.'],
             ['unidad_venta',   'No', 'Unidad de venta (UND, CAJA, etc.). Default: UND.'],
-            ['unidad_empaque', 'No', 'Unidad de empaque. Default: UND.'],
-            ['peso_paca',         'No', 'Peso por paca en kilogramos (kg). Acepta decimales (ej. 12.5). Se usa para el cálculo de peso en la cotización.'],
-            ['cubicaje_paca',     'No', 'Cubicaje (volumen) por paca en metros cúbicos (m³). Acepta decimales (ej. 0.045). Se usa para el cálculo de volumen en la cotización.'],
-            ['unidades_por_paca', 'No', 'Cuántas unidades de venta trae una paca (ej. 12). Necesario para calcular el peso/volumen total según la cantidad pedida.'],
-            ['codigo_barras',     'No', 'Código de barras del producto (útil para exportaciones/aduanas).'],
-            ['color_o_motivo', 'No', 'Si trae valor, esa fila es una variante. Si repites la misma referencia con distinto color, todas son variantes del mismo producto.'],
         ];
         foreach ($this->listas as $lista) {
             $filas[] = [
@@ -198,7 +189,6 @@ class PlantillaProductosInstrucciones implements FromArray, WithHeadings, WithSt
         $filas[] = ['REGLAS', '', ''];
         $filas[] = ['Si la referencia existe', '', 'Se actualizan solo los campos llenos. Vacíos = no se tocan.'];
         $filas[] = ['Si la referencia no existe', '', 'Se crea el producto. Si descripcion está vacía, se usa la referencia como nombre. El producto nace sin categoría: Innpro no clasifica por categoría.'];
-        $filas[] = ['Variantes', '', 'Misma referencia repetida con distinto color/motivo → variantes del mismo producto. La primera fila define los precios base; las filas siguientes guardan SOLO la diferencia (ajuste).'];
 
         return $filas;
     }

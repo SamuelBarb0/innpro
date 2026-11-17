@@ -45,7 +45,6 @@
               <small>
                 Si la referencia ya existe, se actualizan solo los campos que vengan llenos.
                 Si no existe, se crea el producto (descripción → nombre, categoría default "Sin categoría").
-                Si una misma referencia se repite con distinto <code>color_o_motivo</code>, esas filas se interpretan como variantes del mismo producto.
               </small>
             </div>
           </div>
@@ -115,36 +114,6 @@
                   <td><code>unidad_venta</code></td>
                   <td><span class="badge bg-secondary">No</span></td>
                   <td>UND, CAJA, etc. Default: UND.</td>
-                </tr>
-                <tr>
-                  <td><code>unidad_empaque</code></td>
-                  <td><span class="badge bg-secondary">No</span></td>
-                  <td>Default: UND.</td>
-                </tr>
-                <tr>
-                  <td><code>peso_paca</code></td>
-                  <td><span class="badge bg-secondary">No</span></td>
-                  <td>Peso por paca en kilogramos (kg). Acepta decimales (ej. 12.5). Se usa para el cálculo de peso en la cotización.</td>
-                </tr>
-                <tr>
-                  <td><code>cubicaje_paca</code></td>
-                  <td><span class="badge bg-secondary">No</span></td>
-                  <td>Cubicaje (volumen) por paca en metros cúbicos (m³). Acepta decimales (ej. 0.045). Se usa para el cálculo de volumen en la cotización.</td>
-                </tr>
-                <tr>
-                  <td><code>unidades_por_paca</code></td>
-                  <td><span class="badge bg-secondary">No</span></td>
-                  <td>Cuántas unidades de venta trae una paca (ej. 12). Necesario para calcular el peso/volumen total según la cantidad pedida.</td>
-                </tr>
-                <tr>
-                  <td><code>codigo_barras</code></td>
-                  <td><span class="badge bg-secondary">No</span></td>
-                  <td>Código de barras del producto (útil para exportaciones/aduanas).</td>
-                </tr>
-                <tr>
-                  <td><code>color_o_motivo</code></td>
-                  <td><span class="badge bg-secondary">No</span></td>
-                  <td>Si trae valor, esa fila es una variante. Repite la misma referencia con distintos colores para crear varias variantes.</td>
                 </tr>
                 @foreach($listas as $lista)
                   <tr>
